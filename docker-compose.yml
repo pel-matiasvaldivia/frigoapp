@@ -32,7 +32,7 @@ services:
     volumes:
       - pdf_uploads:/app/uploads
     ports:
-      - "8000:8000"
+      - "8889:8000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
       - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
@@ -71,6 +71,8 @@ services:
     image: ghcr.io/pel-matiasvaldivia/frigo-frontend:latest
     container_name: frigo-frontend
     restart: always
+    ports:
+      - "8870:80"
     depends_on:
       - backend
 
@@ -79,7 +81,7 @@ services:
     container_name: frigo-nginx
     restart: always
     ports:
-      - "${APP_PORT:-80}:80"
+      - "8890:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - pdf_uploads:/app/uploads:ro
