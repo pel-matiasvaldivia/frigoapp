@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install ONLY production deps, skip audit/fund output
-RUN npm ci --omit=dev --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # Copy source and build
 COPY . .
