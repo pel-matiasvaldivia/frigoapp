@@ -1,19 +1,39 @@
-FROM python:3.11-slim
+# ── Stage 1: Build dependencies in a virtualenv ──────────────────────────────
+FROM python:3.11-slim AS builder
 
-WORKDIR /app
-
-# Install system dependencies
+# Install build-time deps only (not needed at runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create isolated virtualenv
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy source code
-COPY . .
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+
+# ── Stage 2: Lean runtime image ───────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+# Only runtime postgres lib needed (not the -dev headers)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the pre-built virtualenv from builder (no build tools in final image)
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+COPY app ./app
+
+# Non-root user for security
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
 
 EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

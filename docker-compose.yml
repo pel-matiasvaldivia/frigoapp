@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-frigodb}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +21,6 @@ services:
     image: redis:alpine
     container_name: frigo-redis
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redisdata:/data
 
@@ -32,6 +28,7 @@ services:
     image: ghcr.io/pel-matiasvaldivia/frigo-backend:latest
     container_name: frigo-backend
     restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
       - pdf_uploads:/app/uploads
     ports:
@@ -54,14 +51,13 @@ services:
     image: ghcr.io/pel-matiasvaldivia/frigo-backend:latest
     container_name: frigo-worker
     restart: always
-    command: celery -A app.core.celery_app worker --loglevel=info
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
     volumes:
       - pdf_uploads:/app/uploads
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
       - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
       - REDIS_URL=redis://redis:6379/0
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
@@ -75,8 +71,6 @@ services:
     image: ghcr.io/pel-matiasvaldivia/frigo-frontend:latest
     container_name: frigo-frontend
     restart: always
-    ports:
-      - "8080:80"
     depends_on:
       - backend
 
@@ -85,7 +79,7 @@ services:
     container_name: frigo-nginx
     restart: always
     ports:
-      - "80:80"
+      - "${APP_PORT:-80}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - pdf_uploads:/app/uploads:ro

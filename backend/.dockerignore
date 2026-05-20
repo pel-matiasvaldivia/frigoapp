@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Development & editor artifacts
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment secrets
+.env
+.env.*
+
+# Runtime artifacts
+uploads/
+*.pdf
+*.log
+
+# Git metadata
+.git/
+.gitignore
