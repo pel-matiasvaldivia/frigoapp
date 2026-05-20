@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: frigo-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-frigodb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-frigodb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: frigo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: frigo-backend
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+      - pdf_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
+      - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
+      - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
+      - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: frigo-worker
+    restart: always
+    command: celery -A app.core.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - pdf_uploads:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
+      - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
+      - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
+      - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frigo-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: frigo-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - pdf_uploads:/app/uploads:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  pdf_uploads:
