@@ -97,38 +97,38 @@ def entregar_pedido(
         
     cliente = db.query(Cliente).filter(Cliente.id == pedido.cliente_id).first()
     
-    # 1. Update status
-    pedido.estado = payload.estado_pedido # "Entregado", "Entrega parcial", "No entregado"
+    # 1. Update pedido status to reflect delivery outcome
+    pedido.estado = payload.estado_pedido  # "Entregado", "Entrega parcial", "No entregado"
     if payload.observaciones:
         pedido.observaciones = f"{pedido.observaciones or ''} | Chofer: {payload.observaciones}".strip()
-        
+
     # 2. Save Signature
     if payload.firma_base64:
         try:
-            # Strip base64 metadata
+            # Strip base64 metadata prefix if present
             header, data = payload.firma_base64.split(",", 1) if "," in payload.firma_base64 else ("", payload.firma_base64)
             img_data = base64.b64decode(data)
-            
+
             sig_filename = f"firma_{comp.id}_{datetime.date.today().strftime('%Y%m%d')}.png"
             sig_filepath = os.path.join(settings.UPLOAD_DIR, sig_filename)
-            
+
             with open(sig_filepath, "wb") as f:
                 f.write(img_data)
-                
+
             comp.firma_repartidor_path = sig_filepath
         except Exception as e:
             print(f"[Despacho] Error saving signature: {e}")
-            
+
     # 3. Process Account Balance / Ledger updates
     if payload.estado_pedido in ["Entregado", "Entrega parcial"]:
         comp.estado = "Entregado"
-        
+
         # Post DEBIT to Cuenta Corriente
         cc = db.query(CuentaCorriente).filter(CuentaCorriente.cliente_id == cliente.id).first()
         if cc:
             cc.saldo_actual = round(cc.saldo_actual + comp.total, 2)
             cc.fecha_actualizacion = datetime.datetime.utcnow()
-            
+
             mov = MovimientoCC(
                 cuenta_id=cc.id,
                 tipo="DEBITO",
@@ -138,15 +138,17 @@ def entregar_pedido(
                 descripcion=f"Compra según {comp.tipo} N° {comp.numero}"
             )
             db.add(mov)
-            
-            # Re-generate invoice PDF to attach signature
-            # Trigger celery task asynchronously to redraw the PDF with the signature
-            from app.core.celery_app import generar_pdf_comprobante_task
-            generar_pdf_comprobante_task.delay(comp.id)
+
+            # Trigger celery task to regenerate PDF with embedded signature
+            try:
+                from app.core.celery_app import generar_pdf_comprobante_task
+                generar_pdf_comprobante_task.delay(comp.id)
+            except Exception as e:
+                print(f"[Despacho] Error scheduling PDF task: {e}")
     else:
-        # No entregado
-        comp.estado = "Anulado"
-        # We don't post debit since customer rejected delivery
+        # No entregado — mark comprobante as not delivered (Anulado is reserved for admin cancellations)
+        comp.estado = "No Entregado"
+        # No debit posted since customer refused delivery
         
     db.commit()
     db.refresh(comp)

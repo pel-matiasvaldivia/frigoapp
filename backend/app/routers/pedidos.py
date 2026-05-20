@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import datetime
@@ -203,11 +204,11 @@ def create_pedido(
         db.add(bulto)
     db.commit()
     
-    # Retrieve order response structure
+    # Retrieve order response structure (refresh to load all relationships)
     db.refresh(new_pedido)
-    
+
     return {
-        "pedido": new_pedido,
+        "pedido": jsonable_encoder(new_pedido),
         "warning_credito": credit_warn,
         "mensaje_warning": warning_msg
     }

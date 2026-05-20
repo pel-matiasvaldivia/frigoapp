@@ -68,7 +68,7 @@ def update_orden_preparacion(
         if payload.estado == "En preparación":
             pedido.estado = "En preparación"
         elif payload.estado == "Completado":
-            pedido.estado = "Preparado/Listo para despacho"
+            pedido.estado = "Listo para despacho"
             
     if payload.observaciones is not None:
         prep.observaciones = payload.observaciones

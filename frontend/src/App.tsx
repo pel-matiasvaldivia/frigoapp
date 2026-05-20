@@ -50,7 +50,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 /** Redirect to home if already logged in */
 const RequireGuest: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
