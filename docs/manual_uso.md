@@ -49,7 +49,16 @@ El transportista gestiona la logística final.
 
 ---
 
-## 3. Estados del Pedido
+## 4. Nuevo Canal: WhatsApp Business + AI
+Ahora los clientes pueden enviar pedidos por mensaje de texto.
+- **Vincular Sesión:** En `Admin > WhatsApp`, escanee el código QR para conectar el bot.
+- **Detección Automática:** El sistema utiliza Inteligencia Artificial (GPT-4o) para entender el pedido (ej: "mandame 2 bondiolas y 5kg de asado").
+- **Validación:** Los pedidos recibidos aparecen en la lista de "Pedidos Detectados". Usted solo debe revisar que los productos coincidan y presionar **"Validar Pedido"** para que entre al flujo normal de preparación.
+
+---
+
+## 5. Estados del Pedido
+- **Pendiente de Validación:** Pedido recibido por WhatsApp, esperando revisión humana.
 - **Pendiente:** Creado, esperando ser preparado.
 - **En Preparación:** Siendo pesado en balanza.
 - **Preparado:** Pesos cargados, listo para facturar.

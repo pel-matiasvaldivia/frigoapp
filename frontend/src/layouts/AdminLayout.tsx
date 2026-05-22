@@ -14,7 +14,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -42,6 +43,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { name: 'Clientes', path: '/clientes', icon: Users, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
     { name: 'Catálogo Productos', path: '/productos', icon: Beef, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
     { name: 'Listas de Precios', path: '/listas-precios', icon: ClipboardList, roles: ['SUPERADMIN'] },
+    { name: 'WhatsApp', path: '/whatsapp', icon: MessageSquare, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
     { name: 'Configuración', path: '/configuracion', icon: Settings, roles: ['SUPERADMIN'] },
   ];
 

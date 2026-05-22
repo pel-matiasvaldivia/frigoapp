@@ -2,18 +2,15 @@
 node_modules/
 .pnp
 .pnp.js
-
 # Testing
 /coverage
 .nyc_output
-
 # Production / Builds
 /dist
 /build
 /out
 .next
 .nuxt
-
 # Environment variables and secrets
 .env
 .env.local
@@ -21,12 +18,10 @@ node_modules/
 .env.test.local
 .env.production.local
 .env*.local
-
 # OS files
 .DS_Store
 Thumbs.db
 desktop.ini
-
 # IDEs and editors
 .idea/
 .vscode/
@@ -35,7 +30,6 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
-
 # Logs
 npm-debug.log*
 yarn-debug.log*
@@ -43,7 +37,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 *.log
-
 # Python / Backend
 __pycache__/
 *.py[cod]
@@ -59,3 +52,9 @@ uploads/
 *.pdf
 *.xlsx
 !*.example
+
+# managed by open-wa
+**.data.json
+**.node-persist**
+**_IGNORE_**
+# end managed by open-wa

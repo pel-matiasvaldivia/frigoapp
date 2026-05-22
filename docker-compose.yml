@@ -89,6 +89,17 @@ services:
       - frontend
       - backend
 
+  whatsapp-bot:
+    build: ./whatsapp
+    container_name: frigo-whatsapp
+    restart: always
+    volumes:
+      - ./whatsapp/session:/app/session
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
   redisdata:
