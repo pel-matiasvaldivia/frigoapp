@@ -90,7 +90,7 @@ services:
       - backend
 
   whatsapp-bot:
-    build: ./whatsapp
+    image: ghcr.io/pel-matiasvaldivia/frigo-whatsapp:latest
     container_name: frigo-whatsapp
     restart: always
     volumes:

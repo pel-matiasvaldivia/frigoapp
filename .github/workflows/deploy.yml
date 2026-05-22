@@ -9,6 +9,7 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/pel-matiasvaldivia/frigo-backend
   FRONTEND_IMAGE: ghcr.io/pel-matiasvaldivia/frigo-frontend
+  WHATSAPP_IMAGE: ghcr.io/pel-matiasvaldivia/frigo-whatsapp
 
 jobs:
   build-and-push:
@@ -56,3 +57,16 @@ jobs:
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+
+      # ── WhatsApp Bot ──────────────────────────────────────────────────────────
+      - name: Build and push WhatsApp Bot image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./whatsapp
+          file: ./whatsapp/Dockerfile
+          push: true
+          tags: |
+            ${{ env.WHATSAPP_IMAGE }}:latest
+            ${{ env.WHATSAPP_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.WHATSAPP_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.WHATSAPP_IMAGE }}:buildcache,mode=max
