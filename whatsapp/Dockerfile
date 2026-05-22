@@ -8,6 +8,8 @@ RUN apk add --no-cache \
       harfbuzz \
       ca-certificates \
       ttf-freefont \
+      udev \
+      libstdc++ \
       nodejs \
       npm
 
