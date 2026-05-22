@@ -130,65 +130,69 @@ export const Despacho: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-extrabold text-white flex items-center">
-          <Truck className="h-8 w-8 mr-3 text-rose-500" />
+        <h1 className="text-3xl font-black text-slate-900 flex items-center uppercase tracking-tighter">
+          <Truck className="h-10 w-10 mr-4 text-brand-600" />
           Hoja de Ruta
         </h1>
-        <p className="text-slate-400 text-sm mt-1">Panel del repartidor para gestionar entregas, registrar firma del cliente y actualizar estado.</p>
+        <p className="text-slate-500 text-sm mt-1 font-medium">Panel del repartidor para gestionar entregas, registrar firmas y actualizar estados.</p>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center min-h-[300px]">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500"></div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600"></div>
         </div>
       ) : hojaRuta.length === 0 ? (
-        <div className="border border-dashed border-slate-800 rounded-2xl p-12 text-center bg-slate-900/20">
-          <Truck className="h-12 w-12 text-slate-700 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-white">Sin entregas asignadas</h3>
-          <p className="text-xs text-slate-500 mt-1">No hay comprobantes listos para despacho en tu ruta hoy.</p>
+        <div className="border border-dashed border-slate-200 rounded-[2rem] p-16 text-center bg-slate-50/50">
+          <Truck className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+          <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">Sin entregas</h3>
+          <p className="text-sm text-slate-400 mt-2 font-medium">No hay comprobantes listos para despechar hoy.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {hojaRuta.map((item) => (
-            <div key={item.id} className="border border-slate-800 rounded-2xl bg-slate-900/40 p-5 space-y-4">
+            <div key={item.id} className="border border-slate-200 rounded-3xl bg-white p-6 space-y-5 shadow-sm hover:shadow-md transition-all">
               {/* Header */}
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-white">{item.cliente_razon_social}</h3>
-                  <div className="flex items-center text-xs text-slate-400 mt-1 space-x-2">
-                    <MapPin className="h-3.5 w-3.5 text-rose-500" />
-                    <span>{item.direccion || 'Sin dirección'}</span>
+                <div className="space-y-1">
+                  <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight leading-tight">{item.cliente_razon_social}</h3>
+                  <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                    <MapPin className="h-3 w-3 text-brand-600 mr-1.5" />
+                    <span className="truncate max-w-[200px]">{item.direccion || 'Sin dirección'}</span>
                   </div>
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${statusColor(item.estado)}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-widest ${
+                  item.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                  item.estado === 'En reparto' || item.estado === 'Listo para despacho' ? 'bg-brand-50 text-brand-700 border-brand-200' :
+                  'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
                   {item.estado}
                 </span>
               </div>
 
               {/* Details */}
-              <div className="flex justify-between text-xs bg-slate-950/40 p-3 rounded-xl">
+              <div className="flex justify-between text-[11px] bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div>
-                  <p className="text-slate-450 text-[10px] mb-0.5">Ruta</p>
-                  <p className="font-bold text-slate-200">{item.ruta_nombre}</p>
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-[9px] mb-1">Ruta</p>
+                  <p className="font-black text-slate-800 uppercase leading-none">{item.ruta_nombre}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-slate-450 text-[10px] mb-0.5">Monto</p>
-                  <p className="font-bold text-emerald-400">${item.total?.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-[9px] mb-1">Total</p>
+                  <p className="font-black text-brand-700 text-base leading-none">${item.total?.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
 
               {/* Comprobante info */}
               {item.comprobante && (
-                <div className="text-xs border border-slate-850 bg-slate-950/30 px-3 py-2 rounded-lg flex justify-between items-center">
+                <div className="text-[10px] border border-slate-100 bg-white px-4 py-3 rounded-2xl flex justify-between items-center shadow-inner">
                   <div className="flex items-center space-x-2">
-                    <FileText className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="font-mono text-slate-300">{item.comprobante.tipo} {item.comprobante.numero}</span>
+                    <FileText className="h-4 w-4 text-slate-400" />
+                    <span className="font-black text-slate-600 uppercase tracking-tight">{item.comprobante.tipo} #{item.comprobante.numero}</span>
                   </div>
                   {item.comprobante.pdf_path && (
                     <a href={item.comprobante.pdf_path} target="_blank" rel="noopener noreferrer"
-                      className="text-rose-400 hover:text-rose-300 font-semibold text-[10px]">
+                      className="text-brand-600 hover:text-brand-700 font-black uppercase tracking-widest text-[9px] bg-brand-50 px-2 py-1 rounded border border-brand-100">
                       Ver PDF
                     </a>
                   )}
@@ -196,23 +200,23 @@ export const Despacho: React.FC = () => {
               )}
 
               {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-2 gap-3 pt-1">
                 <a
                   href={`https://wa.me/${item.telefono_whatsapp?.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center py-2 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white text-xs font-semibold rounded-xl border border-emerald-700/30 transition"
+                  className="flex items-center justify-center py-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[10px] font-black rounded-2xl border border-emerald-100 transition-all uppercase tracking-widest shadow-sm"
                 >
-                  <Phone className="h-3.5 w-3.5 mr-1.5" />
-                  WhatsApp
+                  <Phone className="h-4 w-4 mr-2" />
+                  WA
                 </a>
                 {item.estado !== 'Entregado' && item.comprobante && (
                   <button
                     onClick={() => handleOpenDelivery(item)}
-                    className="flex items-center justify-center py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition"
+                    className="flex items-center justify-center py-3 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-black rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-brand-900/10"
                   >
-                    <PenLine className="h-3.5 w-3.5 mr-1.5" />
-                    Confirmar Entrega
+                    <PenLine className="h-4 w-4 mr-2" />
+                    ENTREGAR
                   </button>
                 )}
               </div>
@@ -223,28 +227,28 @@ export const Despacho: React.FC = () => {
 
       {/* Delivery Confirmation Modal */}
       {deliveryModalOpen && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5">
-            <div className="pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white">Confirmar Entrega</h3>
-              <p className="text-xs text-rose-500 font-semibold mt-0.5">{selectedItem.cliente_razon_social}</p>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-[2.5rem] p-8 space-y-6 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+            <div className="pb-4 border-b border-slate-100">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Registrar Entrega</h3>
+              <p className="text-sm text-brand-600 font-black mt-1 uppercase tracking-tight">{selectedItem.cliente_razon_social}</p>
             </div>
 
             {/* Status Picker */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Estado de la Entrega</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Resultado</label>
               <div className="grid grid-cols-3 gap-2">
                 {(['Entregado', 'Entrega parcial', 'No entregado'] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
                     onClick={() => setDeliveryStatus(st)}
-                    className={`py-2 text-[10px] font-bold rounded-xl border transition ${
+                    className={`py-3 text-[9px] font-black rounded-2xl border transition-all uppercase tracking-tighter ${
                       deliveryStatus === st
-                        ? st === 'Entregado' ? 'border-emerald-500 bg-emerald-950/20 text-emerald-400'
-                          : st === 'Entrega parcial' ? 'border-orange-500 bg-orange-950/20 text-orange-400'
-                          : 'border-rose-500 bg-rose-950/20 text-rose-400'
-                        : 'border-slate-800 text-slate-500 hover:text-slate-300'
+                        ? st === 'Entregado' ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : st === 'Entrega parcial' ? 'border-amber-600 bg-amber-50 text-amber-700 shadow-sm'
+                          : 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
+                        : 'border-slate-100 bg-slate-50 text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     {st}
@@ -255,59 +259,61 @@ export const Despacho: React.FC = () => {
 
             {/* Observations */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Observaciones del chofer</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 font-black">Novedades / Comentarios</label>
               <textarea
                 value={deliveryObs}
                 onChange={(e) => setDeliveryObs(e.target.value)}
                 rows={2}
-                placeholder="Novedades de la entrega..."
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none text-slate-300"
+                placeholder="Indique si hubo algún inconveniente..."
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-700 placeholder:text-slate-300"
               />
             </div>
 
             {/* Signature Canvas */}
             {deliveryStatus !== 'No entregado' && (
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Firma del Receptor (opcional)
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
+                    <PenLine className="h-3 w-3 mr-2" /> Firma del Cliente
                   </label>
                   <button
                     type="button"
                     onClick={clearSignature}
-                    className="text-[10px] text-slate-500 hover:text-rose-400"
+                    className="text-[9px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest"
                   >
-                    Limpiar
+                    Borrar
                   </button>
                 </div>
-                <canvas
-                  ref={canvasRef}
-                  width={360}
-                  height={120}
-                  className="w-full h-28 bg-slate-950 border border-slate-700 rounded-xl touch-none cursor-crosshair"
-                  onMouseDown={startDraw}
-                  onMouseMove={draw}
-                  onMouseUp={stopDraw}
-                  onMouseLeave={stopDraw}
-                  onTouchStart={startDraw}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDraw}
-                />
-                <p className="text-[10px] text-slate-500 mt-1 text-center">Dibuje la firma en el recuadro de arriba</p>
+                <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
+                  <canvas
+                    ref={canvasRef}
+                    width={360}
+                    height={140}
+                    className="w-full h-32 touch-none cursor-crosshair"
+                    onMouseDown={startDraw}
+                    onMouseMove={draw}
+                    onMouseUp={stopDraw}
+                    onMouseLeave={stopDraw}
+                    onTouchStart={startDraw}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDraw}
+                  />
+                </div>
+                <p className="text-[9px] text-slate-400 mt-2 text-center font-bold uppercase tracking-widest">Dibuje la firma arriba</p>
               </div>
             )}
 
-            <div className="flex space-x-3 pt-1">
+            <div className="flex space-x-3 pt-2">
               <button
                 onClick={() => { setDeliveryModalOpen(false); setSelectedItem(null); }}
-                className="flex-1 py-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl"
+                className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-xs rounded-[1.25rem] transition-all uppercase tracking-widest"
               >
-                Cancelar
+                Cerrar
               </button>
               <button
                 onClick={handleConfirmDelivery}
                 disabled={submitting}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition disabled:opacity-50"
+                className="flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs rounded-[1.25rem] transition-all shadow-xl shadow-brand-900/20 uppercase tracking-widest"
               >
                 {submitting ? 'Guardando...' : 'Confirmar'}
               </button>

@@ -198,19 +198,19 @@ export const Pedidos: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white">Notas de Pedido</h1>
-          <p className="text-slate-400 text-sm mt-1">Carga y administración de órdenes comerciales de preventistas y WhatsApp.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900">Notas de Pedido</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Carga y administración de órdenes comerciales de preventistas y WhatsApp.</p>
         </div>
         
         {/* Create Order Button */}
         {user?.rol !== 'CLIENTE' && (
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-rose-900/30"
+            className="flex items-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-brand-900/20"
           >
             <Plus className="h-5 w-5 mr-2" />
             Nueva Nota de Pedido
@@ -219,15 +219,15 @@ export const Pedidos: React.FC = () => {
       </div>
 
       {/* Filters bar */}
-      <div className="flex flex-wrap gap-4 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl">
+      <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
         <div className="flex-1 min-w-[200px] relative">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
             <Search className="h-4 w-4" />
           </span>
           <select
             value={filterCliente}
             onChange={(e) => setFilterCliente(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-rose-500"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold focus:outline-none focus:border-brand-500 transition-all"
           >
             <option value="">Todos los Clientes</option>
             {clientes.map(c => (
@@ -240,7 +240,7 @@ export const Pedidos: React.FC = () => {
           <select
             value={filterEstado}
             onChange={(e) => setFilterEstado(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-rose-500"
+            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold focus:outline-none focus:border-brand-500 transition-all"
           >
             <option value="">Todos los Estados</option>
             <option value="Pendiente de preparación">Pendiente</option>
@@ -256,60 +256,60 @@ export const Pedidos: React.FC = () => {
       </div>
 
       {/* Orders List Table */}
-      <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 overflow-hidden">
+      <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 text-xs font-bold uppercase">
-                <th className="py-3">Fecha</th>
-                <th className="py-3">Cliente</th>
-                <th className="py-3">Bultos</th>
-                <th className="py-3 text-right">Monto Est.</th>
-                <th className="py-3 text-center">Estado</th>
-                <th className="py-3 text-center">Acciones</th>
+              <tr className="border-b border-slate-100 text-slate-500 text-xs font-bold uppercase bg-slate-50/50">
+                <th className="py-4 px-6">Fecha</th>
+                <th className="py-4 px-4">Cliente</th>
+                <th className="py-4 px-4">Bultos</th>
+                <th className="py-4 px-4 text-right">Monto Est.</th>
+                <th className="py-4 px-4 text-center">Estado</th>
+                <th className="py-4 px-4 text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
                   </td>
                 </tr>
               ) : pedidos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">Ningún pedido registrado</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400 italic">Ningún pedido registrado</td>
                 </tr>
               ) : (
                 pedidos.map((pedido) => (
-                  <tr key={pedido.id} className="text-slate-350 hover:bg-slate-900/30">
-                    <td className="py-4 font-semibold text-white">
+                  <tr key={pedido.id} className="text-slate-600 hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-6 font-bold text-slate-900">
                       {new Date(pedido.fecha).toLocaleDateString('es-AR')}
                     </td>
-                    <td className="py-4">
-                      <div className="font-semibold text-white">{pedido.cliente.razon_social}</div>
-                      <div className="text-[10px] text-slate-450 font-mono">CUIT: {pedido.cliente.cuit || 'Sin CUIT'}</div>
+                    <td className="py-4 px-4">
+                      <div className="font-bold text-slate-800">{pedido.cliente.razon_social}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">CUIT: {pedido.cliente.cuit || 'Sin CUIT'}</div>
                     </td>
-                    <td className="py-4">{pedido.items?.length || 0} ítems</td>
-                    <td className="py-4 text-right font-bold text-slate-200">
+                    <td className="py-4 px-4 font-medium">{pedido.items?.length || 0} ítems</td>
+                    <td className="py-4 px-4 text-right font-black text-brand-700">
                       ${pedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        pedido.estado === 'Pendiente de preparación' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                        pedido.estado === 'En preparación' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                        pedido.estado === 'Listo para despacho' || pedido.estado === 'Preparado/Listo para despacho' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
-                        pedido.estado === 'Entregado' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        pedido.estado === 'Entrega parcial' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
-                        'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    <td className="py-4 px-4 text-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        pedido.estado === 'Pendiente de preparación' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        pedido.estado === 'En preparación' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        pedido.estado === 'Listo para despacho' || pedido.estado === 'Preparado/Listo para despacho' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                        pedido.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        pedido.estado === 'Entrega parcial' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                        'bg-red-50 text-red-700 border-red-200'
                       }`}>
-                        {pedido.estado}
+                        {pedido.estado.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-4 text-center">
+                    <td className="py-4 px-4 text-center">
                       <button
                         onClick={() => setViewOrderModal(pedido)}
-                        className="p-1.5 bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-all"
+                        className="p-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl transition-all"
                         title="Ver detalles"
                       >
                         <Eye className="h-4 w-4" />
@@ -326,35 +326,35 @@ export const Pedidos: React.FC = () => {
       {/* Create Order Drawer - Modal Layout */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setDrawerOpen(false)}></div>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDrawerOpen(false)}></div>
           
-          <div className="relative w-full max-w-2xl bg-slate-900 border-l border-slate-800 h-full flex flex-col p-6 overflow-hidden animate-slide-right">
+          <div className="relative w-full max-w-2xl bg-white border-l border-slate-200 h-full flex flex-col p-6 overflow-hidden animate-slide-right shadow-2xl">
             {/* Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-slate-800">
-              <h2 className="text-xl font-bold text-white flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2 text-rose-500" />
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+              <h2 className="text-2xl font-black text-slate-900 flex items-center">
+                <ShoppingCart className="h-6 w-6 mr-3 text-brand-600" />
                 Nueva Nota de Pedido
               </h2>
               <button 
                 onClick={() => setDrawerOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
               >
-                Cerrar
+                <Trash2 className="h-5 w-5" />
               </button>
             </div>
 
             {/* Content Form */}
-            <div className="flex-1 overflow-y-auto py-6 space-y-6">
+            <div className="flex-1 overflow-y-auto py-6 space-y-8">
               {/* Select Client */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Cliente (Obligatorio)
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  CLIENTE (OBLIGATORIO)
                 </label>
                 <select
                   required
                   value={selectedClienteId}
                   onChange={(e) => handleClientChange(Number(e.target.value))}
-                  className="w-full px-3 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-300 focus:outline-none focus:border-rose-500"
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 font-bold focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all cursor-pointer"
                 >
                   <option value="">Seleccione un cliente...</option>
                   {clientes.map(c => (
@@ -368,18 +368,20 @@ export const Pedidos: React.FC = () => {
               {selectedClienteId && clientPriceList && (
                 <>
                   {/* Add Product Section */}
-                  <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-xl space-y-4">
-                    <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Agregar Producto al Pedido</h3>
+                  <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-5">
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center">
+                      <Plus className="h-4 w-4 mr-2" /> AGREGAR PRODUCTO
+                    </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-1">
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Producto</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-tight">Producto</label>
                         <select
                           value={addProductId}
                           onChange={(e) => setAddProductId(Number(e.target.value))}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs focus:outline-none focus:border-rose-500"
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all cursor-pointer"
                         >
-                          <option value="">Seleccionar...</option>
+                          <option value="">Seleccionar producto del catálogo...</option>
                           {clientPriceList.detalles.map((det: any) => (
                             <option key={det.producto_id} value={det.producto_id}>
                               {det.producto.codigo} - {det.producto.descripcion} (${det.precio_venta}/kg)
@@ -389,25 +391,25 @@ export const Pedidos: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Unidades</label>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-tight">Unidades</label>
                         <input
                           type="number"
                           min="1"
                           value={addUnits}
                           onChange={(e) => setAddUnits(Math.max(1, Number(e.target.value)))}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs focus:outline-none focus:border-rose-500 text-white"
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Peso Estimado (kg total)</label>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-tight">Peso Est. (kg)</label>
                         <input
                           type="number"
                           min="1"
                           step="0.5"
                           value={addWeight}
                           onChange={(e) => setAddWeight(Math.max(0.1, Number(e.target.value)))}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs focus:outline-none focus:border-rose-500 text-white"
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
                         />
                       </div>
                     </div>
@@ -415,40 +417,47 @@ export const Pedidos: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleAddItem}
-                      className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded-lg transition"
+                      className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-xl transition-all shadow-md shadow-brand-900/10 uppercase tracking-widest flex items-center justify-center active:scale-[0.98]"
                     >
-                      Añadir Ítem
+                      <Plus className="h-4 w-4 mr-2" /> Añadir al Pedido
                     </button>
                   </div>
 
                   {/* Added Items List */}
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ítems del Pedido</h3>
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center">
+                      <ShoppingCart className="h-4 w-4 mr-2" /> ÍTEMS DETALLADOS
+                    </h3>
                     
-                    <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/20">
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                       {items.length === 0 ? (
-                        <p className="text-center text-xs text-slate-500 py-6">Ningún producto añadido aún</p>
+                        <div className="text-center text-sm text-slate-400 py-10 italic">
+                          <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-10" />
+                          Ningún producto añadido aún
+                        </div>
                       ) : (
-                        <div className="divide-y divide-slate-800">
+                        <div className="divide-y divide-slate-100">
                           {items.map((item) => (
-                            <div key={item.producto_id} className="p-3 flex items-center justify-between text-xs">
+                            <div key={item.producto_id} className="p-4 flex items-center justify-between group hover:bg-slate-50 transition-colors">
                               <div>
-                                <span className="font-mono text-slate-400 mr-2">[{item.codigo}]</span>
-                                <span className="font-semibold text-white">{item.descripcion}</span>
-                                <div className="text-[10px] text-slate-450 mt-0.5">
-                                  {item.cantidad_unidades} unidades • Est. {item.peso_estimado_kg} kg • ${item.precio_unitario}/kg
+                                <span className="font-mono text-brand-600 font-bold mr-2 text-[10px]">#{item.codigo}</span>
+                                <span className="font-bold text-slate-900 text-sm">{item.descripcion}</span>
+                                <div className="text-[11px] text-slate-500 mt-1 font-medium">
+                                  <span className="font-bold text-slate-700">{item.cantidad_unidades}</span> unid. • 
+                                  <span className="font-bold text-slate-700"> {item.peso_estimado_kg}kg</span> • 
+                                  <span className="font-bold text-slate-700"> ${item.precio_unitario}</span>/kg
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-3">
-                                <span className="font-bold text-slate-200">
-                                  ${(item.precio_unitario * item.peso_estimado_kg).toFixed(2)}
+                              <div className="flex items-center space-x-4">
+                                <span className="font-black text-slate-900 text-sm">
+                                  ${(item.precio_unitario * item.peso_estimado_kg).toLocaleString('es-AR')}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveItem(item.producto_id)}
-                                  className="text-rose-400 hover:text-rose-300 p-1"
+                                  className="text-red-300 hover:text-red-600 p-2 hover:bg-red-50 rounded-xl transition-all"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-5 w-5" />
                                 </button>
                               </div>
                             </div>
@@ -461,25 +470,25 @@ export const Pedidos: React.FC = () => {
               )}
 
               {/* Observations */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Observaciones
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  OBSERVACIONES / ENTREGA
                 </label>
                 <textarea
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
-                  placeholder="Instrucciones especiales de entrega..."
+                  placeholder="Ej: Entrega antes de las 10hs, preguntar por el encargado..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
                 />
               </div>
             </div>
 
             {/* Footer Summary & Submit */}
-            <div className="border-t border-slate-800 pt-4 bg-slate-900 space-y-4">
-              <div className="flex justify-between items-center text-sm font-semibold">
-                <span className="text-slate-450">Monto Estimado Total:</span>
-                <span className="text-xl font-bold text-emerald-400">
+            <div className="border-t border-slate-100 pt-6 mt-auto space-y-5">
+              <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">MONTO ESTIMADO</span>
+                <span className="text-2xl font-black text-brand-600">
                   ${calculateTotal().toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -488,9 +497,9 @@ export const Pedidos: React.FC = () => {
                 type="button"
                 disabled={items.length === 0}
                 onClick={() => handleCreateOrder(false)}
-                className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-rose-900/30 disabled:opacity-50"
+                className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-2xl transition-all shadow-xl shadow-brand-900/20 disabled:opacity-30 disabled:shadow-none uppercase tracking-widest active:scale-[0.98]"
               >
-                Crear Nota de Pedido
+                REGISTRAR NOTA DE PEDIDO
               </button>
             </div>
           </div>
@@ -499,27 +508,27 @@ export const Pedidos: React.FC = () => {
 
       {/* Credit Limit Warning Modal */}
       {warningModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-850 rounded-2xl p-6 space-y-4 text-center">
-            <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="h-6 w-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 space-y-5 text-center shadow-2xl animate-fade-in">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <AlertTriangle className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-bold text-white">Advertencia de Límite de Crédito</h3>
-            <p className="text-xs text-slate-400">{warningMsg}</p>
-            <p className="text-xs text-slate-300">¿Desea forzar el registro de este pedido con la alerta de crédito?</p>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Advertencia de Límite de Crédito</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">{warningMsg}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pt-2">¿Desea forzar el registro de este pedido?</p>
             
-            <div className="flex space-x-3 pt-2">
+            <div className="flex space-x-4 pt-4">
               <button
                 onClick={() => setWarningModalOpen(false)}
-                className="flex-1 py-2 bg-slate-850 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm rounded-2xl transition-all"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 onClick={() => handleCreateOrder(true)}
-                className="flex-1 py-2 bg-rose-600 hover:bg-rose-505 text-white font-semibold text-xs rounded-xl shadow-md"
+                className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-brand-900/20 transition-all active:scale-[0.98]"
               >
-                Confirmar Registro
+                CONFIRMAR
               </button>
             </div>
           </div>
@@ -528,58 +537,58 @@ export const Pedidos: React.FC = () => {
 
       {/* View Order Modal */}
       {viewOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white">Detalle de Pedido N° #{viewOrderModal.id}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-8 space-y-8 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Pedido <span className="text-brand-600">#{viewOrderModal.id}</span></h3>
               <button 
                 onClick={() => setViewOrderModal(null)}
-                className="text-slate-400 hover:text-white"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
               >
-                Cerrar
+                <Trash2 className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-slate-400">Cliente:</span>
-                <p className="font-bold text-white">{viewOrderModal.cliente?.razon_social}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</span>
+                <p className="font-bold text-slate-900 text-sm truncate">{viewOrderModal.cliente?.razon_social}</p>
               </div>
-              <div>
-                <span className="text-slate-400">Fecha:</span>
-                <p className="font-bold text-white">{new Date(viewOrderModal.fecha).toLocaleString('es-AR')}</p>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</span>
+                <p className="font-bold text-slate-900 text-sm">{new Date(viewOrderModal.fecha).toLocaleString('es-AR')}</p>
               </div>
-              <div>
-                <span className="text-slate-400">Estado:</span>
-                <p className="font-bold text-rose-400">{viewOrderModal.estado}</p>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</span>
+                <p className="font-black text-brand-600 text-xs uppercase">{viewOrderModal.estado}</p>
               </div>
-              <div>
-                <span className="text-slate-400">Total:</span>
-                <p className="font-bold text-emerald-400">${viewOrderModal.total.toLocaleString('es-AR')}</p>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total</span>
+                <p className="font-black text-emerald-600 text-lg leading-none">${viewOrderModal.total.toLocaleString('es-AR')}</p>
               </div>
             </div>
 
-            <div className="border border-slate-800 rounded-xl overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-950/50 text-slate-400 font-bold">
-                  <tr>
-                    <th className="p-3">Código</th>
-                    <th className="p-3">Descripción</th>
-                    <th className="p-3 text-right">Cant. Unidades</th>
-                    <th className="p-3 text-right">Peso Est.</th>
-                    <th className="p-3 text-right">Peso Real</th>
-                    <th className="p-3 text-right">Precio/Kg</th>
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="bg-white border-b border-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                    <th className="p-4">Código</th>
+                    <th className="p-4">Descripción</th>
+                    <th className="p-4 text-right">Cant.</th>
+                    <th className="p-4 text-right">Peso Est.</th>
+                    <th className="p-4 text-right">Peso Real</th>
+                    <th className="p-4 text-right">Precio</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-100">
                   {viewOrderModal.items?.map((item: any) => (
-                    <tr key={item.id} className="text-slate-300">
-                      <td className="p-3 font-mono text-slate-400">{item.producto.codigo}</td>
-                      <td className="p-3">{item.producto.descripcion}</td>
-                      <td className="p-3 text-right">{item.cantidad_unidades}</td>
-                      <td className="p-3 text-right">{item.peso_estimado_kg} kg</td>
-                      <td className="p-3 text-right text-rose-400 font-bold">{item.peso_real_kg || '-'} kg</td>
-                      <td className="p-3 text-right">${item.precio_unitario}</td>
+                    <tr key={item.id} className="text-slate-700 hover:bg-white transition-colors">
+                      <td className="p-4 font-mono text-brand-600 font-bold text-xs">{item.producto.codigo}</td>
+                      <td className="p-4 font-bold text-slate-900">{item.producto.descripcion}</td>
+                      <td className="p-4 text-right font-medium">{item.cantidad_unidades}u</td>
+                      <td className="p-4 text-right font-medium">{item.peso_estimado_kg}kg</td>
+                      <td className="p-4 text-right text-brand-700 font-black">{item.peso_real_kg || '-'} kg</td>
+                      <td className="p-4 text-right font-bold">${item.precio_unitario}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -587,9 +596,9 @@ export const Pedidos: React.FC = () => {
             </div>
 
             {viewOrderModal.observaciones && (
-              <div className="p-3 bg-slate-950/30 rounded-xl border border-slate-850 text-xs">
-                <span className="font-bold text-slate-400">Observaciones:</span>
-                <p className="text-slate-300 mt-1">{viewOrderModal.observaciones}</p>
+              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 text-sm">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Instrucciones de Entrega</span>
+                <p className="text-slate-700 font-medium italic leading-relaxed">"{viewOrderModal.observaciones}"</p>
               </div>
             )}
           </div>

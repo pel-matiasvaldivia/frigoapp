@@ -77,86 +77,86 @@ export const ListasPrecios: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-extrabold text-white">Listas de Precios</h1>
-        <p className="text-slate-400 text-sm mt-1">Edición de precios por unidad/kg para cada categoría de cliente. Expansión inline con edición directa.</p>
+        <h1 className="text-3xl font-extrabold text-slate-900">Listas de Precios</h1>
+        <p className="text-slate-500 text-sm mt-1 font-medium">Edición de precios por unidad/kg para cada categoría de cliente. Expansión inline con edición directa.</p>
       </div>
 
       <div className="space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500"></div>
+          <div className="flex items-center justify-center min-h-[300px]">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600"></div>
           </div>
         ) : (
           listas.map((lista) => (
-            <div key={lista.id} className="border border-slate-800 rounded-2xl bg-slate-900/40 overflow-hidden">
+            <div key={lista.id} className="border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               {/* List Header */}
               <div
-                className="flex items-center justify-between p-5 cursor-pointer hover:bg-slate-900/60 transition"
+                className="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors"
                 onClick={() => handleToggleExpand(lista.id)}
               >
-                <div className="flex items-center space-x-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-lg ${
-                    lista.id === 1 ? 'bg-rose-600/20 text-rose-400' :
-                    lista.id === 2 ? 'bg-sky-600/20 text-sky-400' :
-                    lista.id === 3 ? 'bg-amber-600/20 text-amber-400' :
-                    lista.id === 4 ? 'bg-emerald-600/20 text-emerald-400' :
-                    lista.id === 5 ? 'bg-purple-600/20 text-purple-400' :
-                    'bg-slate-700/40 text-slate-400'
+                <div className="flex items-center space-x-5">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner ${
+                    lista.id === 1 ? 'bg-red-50 text-red-600' :
+                    lista.id === 2 ? 'bg-sky-50 text-sky-600' :
+                    lista.id === 3 ? 'bg-amber-50 text-amber-600' :
+                    lista.id === 4 ? 'bg-emerald-50 text-emerald-600' :
+                    lista.id === 5 ? 'bg-purple-50 text-purple-600' :
+                    'bg-slate-100 text-slate-500'
                   }`}>
                     {lista.id}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base">{lista.nombre}</h3>
-                    <p className="text-xs text-slate-400">{lista.descripcion || 'Sin descripción'}</p>
+                    <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">{lista.nombre}</h3>
+                    <p className="text-xs text-slate-500 font-medium">{lista.descripcion || 'Sin descripción'}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleExport(lista.id); }}
-                    className="hidden sm:flex items-center px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition"
+                    className="hidden sm:flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all"
                   >
-                    <Download className="h-3.5 w-3.5 mr-1.5" /> Exportar .xlsx
+                    <Download className="h-4 w-4 mr-2" /> Exportar .xlsx
                   </button>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${lista.activa ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-700/20 text-slate-500 border-slate-700/20'}`}>
+                  <span className={`px-2.5 py-1 rounded text-[10px] font-black border uppercase tracking-widest ${lista.activa ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
                     {lista.activa ? 'Activa' : 'Inactiva'}
                   </span>
-                  {expandedLista === lista.id ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                  {expandedLista === lista.id ? <ChevronUp className="h-6 w-6 text-slate-400" /> : <ChevronDown className="h-6 w-6 text-slate-400" />}
                 </div>
               </div>
 
               {/* Expanded Price Table */}
               {expandedLista === lista.id && (
-                <div className="border-t border-slate-800">
+                <div className="border-t border-slate-100">
                   {/* Search within list */}
-                  <div className="p-4 border-b border-slate-800/60 bg-slate-950/20">
+                  <div className="p-4 border-b border-slate-50 bg-slate-50/30">
                     <div className="relative max-w-sm">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-                      <input type="text" placeholder="Filtrar productos..."
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input type="text" placeholder="Filtrar por código o nombre..."
                         value={search} onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-8 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500" />
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-brand-500 transition-all shadow-sm" />
                     </div>
                   </div>
 
                   {loadingDetalles ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+                    <div className="flex items-center justify-center py-16">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs text-left">
                         <thead>
-                          <tr className="border-b border-slate-800 text-slate-500 font-bold uppercase bg-slate-950/20">
-                            <th className="py-3 px-4">Código</th>
-                            <th className="py-3 px-4">Descripción</th>
-                            <th className="py-3 px-4">Depto.</th>
-                            <th className="py-3 px-4 text-right">Precio Costo</th>
-                            <th className="py-3 px-4 text-right">Precio Venta</th>
-                            <th className="py-3 px-4 text-right">Precio Mayoreo</th>
-                            <th className="py-3 px-4 text-right">Stock</th>
-                            <th className="py-3 px-4 text-center">Guardar</th>
+                          <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest bg-slate-50/50">
+                            <th className="py-4 px-4">Código</th>
+                            <th className="py-4 px-4 uppercase">Descripción</th>
+                            <th className="py-4 px-4">Depto.</th>
+                            <th className="py-4 px-4 text-right">Costo</th>
+                            <th className="py-4 px-4 text-right">Precio Venta</th>
+                            <th className="py-4 px-4 text-right">Mayoreo</th>
+                            <th className="py-4 px-4 text-right">Stock</th>
+                            <th className="py-4 px-4 text-center">Acción</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/50">
+                        <tbody className="divide-y divide-slate-100">
                           {filteredDetalles.length === 0 ? (
                             <tr><td colSpan={8} className="py-6 text-center text-slate-500">Sin resultados</td></tr>
                           ) : (
@@ -165,37 +165,39 @@ export const ListasPrecios: React.FC = () => {
                               const isModified = Object.keys(edited).length > 0;
                               const isSaving = savingRows.has(det.id);
                               return (
-                                <tr key={det.id} className={`transition ${isModified ? 'bg-rose-950/10' : 'hover:bg-slate-900/20'}`}>
-                                  <td className="py-2.5 px-4 font-mono text-rose-400 font-bold">{det.producto.codigo}</td>
-                                  <td className="py-2.5 px-4 font-semibold text-white">{det.producto.descripcion}</td>
-                                  <td className="py-2.5 px-4 text-slate-400">{det.producto.departamento}</td>
+                                <tr key={det.id} className={`transition-colors ${isModified ? 'bg-amber-50' : 'hover:bg-slate-50'}`}>
+                                  <td className="py-3 px-4 font-mono text-brand-700 font-black">{det.producto.codigo}</td>
+                                  <td className="py-3 px-4 font-bold text-slate-900">{det.producto.descripcion}</td>
+                                  <td className="py-3 px-4">
+                                    <span className="inline-flex px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold text-[9px] uppercase border border-slate-200">{det.producto.departamento}</span>
+                                  </td>
                                   {/* Editable price cells */}
                                   {(['precio_costo', 'precio_venta', 'precio_mayoreo'] as const).map(field => (
-                                    <td key={field} className="py-2.5 px-4 text-right">
+                                    <td key={field} className="py-3 px-4 text-right">
                                       <input
                                         type="number"
                                         min="0"
                                         step="0.01"
                                         value={edited[field] !== undefined ? edited[field] : det[field]}
                                         onChange={(e) => handleEditField(det.id, field, parseFloat(e.target.value) || 0)}
-                                        className={`w-24 px-2 py-1 text-right bg-slate-950 border rounded-lg text-xs font-mono focus:outline-none ${
-                                          edited[field] !== undefined ? 'border-rose-500 text-rose-300' : 'border-slate-800 text-slate-300'
+                                        className={`w-24 px-3 py-1.5 text-right bg-white border rounded-xl text-xs font-black transition-all focus:outline-none focus:ring-1 focus:ring-brand-500 ${
+                                          edited[field] !== undefined ? 'border-brand-600 text-brand-700 shadow-sm' : 'border-slate-200 text-slate-700'
                                         }`}
                                       />
                                     </td>
                                   ))}
-                                  <td className="py-2.5 px-4 text-right font-mono text-slate-300">
+                                  <td className="py-3 px-4 text-right font-black text-slate-600">
                                     {det.stock?.toFixed(1)} kg
                                   </td>
-                                  <td className="py-2.5 px-4 text-center">
+                                  <td className="py-3 px-4 text-center">
                                     {isModified && (
                                       <button
                                         onClick={() => handleSaveRow(lista.id, det.id)}
                                         disabled={isSaving}
-                                        className="p-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition disabled:opacity-50"
+                                        className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-900/10 transition-all disabled:opacity-50 active:scale-95"
                                         title="Guardar cambios"
                                       >
-                                        {isSaving ? <div className="animate-spin h-3 w-3 border-b border-white rounded-full" /> : <Save className="h-3.5 w-3.5" />}
+                                        {isSaving ? <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full" /> : <Save className="h-4 w-4" />}
                                       </button>
                                     )}
                                   </td>

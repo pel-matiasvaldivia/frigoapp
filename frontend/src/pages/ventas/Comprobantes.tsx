@@ -66,51 +66,53 @@ export const Comprobantes: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-10 animate-fade-in">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-extrabold text-white">Facturación y Remisiones</h1>
-          <p className="text-slate-400 text-sm mt-1">Emisión de comprobantes fiscales (Factura A/B) o internos (Remito de reparto) sobre kg reales.</p>
+          <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Facturación</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Emisión de facturas fiscales y remitos internos sobre pesajes confirmados.</p>
         </div>
         <button
           onClick={fetchData}
-          className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-850 rounded-xl text-slate-400 hover:text-white transition"
+          className="p-3 bg-white border border-slate-200 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-brand-600 transition-all shadow-sm"
           title="Sincronizar"
         >
-          <RefreshCw className="h-5 w-5" />
+          <RefreshCw className="h-6 w-6" />
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Prepared Orders Waiting for Billing */}
-        <div className="lg:col-span-1 border border-slate-800 rounded-2xl bg-slate-900/40 p-5 space-y-4 h-fit">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
-            <FileCheck2 className="h-5 w-5 text-rose-500" />
-            <h2 className="text-lg font-bold text-white">Pendientes de Facturación</h2>
+        <div className="lg:col-span-1 border border-slate-200 rounded-3xl bg-white p-6 space-y-6 h-fit shadow-sm">
+          <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+            <FileCheck2 className="h-6 w-6 text-brand-600" />
+            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Pendientes</h2>
           </div>
 
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
             {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-rose-500 mx-auto"></div>
+              <div className="py-10 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+              </div>
             ) : pedidosPendientes.length === 0 ? (
-              <p className="text-center text-xs text-slate-500 py-6">No hay pedidos preparados esperando comprobante</p>
+              <p className="text-center text-xs text-slate-400 font-medium py-10 italic">No hay pedidos preparados</p>
             ) : (
               pedidosPendientes.map((ped) => (
-                <div key={ped.id} className="p-4 border border-slate-850 bg-slate-950/40 rounded-xl space-y-3">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-white">Pedido #{ped.id}</span>
-                    <span className="font-bold text-emerald-400">${ped.total.toLocaleString('es-AR')}</span>
+                <div key={ped.id} className="p-5 border border-slate-100 bg-slate-50 rounded-[1.5rem] space-y-4 hover:border-brand-200 transition-all">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Pedido #{ped.id}</span>
+                    <span className="font-black text-brand-700 text-sm">${ped.total.toLocaleString('es-AR')}</span>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-350">{ped.cliente?.razon_social}</p>
-                    <p className="text-[10px] text-slate-450 mt-0.5">CUIT: {ped.cliente?.cuit || 'Sin registrar'}</p>
+                    <p className="text-sm font-black text-slate-900 uppercase leading-none">{ped.cliente?.razon_social}</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1.5 uppercase tracking-widest">CUIT: {ped.cliente?.cuit || 'S/D'}</p>
                   </div>
                   <button
                     onClick={() => handleOpenGenerateModal(ped)}
-                    className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded-lg transition-all"
+                    className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-[10px] rounded-xl transition-all uppercase tracking-widest shadow-lg shadow-brand-900/10"
                   >
-                    Emitir Factura / Remito
+                    Emitir Comprobante
                   </button>
                 </div>
               ))
@@ -119,73 +121,74 @@ export const Comprobantes: React.FC = () => {
         </div>
 
         {/* Existing Comprobantes Ledger */}
-        <div className="lg:col-span-2 border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
-            <FileText className="h-5 w-5 text-rose-500" />
-            <h2 className="text-lg font-bold text-white">Historial de Comprobantes</h2>
+        <div className="lg:col-span-2 border border-slate-200 rounded-3xl bg-white p-8 space-y-6 shadow-sm">
+          <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+            <FileText className="h-6 w-6 text-brand-600" />
+            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Historial</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 text-xs font-bold uppercase">
-                  <th className="py-3">Fecha</th>
-                  <th className="py-3">Número</th>
-                  <th className="py-3">Cliente</th>
-                  <th className="py-3 text-right">Monto</th>
-                  <th className="py-3 text-center">Estado</th>
-                  <th className="py-3 text-center">Acciones</th>
+                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest bg-slate-50/50">
+                  <th className="py-4 px-4">Fecha</th>
+                  <th className="py-4 px-4">Número</th>
+                  <th className="py-4 px-4">Cliente</th>
+                  <th className="py-4 px-4 text-right">Monto</th>
+                  <th className="py-4 px-4 text-center">Estado</th>
+                  <th className="py-4 px-4 text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-rose-500 mx-auto"></div>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
                     </td>
                   </tr>
-                ) : comprobantes.length === 0 ? (
+                ) :
+ comprobantes.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-6 text-center text-slate-500">Ningún comprobante emitido aún</td>
                   </tr>
                 ) : (
                   comprobantes.map((comp) => (
-                    <tr key={comp.id} className="text-slate-350 hover:bg-slate-900/30">
-                      <td className="py-3.5 text-xs">
+                    <tr key={comp.id} className="text-slate-600 hover:bg-slate-50 transition-colors">
+                      <td className="py-4 px-4 text-[11px] font-bold">
                         {new Date(comp.fecha).toLocaleDateString('es-AR')}
                       </td>
-                      <td className="py-3.5 font-mono text-xs font-bold text-white">
+                      <td className="py-4 px-4 font-black text-xs text-brand-700 uppercase">
                         {comp.numero}
                       </td>
-                      <td className="py-3.5 text-xs">
-                        <span className="font-semibold block text-slate-200">{comp.pedido?.cliente?.razon_social}</span>
-                        <span className="text-[10px] text-slate-450">Ruta: {comp.pedido?.cliente?.ruta?.nombre || 'Sin asignación'}</span>
+                      <td className="py-4 px-4">
+                        <span className="font-black block text-slate-900 text-xs uppercase leading-tight">{comp.pedido?.cliente?.razon_social}</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">RUTA: {comp.pedido?.cliente?.ruta?.nombre || 'S/A'}</span>
                       </td>
-                      <td className="py-3.5 text-right font-bold text-emerald-450">
+                      <td className="py-4 px-4 text-right font-black text-slate-900">
                         ${comp.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3.5 text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
-                          comp.estado === 'Emitido' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                          comp.estado === 'Entregado' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      <td className="py-4 px-4 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-widest ${
+                          comp.estado === 'Emitido' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                          comp.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                           {comp.estado}
                         </span>
                       </td>
-                      <td className="py-3.5 text-center">
+                      <td className="py-4 px-4 text-center">
                         {comp.pdf_path ? (
                           <a
                             href={comp.pdf_path}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-2 py-1.5 bg-slate-800 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg text-xs font-semibold transition"
+                            className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-brand-600 hover:bg-brand-600 hover:text-white rounded-xl text-[10px] font-black transition-all uppercase tracking-widest border border-slate-200"
                           >
-                            <Download className="h-3.5 w-3.5 mr-1" />
+                            <Download className="h-3 w-3 mr-1.5" />
                             PDF
                           </a>
                         ) : (
-                          <span className="text-slate-500 text-xs italic">Generando...</span>
+                          <span className="text-slate-400 text-[10px] font-black uppercase italic tracking-widest">Generando...</span>
                         )}
                       </td>
                     </tr>
@@ -199,38 +202,39 @@ export const Comprobantes: React.FC = () => {
 
       {/* Generate Document Modal Dialog */}
       {generateModalOpen && selectedPedido && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="pb-3 border-b border-slate-800 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Emitir Comprobante Comercial</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-[2.5rem] p-8 space-y-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Emitir Comprobante</h3>
               <button 
                 onClick={() => { setSelectedPedido(null); setGenerateModalOpen(false); }}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-300 hover:text-brand-600 transition-colors"
               >
-                Cerrar
+                <RefreshCw className="h-5 w-5 hover:rotate-180 transition-transform duration-500" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="text-xs bg-slate-950 p-4 border border-slate-850 rounded-xl space-y-2">
-                <p><span className="text-slate-450">Cliente:</span> <strong className="text-white">{selectedPedido.cliente?.razon_social}</strong></p>
-                <p><span className="text-slate-450">CUIT:</span> <strong className="text-white">{selectedPedido.cliente?.cuit || 'No registrado'}</strong></p>
-                <p><span className="text-slate-450">Kilogramos preparados:</span> <strong className="text-rose-400">{selectedPedido.items.reduce((a: any, b: any) => a + b.peso_real_kg, 0).toFixed(2)} kg</strong></p>
-                <p><span className="text-slate-450">Monto total final:</span> <strong className="text-emerald-400">${selectedPedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></p>
+            <div className="space-y-6">
+              <div className="text-[11px] bg-slate-50 p-6 border border-slate-100 rounded-[1.5rem] space-y-3 shadow-inner font-bold uppercase tracking-tight">
+                <p className="flex justify-between items-center"><span className="text-slate-400">Cliente:</span> <span className="text-slate-900 font-black">{selectedPedido.cliente?.razon_social}</span></p>
+                <p className="flex justify-between items-center"><span className="text-slate-400">CUIT:</span> <span className="text-slate-900">{selectedPedido.cliente?.cuit || 'N/A'}</span></p>
+                <div className="h-px bg-slate-200 my-2" />
+                <p className="flex justify-between items-center"><span className="text-slate-400">Peso Total:</span> <span className="text-brand-600 font-extrabold">{selectedPedido.items.reduce((a: any, b: any) => a + b.peso_real_kg, 0).toFixed(2)} KG</span></p>
+                <p className="flex justify-between items-center"><span className="text-slate-400">Monto Final:</span> <span className="text-brand-700 font-black text-sm">${selectedPedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span></p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Tipo de Comprobante
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                  Seleccionar Documento
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setComprobanteTipo('FACTURA')}
-                    className={`py-3 border rounded-xl font-bold text-xs transition ${
+                    className={`py-4 border rounded-2xl font-black text-[10px] transition-all uppercase tracking-widest ${
                       comprobanteTipo === 'FACTURA' 
-                        ? 'border-rose-500 bg-rose-950/10 text-rose-400' 
-                        : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-slate-350'
+                        ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm' 
+                        : 'border-slate-100 bg-slate-50 text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     Factura AFIP
@@ -238,21 +242,21 @@ export const Comprobantes: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setComprobanteTipo('REMITO')}
-                    className={`py-3 border rounded-xl font-bold text-xs transition ${
+                    className={`py-4 border rounded-2xl font-black text-[10px] transition-all uppercase tracking-widest ${
                       comprobanteTipo === 'REMITO' 
-                        ? 'border-rose-500 bg-rose-950/10 text-rose-400' 
-                        : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-slate-350'
+                        ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm' 
+                        : 'border-slate-100 bg-slate-50 text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    Remito de Reparto
+                    Remito Interno
                   </button>
                 </div>
               </div>
 
-              <div className="p-3 bg-indigo-950/20 border border-indigo-900/30 text-indigo-400 rounded-xl text-xs flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <div className="p-4 bg-brand-50 border border-brand-100 text-brand-700 rounded-2xl text-[10px] font-black uppercase tracking-widest leading-relaxed flex items-start space-x-3 shadow-inner">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 text-brand-600" />
                 <span>
-                  Al emitir el comprobante, el pedido quedará listo para despacho y se asignará automáticamente a la hoja de ruta del repartidor.
+                  Al emitir, el pedido pasará a HOJA DE RUTA para el despacho inmediato.
                 </span>
               </div>
             </div>
@@ -261,16 +265,16 @@ export const Comprobantes: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setSelectedPedido(null); setGenerateModalOpen(false); }}
-                className="flex-1 py-2 bg-slate-850 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl"
+                className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-xs rounded-2xl transition-all uppercase tracking-widest"
               >
-                Cancelar
+                Cerrar
               </button>
               <button
                 type="button"
                 onClick={handleGenerateComprobante}
-                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md"
+                className="flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs rounded-2xl shadow-xl shadow-brand-900/20 transition-all uppercase tracking-widest"
               >
-                Confirmar Emisión
+                Emitir
               </button>
             </div>
           </div>

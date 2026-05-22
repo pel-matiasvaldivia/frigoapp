@@ -196,10 +196,10 @@ const AppRoutes: React.FC = () => (
 
     {/* 404 Fallback */}
     <Route path="*" element={
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-center space-y-4">
-        <div className="text-8xl font-extrabold text-slate-800">404</div>
-        <h2 className="text-2xl font-bold text-white">Página no encontrada</h2>
-        <a href="/" className="px-4 py-2 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-500 transition">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-center space-y-4">
+        <div className="text-8xl font-extrabold text-slate-200">404</div>
+        <h2 className="text-2xl font-bold text-slate-900">Página no encontrada</h2>
+        <a href="/" className="px-6 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition shadow-lg shadow-brand-900/20">
           Volver al inicio
         </a>
       </div>

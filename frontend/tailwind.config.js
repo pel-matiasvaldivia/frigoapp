@@ -13,13 +13,39 @@ export default {
           200: '#fecdd3',
           300: '#fda4af',
           400: '#fb7185',
-          500: '#f43f5e', // Vibrant Rose
-          600: '#e11d48', // Pig Crimson Primary
-          700: '#be123c',
-          800: '#9f1239',
-          900: '#881337',
-          950: '#4c0519',
+          500: '#ef4444', // Red 500
+          600: '#dc2626', // Red 600 - Traditional Primary
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+          950: '#450a0a',
         },
+        'accent-brown': {
+          50: '#fdf8f6',
+          100: '#f2e8e5',
+          200: '#eaddd7',
+          300: '#e0c1b3',
+          400: '#d3a28e',
+          500: '#c07e61',
+          600: '#a6654a',
+          700: '#8c5039',
+          800: '#734230',
+          900: '#5e3729',
+          950: '#321c15', // Dark Brown for Sidebar
+        },
+        'accent-yellow': {
+          50: '#fefce8',
+          100: '#fef9c3',
+          200: '#fef08a',
+          300: '#fde047',
+          400: '#facc15', // Vibrant Yellow
+          500: '#eab308',
+          600: '#ca8a04',
+          700: '#a16207',
+          800: '#854d0e',
+          900: '#713f12',
+          950: '#422006',
+        }
       },
       fontFamily: {
         sans: ['Outfit', 'Inter', 'sans-serif'],
