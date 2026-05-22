@@ -27,7 +27,7 @@ RUN mkdir -p session && chown -R node:node /app
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Switch to non-root user
-USER node
+# Reverted to root to avoid permission denied on volume mounts (EACCES)
+# USER node
 
 CMD ["node", "index.js"]

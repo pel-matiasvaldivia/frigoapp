@@ -19,8 +19,20 @@ async function start() {
       hostNotificationLang: 'es-AR',
       logConsole: false,
       popup: true,
-      qrTimeout: 0, // 0 means it will wait forever
+      qrTimeout: 0,
       sessionDataPath: './session',
+      // Fixes for Docker/Alpine
+      useChrome: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+      chromiumArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--aggressive-cache-discard',
+        '--disable-cache',
+        '--disable-application-cache',
+        '--disable-offline-load-stale-cache',
+        '--disk-cache-size=0'
+      ],
     });
 
     console.log('WhatsApp Bot is Ready!');
