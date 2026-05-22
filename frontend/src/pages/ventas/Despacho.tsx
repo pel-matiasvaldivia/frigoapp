@@ -131,12 +131,16 @@ export const Despacho: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-black text-slate-900 flex items-center uppercase tracking-tighter">
-          <Truck className="h-10 w-10 mr-4 text-brand-600" />
-          Hoja de Ruta
-        </h1>
-        <p className="text-slate-500 text-sm mt-1 font-medium">Panel del repartidor para gestionar entregas, registrar firmas y actualizar estados.</p>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-brand-50 rounded-2xl text-brand-600">
+            <Truck className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Hoja de Ruta</h1>
+            <p className="text-slate-500 text-sm mt-1 font-medium">Gestión de entregas y seguimiento de logística en tiempo real.</p>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -150,73 +154,79 @@ export const Despacho: React.FC = () => {
           <p className="text-sm text-slate-400 mt-2 font-medium">No hay comprobantes listos para despechar hoy.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {hojaRuta.map((item) => (
-            <div key={item.id} className="border border-slate-200 rounded-3xl bg-white p-6 space-y-5 shadow-sm hover:shadow-md transition-all">
+            <div key={item.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
               {/* Header */}
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight leading-tight">{item.cliente_razon_social}</h3>
-                  <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                    <MapPin className="h-3 w-3 text-brand-600 mr-1.5" />
-                    <span className="truncate max-w-[200px]">{item.direccion || 'Sin dirección'}</span>
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-900 text-lg uppercase leading-tight tracking-tight mb-2">
+                    {item.cliente_razon_social}
+                  </h3>
+                  <div className="flex items-start text-xs text-slate-500 font-medium">
+                    <MapPin className="h-4 w-4 text-brand-600 mr-2 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{item.direccion || 'Sin dirección asignada'}</span>
                   </div>
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-widest ${
-                  item.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  item.estado === 'En reparto' || item.estado === 'Listo para despacho' ? 'bg-brand-50 text-brand-700 border-brand-200' :
-                  'bg-amber-50 text-amber-700 border-amber-200'
+                <span className={`shrink-0 inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${
+                  item.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                  item.estado === 'En reparto' ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                  'bg-amber-50 text-amber-600 border-amber-100'
                 }`}>
                   {item.estado}
                 </span>
               </div>
 
               {/* Details */}
-              <div className="flex justify-between text-[11px] bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div>
-                  <p className="text-slate-400 font-black uppercase tracking-widest text-[9px] mb-1">Ruta</p>
-                  <p className="font-black text-slate-800 uppercase leading-none">{item.ruta_nombre}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Ruta</p>
+                  <p className="font-bold text-slate-700 uppercase leading-none">{item.ruta_nombre}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-slate-400 font-black uppercase tracking-widest text-[9px] mb-1">Total</p>
-                  <p className="font-black text-brand-700 text-base leading-none">${item.total?.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Monto Cobro</p>
+                  <p className="font-bold text-slate-900 text-xl tracking-tighter leading-none">
+                    ${item.total?.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
               </div>
 
               {/* Comprobante info */}
               {item.comprobante && (
-                <div className="text-[10px] border border-slate-100 bg-white px-4 py-3 rounded-2xl flex justify-between items-center shadow-inner">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-slate-400" />
-                    <span className="font-black text-slate-600 uppercase tracking-tight">{item.comprobante.tipo} #{item.comprobante.numero}</span>
+                <div className="flex items-center justify-between px-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-4 w-4 text-slate-300" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{item.comprobante.tipo}</p>
+                      <p className="text-xs font-bold text-slate-800 mt-0.5">#{item.comprobante.numero}</p>
+                    </div>
                   </div>
                   {item.comprobante.pdf_path && (
                     <a href={item.comprobante.pdf_path} target="_blank" rel="noopener noreferrer"
-                      className="text-brand-600 hover:text-brand-700 font-black uppercase tracking-widest text-[9px] bg-brand-50 px-2 py-1 rounded border border-brand-100">
-                      Ver PDF
+                      className="p-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 transition-colors">
+                      <FileText className="h-4 w-4" />
                     </a>
                   )}
                 </div>
               )}
 
               {/* Actions */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <a
                   href={`https://wa.me/${item.telefono_whatsapp?.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center py-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[10px] font-black rounded-2xl border border-emerald-100 transition-all uppercase tracking-widest shadow-sm"
+                  className="flex items-center justify-center py-4 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-2xl border border-emerald-100 transition-all uppercase tracking-widest shadow-sm"
                 >
                   <Phone className="h-4 w-4 mr-2" />
-                  WA
+                  WhatsApp
                 </a>
                 {item.estado !== 'Entregado' && item.comprobante && (
                   <button
                     onClick={() => handleOpenDelivery(item)}
-                    className="flex items-center justify-center py-3 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-black rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-brand-900/10"
+                    className="flex items-center justify-center py-4 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-brand-900/10"
                   >
-                    <PenLine className="h-4 w-4 mr-2" />
-                    ENTREGAR
+                    Confirmar
                   </button>
                 )}
               </div>

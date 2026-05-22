@@ -24,23 +24,24 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Custom premium scrollbar */
+/* Custom professional light scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 10px;
+  border: 2px solid #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #fda4af;
+  background: #94a3b8;
 }
 
 /* Tap highlight removal for mobile PWAs */

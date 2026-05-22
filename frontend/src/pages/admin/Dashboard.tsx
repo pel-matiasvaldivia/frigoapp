@@ -81,11 +81,11 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-10 animate-fade-in">
       {/* Welcome Title */}
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900">Panel de Control</h1>
-        <p className="text-slate-500 text-sm mt-1 font-medium">Monitoreo en tiempo real de operaciones, rutas de reparto y ventas de fábrica.</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
+        <p className="text-slate-500 text-sm mt-1 font-medium">Información en tiempo real de operaciones, rutas y ventas.</p>
       </div>
 
       {/* KPI Cards Grid */}
@@ -93,13 +93,15 @@ export const Dashboard: React.FC = () => {
         {kpiCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.title} className={`border rounded-2xl p-6 bg-white shadow-sm ${card.color} flex items-center justify-between`}>
-              <div>
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider opacity-70">{card.title}</p>
-                <h3 className="text-2xl font-bold mt-2">{card.value}</h3>
-              </div>
-              <div className={`p-4 rounded-xl ${card.color.split(' ')[0]}`}>
-                <Icon className="h-6 w-6" />
+            <div key={card.title} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">{card.title}</p>
+                  <h3 className="text-2xl font-bold mt-2 text-slate-900">{card.value}</h3>
+                </div>
+                <div className={`p-3 rounded-xl ${card.color}`}>
+                  <Icon className="h-6 w-6" />
+                </div>
               </div>
             </div>
           );
@@ -109,16 +111,18 @@ export const Dashboard: React.FC = () => {
       {/* Reports Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Clients */}
-        <div className="lg:col-span-2 border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+        <div className="lg:col-span-2 border border-slate-200 rounded-2xl bg-white p-8 space-y-6 shadow-sm">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-brand-600" />
-              <h3 className="text-lg font-bold text-slate-900">Principales Clientes</h3>
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-brand-50 rounded-lg text-brand-600">
+                <Users className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Ventas por Cliente</h3>
             </div>
             <select 
               value={period} 
               onChange={(e) => setPeriod(e.target.value)}
-              className="bg-slate-50 text-xs text-slate-600 font-bold px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              className="bg-slate-50 text-xs text-slate-700 font-semibold px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
             >
               <option value="semana">Esta Semana</option>
               <option value="mes">Este Mes</option>
@@ -129,10 +133,10 @@ export const Dashboard: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
-                  <th className="py-3">Razón Social</th>
-                  <th className="py-3 text-right">Pedidos</th>
-                  <th className="py-3 text-right">Total Facturado</th>
+                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                  <th className="py-4">Razón Social</th>
+                  <th className="py-4 text-right">Pedidos</th>
+                  <th className="py-4 text-right">Total Facturado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -142,10 +146,10 @@ export const Dashboard: React.FC = () => {
                   </tr>
                 ) : (
                   reports?.ventas_por_cliente.map((row) => (
-                    <tr key={row.cliente} className="text-slate-600 hover:bg-slate-50 transition-colors">
-                      <td className="py-3 font-semibold text-slate-900">{row.cliente}</td>
-                      <td className="py-3 text-right">{row.cantidad}</td>
-                      <td className="py-3 text-right font-bold text-emerald-600">${row.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                    <tr key={row.cliente} className="text-slate-600 hover:bg-slate-50/50 transition-colors">
+                      <td className="py-4 font-semibold text-slate-900">{row.cliente}</td>
+                      <td className="py-4 text-right font-medium">{row.cantidad}</td>
+                      <td className="py-4 text-right font-bold text-slate-900">${row.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   ))
                 )}
@@ -155,9 +159,11 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Sales by Route */}
-        <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-brand-600" />
+        <div className="border border-slate-200 rounded-2xl bg-white p-8 space-y-6 shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-brand-50 rounded-lg text-brand-600">
+              <BarChart3 className="h-5 w-5" />
+            </div>
             <h3 className="text-lg font-bold text-slate-900">Ventas por Ruta</h3>
           </div>
 
@@ -166,10 +172,10 @@ export const Dashboard: React.FC = () => {
               <p className="text-center text-slate-400 py-6 text-sm italic">Sin datos por ruta</p>
             ) : (
               reports?.ventas_por_ruta.map((row) => (
-                <div key={row.ruta} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
+                <div key={row.ruta} className="space-y-2">
+                  <div className="flex justify-between text-xs font-semibold">
                     <span className="text-slate-600">{row.ruta}</span>
-                    <span className="text-emerald-700">${row.total.toLocaleString('es-AR')}</span>
+                    <span className="text-slate-900 font-bold">${row.total.toLocaleString('es-AR')}</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                     <div 
@@ -187,10 +193,12 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Driver list */}
-      <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="h-5 w-5 text-brand-600" />
-          <h3 className="text-lg font-bold text-slate-900">Rendimiento de Repartidores</h3>
+      <div className="border border-slate-200 rounded-2xl bg-white p-8 space-y-6 shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-brand-50 rounded-lg text-brand-600">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">Repartidores</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -198,12 +206,12 @@ export const Dashboard: React.FC = () => {
             <p className="col-span-3 text-center text-slate-400 text-sm">Ningún chofer registrado</p>
           ) : (
             reports?.ventas_por_repartidor.map((row) => (
-              <div key={row.repartidor} className="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between hover:border-brand-200 transition-colors">
+              <div key={row.repartidor} className="p-5 bg-slate-50/50 border border-slate-100 rounded-2xl flex items-center justify-between hover:border-brand-200 transition-all">
                 <div>
                   <h4 className="font-bold text-slate-900">{row.repartidor}</h4>
                   <p className="text-xs text-slate-500 mt-1 font-medium">{row.entregas} entregas completadas</p>
                 </div>
-                <span className="text-emerald-700 font-bold text-sm">${row.total.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</span>
+                <span className="text-slate-900 font-bold text-base leading-none">${row.total.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</span>
               </div>
             ))
           )}

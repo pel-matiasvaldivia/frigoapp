@@ -123,16 +123,16 @@ export const Preparacion: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
       {/* Sidebar List of Orders */}
-      <div className="lg:col-span-1 border border-slate-200 rounded-3xl bg-white p-6 space-y-6 h-fit shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <ClipboardList className="h-6 w-6 text-brand-600" />
-            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Preparación</h2>
+      <div className="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 space-y-6 h-fit shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-brand-50 rounded-xl text-brand-600">
+            <ClipboardList className="h-5 w-5" />
           </div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Preparación</h2>
         </div>
 
         {/* Tab state filters */}
-        <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
+        <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
           {['Pendiente', 'En preparación', 'Completado'].map((st) => (
             <button
               key={st}
@@ -140,44 +140,50 @@ export const Preparacion: React.FC = () => {
                 setFilterEstado(st);
                 setSelectedOrden(null);
               }}
-              className={`py-2 text-[10px] font-black uppercase rounded-xl transition-all ${
+              className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${
                 filterEstado === st 
-                  ? 'bg-white text-brand-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white text-brand-600 shadow-sm border border-slate-100' 
+                  : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              {st === 'Pendiente' ? 'Pendiente' : st === 'En preparación' ? 'En Prep' : 'Listos'}
+              {st === 'Pendiente' ? 'Nuevos' : st === 'En preparación' ? 'En Progreso' : 'Listos'}
             </button>
           ))}
         </div>
 
         {/* List */}
-        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           {loading ? (
-            <div className="text-center py-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
+            <div className="py-12 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
             </div>
           ) : ordenes.length === 0 ? (
-            <p className="text-center text-xs text-slate-400 font-medium py-10 italic">Sin órdenes en este estado</p>
+            <div className="py-12 text-center">
+              <p className="text-sm text-slate-300 font-medium italic">No hay órdenes pendientes</p>
+            </div>
           ) : (
             ordenes.map((orden) => (
               <div
                 key={orden.id}
                 onClick={() => handleSelectOrden(orden)}
-                className={`p-4 border rounded-2xl cursor-pointer transition-all ${
+                className={`p-5 rounded-2xl cursor-pointer transition-all border ${
                   selectedOrden?.id === orden.id
-                    ? 'border-brand-600 bg-brand-50 shadow-sm'
-                    : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                    ? 'border-brand-600 bg-brand-50/50 shadow-md transform scale-[1.02]'
+                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <div className="flex justify-between items-start">
-                  <h4 className={`text-sm font-black ${selectedOrden?.id === orden.id ? 'text-brand-700' : 'text-slate-900'}`}>Orden #{orden.id}</h4>
-                  <span className="text-[10px] text-slate-400 font-mono">#{orden.pedido_id}</span>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Orden #{orden.id}</span>
+                  <span className="text-[10px] font-bold text-brand-600 bg-white px-2 py-0.5 rounded-full border border-brand-100 shadow-sm">
+                    {orden.bultos?.length} Bultos
+                  </span>
                 </div>
-                <p className="text-xs font-bold text-slate-700 mt-2 truncate uppercase">{orden.pedido?.cliente?.razon_social}</p>
-                <div className="flex justify-between items-center mt-3 text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                  <span className="truncate max-w-[120px]">{orden.ruta?.nombre || 'Sin Ruta'}</span>
-                  <span className="bg-white px-2 py-0.5 rounded border border-slate-200">{orden.bultos?.length} bultos</span>
+                <h4 className="text-sm font-bold text-slate-900 leading-tight mb-2 uppercase">
+                  {orden.pedido?.cliente?.razon_social}
+                </h4>
+                <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                  <span className="bg-slate-200/50 text-slate-600 px-1.5 py-0.5 rounded mr-2">#{orden.pedido_id}</span>
+                  <span>{orden.ruta?.nombre || 'General'}</span>
                 </div>
               </div>
             ))
@@ -196,91 +202,107 @@ export const Preparacion: React.FC = () => {
         ) : (
           <div className="border border-slate-200 rounded-[2rem] bg-white p-8 space-y-8 shadow-sm">
             {/* Header info */}
-            <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-slate-100">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-3">
-                  <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Preparar Pedido #{selectedOrden.pedido_id}</h2>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${
-                    selectedOrden.estado === 'Pendiente' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                    selectedOrden.estado === 'En preparación' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                    'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
-                    {selectedOrden.estado}
-                  </span>
+            <div className="pb-8 border-b border-slate-100 space-y-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Orden <span className="text-brand-600">#{selectedOrden.pedido_id}</span></h2>
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${
+                      selectedOrden.estado === 'Pendiente' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                      selectedOrden.estado === 'En preparación' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
+                      'bg-emerald-50 text-emerald-600 border-emerald-200'
+                    }`}>
+                      {selectedOrden.estado}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-500 uppercase tracking-tight">{selectedOrden.pedido?.cliente?.razon_social}</h3>
                 </div>
-                <p className="text-sm font-black text-brand-600 uppercase tracking-tight">{selectedOrden.pedido?.cliente?.razon_social}</p>
-                <div className="flex items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full w-fit">
-                  <span className="text-slate-800 mr-2">RUTA:</span> {selectedOrden.ruta?.nombre} ({selectedOrden.ruta?.zona || 'GENERAL'})
-                </div>
+                
+                {selectedOrden.estado === 'Pendiente' && (
+                  <button
+                    onClick={handleStartPrep}
+                    className="flex items-center px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-2xl shadow-xl shadow-brand-900/20 transition-all uppercase tracking-widest"
+                  >
+                    <Play className="h-5 w-5 mr-3 fill-current" />
+                    Iniciar Preparación
+                  </button>
+                )}
               </div>
 
-              {selectedOrden.estado === 'Pendiente' && (
-                <button
-                  onClick={handleStartPrep}
-                  className="flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-brand-900/20 transition-all uppercase tracking-widest"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Iniciar
-                </button>
-              )}
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ruta:</span>
+                  <span className="text-sm font-bold text-slate-700">{selectedOrden.ruta?.nombre || 'Venta Local'}</span>
+                </div>
+                <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Zona:</span>
+                  <span className="text-sm font-bold text-slate-700">{selectedOrden.ruta?.zona || 'CABA/GBA'}</span>
+                </div>
+              </div>
             </div>
 
             {/* Checklist of products */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center">
-                <Scale className="h-4 w-4 mr-2" /> BALANZA: CARGA DE KILOS REALES
-              </h3>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center px-2">
+                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                  <Scale className="h-4 w-4 mr-2 text-brand-600" /> Control de Pesaje Real
+                </h3>
+              </div>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {selectedOrden.bultos.map((bulto: any) => (
                   <div 
                     key={bulto.id} 
-                    className={`p-5 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+                    className={`p-6 rounded-3xl border transition-all ${
                       confirmedBultos[bulto.id]
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                        : 'bg-white border-slate-200 text-slate-800 hover:border-brand-300'
+                        ? 'bg-emerald-50 border-emerald-100 scale-[0.99] opacity-90'
+                        : 'bg-white border-slate-100 hover:border-brand-200 shadow-sm'
                     }`}
                   >
-                    {/* Product Name */}
-                    <div className="flex-1">
-                      <span className="font-mono text-[10px] text-brand-600 font-bold block mb-1">#{bulto.producto.codigo}</span>
-                      <span className="font-black text-slate-900 text-base leading-tight uppercase">{bulto.producto.descripcion}</span>
-                      <div className="flex space-x-3 text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-tighter">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">PEDIDO: {bulto.unidades} UNID.</span>
-                        <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">ESTIMADO: {bulto.peso_estimado_kg} KG</span>
-                      </div>
-                    </div>
-
-                    {/* Weight Inputs */}
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                        <input
-                          type="number"
-                          step="0.1"
-                          disabled={selectedOrden.estado === 'Completado' || confirmedBultos[bulto.id]}
-                          value={weights[bulto.id] || ''}
-                          onChange={(e) => handleWeightChange(bulto.id, Number(e.target.value))}
-                          placeholder="0.0"
-                          className="w-24 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-black focus:outline-none focus:ring-1 focus:ring-brand-500 text-center text-slate-900"
-                        />
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">KG REALES</span>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      {/* Product Name */}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="font-bold text-xs bg-slate-100 text-slate-400 rounded px-1.5 py-0.5 tracking-tight">#{bulto.producto.codigo}</span>
+                          <span className="font-bold text-slate-900 text-lg uppercase leading-tight tracking-tight">{bulto.producto.descripcion}</span>
+                        </div>
+                        <div className="flex items-center space-x-4 text-[10px] font-bold uppercase tracking-widest">
+                          <span className="text-slate-400">Objetivo: <b className="text-slate-600">{bulto.unidades} UNID.</b></span>
+                          <span className="text-slate-200">/</span>
+                          <span className="text-slate-400">Estimado: <b className="text-slate-600">{bulto.peso_estimado_kg} KG</b></span>
+                        </div>
                       </div>
 
-                      {/* Confirm item check */}
-                      {selectedOrden.estado !== 'Completado' && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleConfirmBulto(bulto.id)}
-                          className={`p-3 rounded-xl border transition-all ${
-                            confirmedBultos[bulto.id]
-                              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-900/10'
-                              : 'bg-white text-slate-300 border-slate-200 hover:border-brand-400 hover:text-brand-600'
-                          }`}
-                          title={confirmedBultos[bulto.id] ? "Confirmado" : "Marcar como listo"}
-                        >
-                          <Check className="h-5 w-5" />
-                        </button>
-                      )}
+                      {/* Weight Inputs */}
+                      <div className="flex items-center space-x-4">
+                        <div className="relative group">
+                          <input
+                            type="number"
+                            step="0.1"
+                            disabled={selectedOrden.estado === 'Completado' || confirmedBultos[bulto.id]}
+                            value={weights[bulto.id] || ''}
+                            onChange={(e) => handleWeightChange(bulto.id, Number(e.target.value))}
+                            placeholder="0.0"
+                            className="w-32 px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-bold focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 text-center text-slate-900 transition-all font-mono placeholder:text-slate-200"
+                          />
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest border border-slate-100 rounded">Kilos Reales</div>
+                        </div>
+
+                        {/* Confirm item check */}
+                        {selectedOrden.estado !== 'Completado' && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleConfirmBulto(bulto.id)}
+                            className={`p-4 rounded-2xl border transition-all ${
+                              confirmedBultos[bulto.id]
+                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-900/20'
+                                : 'bg-slate-50 text-slate-300 border-slate-200 hover:border-brand-300 hover:text-brand-600 group-hover:bg-brand-50/50'
+                            }`}
+                          >
+                            <Check className={`h-6 w-6 transition-transform ${confirmedBultos[bulto.id] ? 'scale-110' : ''}`} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -289,30 +311,30 @@ export const Preparacion: React.FC = () => {
 
             {/* Observations from order */}
             {selectedOrden.observaciones && (
-              <div className="p-3 bg-slate-950/30 border border-slate-850 rounded-xl flex items-start space-x-2 text-xs">
-                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />
+              <div className="p-6 bg-amber-50 border border-amber-100 rounded-3xl flex items-start space-x-4">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
                 <div>
-                  <span className="font-bold text-slate-450">Observaciones del Pedido:</span>
-                  <p className="text-slate-300 mt-0.5">{selectedOrden.observaciones}</p>
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Instrucciones Especiales</span>
+                  <p className="text-sm text-amber-900 font-medium leading-relaxed italic">"{selectedOrden.observaciones}"</p>
                 </div>
               </div>
             )}
 
             {/* Actions Footer */}
             {selectedOrden.estado !== 'Completado' && (
-              <div className="flex space-x-4 pt-6 border-t border-slate-100">
+              <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-100">
                 <button
                   onClick={() => handleSaveWeights(false)}
-                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm rounded-2xl transition-all uppercase tracking-widest"
+                  className="py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs rounded-2xl transition-all uppercase tracking-widest"
                 >
-                  Guardar Avance
+                  Guardar Pesajes Parciales
                 </button>
                 <button
                   onClick={() => handleSaveWeights(true)}
-                  className="flex-1 py-4 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-brand-900/20 transition-all flex items-center justify-center uppercase tracking-widest"
+                  className="py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-2xl shadow-xl shadow-brand-900/20 transition-all flex items-center justify-center uppercase tracking-widest"
                 >
-                  <CheckSquare className="h-5 w-5 mr-3" />
-                  Finalizar Pesaje
+                  <CheckSquare className="h-4 w-4 mr-3" />
+                  Finalizar Preparación
                 </button>
               </div>
             )}

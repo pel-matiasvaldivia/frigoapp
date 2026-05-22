@@ -55,16 +55,16 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex lg:flex-shrink-0 flex-col w-64 bg-accent-brown-950 border-r border-accent-brown-900/20">
+      <aside className="hidden lg:flex lg:flex-shrink-0 flex-col w-64 bg-white border-r border-slate-200">
         {/* Brand Header */}
-        <div className="flex items-center h-16 px-6 bg-accent-brown-950 border-b border-accent-brown-900/30">
+        <div className="flex items-center h-16 px-6 bg-white border-b border-slate-200">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-brand-600 rounded-lg text-white">
+            <div className="p-2 bg-brand-600 rounded-xl text-white shadow-sm">
               <Beef className="h-6 w-6" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight text-white font-sans text-shadow-sm">J&E FRIGORÍFICO</span>
-              <p className="text-[10px] text-accent-yellow-400 font-bold uppercase tracking-wider">Sistema ERP</p>
+              <span className="text-lg font-bold tracking-tight text-slate-900">J&E Frigorífico</span>
+              <p className="text-[10px] text-brand-600 font-bold uppercase tracking-wider">Gestión Interna</p>
             </div>
           </div>
         </div>
@@ -78,13 +78,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${
+                className={`flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
                   isActive 
-                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40' 
-                    : 'text-accent-brown-300 hover:bg-accent-brown-900/40 hover:text-white'
+                    ? 'bg-brand-50 text-brand-700 shadow-sm border border-brand-100' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-brand-600'
                 }`}
               >
-                <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : 'text-accent-brown-400 group-hover:text-accent-yellow-400'}`} />
+                <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-brand-500'}`} />
                 {item.name}
               </Link>
             );
@@ -92,19 +92,19 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         </nav>
 
         {/* User Card & Logout */}
-        <div className="p-4 border-t border-accent-brown-900/30 bg-accent-brown-950">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="p-2 bg-accent-brown-900/50 rounded-full text-accent-brown-200">
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+          <div className="flex items-center space-x-3 mb-4 p-3 bg-white border border-slate-100 rounded-2xl">
+            <div className="p-2 bg-slate-100 rounded-full text-slate-400">
               <User className="h-5 w-5" />
             </div>
             <div className="overflow-hidden">
-              <h4 className="text-sm font-semibold text-white truncate">{user.nombre}</h4>
-              <p className="text-xs text-accent-brown-400 font-mono truncate">{user.rol}</p>
+              <h4 className="text-sm font-bold text-slate-900 truncate">{user.nombre}</h4>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">{user.rol}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center w-full px-4 py-2.5 text-xs font-semibold text-accent-yellow-400 bg-accent-brown-900/40 hover:bg-brand-600 hover:text-white border border-accent-brown-800/30 rounded-xl transition-all duration-200"
+            className="flex items-center justify-center w-full px-4 py-3 text-xs font-bold text-slate-600 bg-white hover:bg-rose-50 hover:text-rose-600 border border-slate-200 rounded-xl transition-all duration-200 shadow-sm"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Cerrar Sesión
@@ -123,14 +123,14 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <Menu className="h-6 w-6" />
           </button>
           
-          <div className="hidden lg:block text-slate-500 text-xs font-semibold tracking-wider uppercase font-mono">
+          <div className="hidden lg:block text-slate-400 text-[10px] font-bold tracking-widest uppercase">
             {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-brand-700 bg-brand-50 rounded-full border border-brand-100">
-              <span className="w-1.5 h-1.5 mr-1.5 bg-brand-500 rounded-full animate-pulse"></span>
-              Servidor Activo
+            <span className="inline-flex items-center px-4 py-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-100 uppercase tracking-widest">
+              <span className="w-2 h-2 mr-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+              En Línea
             </span>
           </div>
         </header>
@@ -150,22 +150,22 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           <div className="fixed inset-0 bg-accent-brown-950/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
 
           {/* Drawer content */}
-          <div className="relative flex flex-col w-80 max-w-xs bg-accent-brown-950 border-r border-accent-brown-900 h-full p-6 animate-fade-in">
+          <div className="relative flex flex-col w-80 max-w-xs bg-white border-r border-slate-200 h-full p-6 animate-in slide-in-from-left duration-300">
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 text-accent-brown-300 hover:text-white rounded-lg"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 rounded-lg"
             >
               <X className="h-6 w-6" />
             </button>
 
             {/* Brand Header */}
             <div className="flex items-center space-x-3 mb-8">
-              <div className="p-2 bg-brand-600 rounded-lg text-white">
+              <div className="p-2 bg-brand-600 rounded-xl text-white shadow-sm">
                 <Beef className="h-6 w-6" />
               </div>
               <div>
-                <span className="text-lg font-bold tracking-tight text-white">J&E FRIGORÍFICO</span>
-                <p className="text-[10px] text-accent-yellow-400 font-bold uppercase tracking-wider">Sistema ERP</p>
+                <span className="text-lg font-bold tracking-tight text-slate-900">J&E Frigorífico</span>
+                <p className="text-[10px] text-brand-600 font-bold uppercase tracking-wider">Gestión Interna</p>
               </div>
             </div>
 
@@ -193,19 +193,19 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </nav>
 
             {/* Footer */}
-            <div className="pt-4 border-t border-accent-brown-900/40 bg-accent-brown-950 -mx-6 -mb-6 p-6">
+            <div className="pt-4 border-t border-slate-100 bg-slate-50 -mx-6 -mb-6 p-6">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-accent-brown-900/50 rounded-full text-accent-brown-200">
+                <div className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 shadow-sm">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">{user.nombre}</h4>
-                  <p className="text-xs text-accent-brown-400 font-mono">{user.rol}</p>
+                  <h4 className="text-sm font-bold text-slate-900">{user.nombre}</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.rol}</p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center w-full px-4 py-2.5 text-xs font-semibold text-accent-yellow-400 bg-accent-brown-900/40 hover:bg-brand-600 hover:text-white border border-accent-brown-800/30 rounded-xl transition-all duration-200"
+                className="flex items-center justify-center w-full px-4 py-3 text-xs font-bold text-slate-600 bg-white hover:bg-rose-50 hover:text-rose-600 border border-slate-200 rounded-xl transition-all duration-200 shadow-sm"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Cerrar Sesión

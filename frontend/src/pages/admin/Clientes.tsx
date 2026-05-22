@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { clientesAPI, rutasAPI, listasPreciosAPI } from '../../services/api';
-import { Plus, Search, Edit2, Trash2, Users, X, Check } from 'lucide-react';
+import { 
+  Users, 
+  Search, 
+  MapPin, 
+  Phone, 
+  Edit2, 
+  Trash2, 
+  Plus, 
+  UserPlus, 
+  RefreshCw,
+  X
+} from 'lucide-react';
 
 export const Clientes: React.FC = () => {
   const [clientes, setClientes] = useState<any[]>([]);
@@ -10,7 +21,7 @@ export const Clientes: React.FC = () => {
   const [search, setSearch] = useState('');
 
   // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<any | null>(null);
 
   // Form fields
@@ -53,7 +64,7 @@ export const Clientes: React.FC = () => {
     setRazonSocial(''); setCuit(''); setDireccion(''); setTelefono('');
     setRutaId(''); setListaId(''); setLimiteCredito(0); setActivo(true);
     setCrearUsuario(false); setEmail(''); setPassword('');
-    setModalOpen(true);
+    setIsModalOpen(true);
   };
 
   const openEdit = (c: any) => {
@@ -67,7 +78,7 @@ export const Clientes: React.FC = () => {
     setLimiteCredito(c.limite_credito || 0);
     setActivo(c.activo);
     setCrearUsuario(false); setEmail(''); setPassword('');
-    setModalOpen(true);
+    setIsModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -92,7 +103,7 @@ export const Clientes: React.FC = () => {
         await clientesAPI.create(payload);
         alert("Cliente creado exitosamente");
       }
-      setModalOpen(false);
+      setIsModalOpen(false);
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al guardar cliente");
@@ -116,14 +127,17 @@ export const Clientes: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Clientes</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">ABM de cartera de clientes, asignación de rutas y listas de precios.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
+          <p className="text-slate-500 text-sm">Gestión de cartera, rutas y listas de precios.</p>
         </div>
-        <button onClick={openCreate}
-          className="flex items-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-brand-900/20">
-          <Plus className="h-5 w-5 mr-2" /> Nuevo Cliente
+        <button
+          onClick={openCreate}
+          className="flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-brand-900/10 active:scale-95"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Nuevo Cliente
         </button>
       </div>
 
@@ -132,21 +146,21 @@ export const Clientes: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input type="text" placeholder="Buscar por razón social o CUIT..."
             value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
         </div>
       </div>
-      <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-500 text-xs font-bold uppercase bg-slate-50/50">
-                <th className="py-4 px-4">Razón Social</th>
-                <th className="py-4 px-4">CUIT</th>
-                <th className="py-4 px-4">Ruta</th>
-                <th className="py-4 px-4">Lista de Precios</th>
-                <th className="py-4 px-4 text-right">Límite Crédito</th>
-                <th className="py-4 px-4 text-center">Estado</th>
-                <th className="py-4 px-4 text-center">Acciones</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-500 text-xs font-semibold uppercase">
+                <th className="py-4 px-6">Razón Social</th>
+                <th className="py-4 px-6">CUIT</th>
+                <th className="py-4 px-6">Ruta</th>
+                <th className="py-4 px-6">Lista</th>
+                <th className="py-4 px-6">Crédito</th>
+                <th className="py-4 px-6 text-center">Estado</th>
+                <th className="py-4 px-6 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -157,13 +171,13 @@ export const Clientes: React.FC = () => {
               ) : (
                 filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{c.razon_social}</td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-slate-600">{c.cuit || '—'}</td>
-                    <td className="py-3.5 px-4 text-xs text-slate-600">{c.ruta?.nombre || '—'}</td>
-                    <td className="py-3.5 px-4 text-xs text-slate-600">{c.lista_precios?.nombre || '—'}</td>
-                    <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-600">${c.limite_credito?.toLocaleString('es-AR') || '0'}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-900">{c.razon_social}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{c.cuit || '—'}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{c.ruta?.nombre || '—'}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{c.lista_precios?.nombre || '—'}</td>
+                    <td className="py-3.5 px-4 text-slate-600">${c.limite_credito?.toLocaleString('es-AR') || '0'}</td>
                     <td className="py-3.5 px-4 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${c.activo ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${c.activo ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                         {c.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
@@ -179,13 +193,15 @@ export const Clientes: React.FC = () => {
         </div>
       </div>
 
-      {/* Cliente Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-xl bg-white border border-slate-200 rounded-3xl p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in">
+      {/* Modal for Create/Edit */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-[2.5rem] p-10 space-y-8 shadow-2xl animate-in zoom-in duration-200">
             <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-              <h3 className="text-xl font-extrabold text-slate-900">{editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
-              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X className="h-6 w-6" /></button>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-300 hover:text-brand-600 transition-colors">
+                <X className="h-7 w-7" />
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -262,10 +278,10 @@ export const Clientes: React.FC = () => {
             )}
 
             <div className="flex space-x-4 pt-4">
-              <button onClick={() => setModalOpen(false)}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold ml-0 text-sm rounded-xl transition-all">
-                CANCELAR
-              </button>
+                <button onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs rounded-2xl transition-all uppercase tracking-widest">
+                  Cancelar
+                </button>
               <button onClick={handleSave}
                 className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-900/20 transition-all active:scale-[0.98]">
                 {editingCliente ? 'GUARDAR CAMBIOS' : 'CREAR CLIENTE'}
