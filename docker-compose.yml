@@ -41,6 +41,7 @@ services:
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -61,6 +62,7 @@ services:
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
