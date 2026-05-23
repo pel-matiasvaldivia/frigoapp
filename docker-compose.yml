@@ -33,6 +33,7 @@ services:
       - pdf_uploads:/app/uploads
     ports:
       - "8889:8000"
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
       - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
@@ -41,7 +42,6 @@ services:
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -55,6 +55,7 @@ services:
     command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
     volumes:
       - pdf_uploads:/app/uploads
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
       - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
@@ -62,7 +63,6 @@ services:
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -97,6 +97,7 @@ services:
     restart: always
     volumes:
       - ./whatsapp/session:/app/session
+    env_file: .env
     environment:
       - BACKEND_URL=http://backend:8000
     depends_on:
