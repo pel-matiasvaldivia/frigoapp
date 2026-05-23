@@ -92,17 +92,20 @@ services:
       - backend
 
   whatsapp-bot:
-    image: ghcr.io/pel-matiasvaldivia/frigo-whatsapp:latest
+    image: openwa/wa-automate
     container_name: frigo-whatsapp
     restart: always
     cap_add:
       - SYS_ADMIN
-    shm_size: '2gb'
+    shm_size: '1gb'
     volumes:
-      - ./whatsapp/session:/app/session
-    env_file: .env
+      - ./whatsapp/session:/session
     environment:
-      - BACKEND_URL=http://backend:8000
+      - WA_WEBHOOK_URL=http://backend:8000/api/whatsapp/webhook
+      - WA_SESSION_ID=FRIGO_SESSION
+      - WA_SESSION_DATA_PATH=/session
+      - WA_HEADLESS=true
+      - WA_POPUP=false
     depends_on:
       - backend
 

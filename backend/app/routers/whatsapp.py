@@ -11,11 +11,19 @@ from typing import List, Optional
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
 
+from pydantic import BaseModel, Field
+from typing import List, Optional, Any
+from pydantic import ConfigDict
+
+router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
+
 class WhatsAppMessage(BaseModel):
-    from_number: str = Body(..., alias="from")
-    body: str
-    sender: dict
-    timestamp: int
+    model_config = ConfigDict(populate_by_name=True)
+    
+    from_number: str = Field(..., alias="from")
+    body: str = ""
+    sender: Optional[Any] = None
+    timestamp: Optional[Any] = None
 
 @router.post("/webhook")
 async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
