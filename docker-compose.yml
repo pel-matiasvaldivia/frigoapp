@@ -95,6 +95,8 @@ services:
     image: ghcr.io/pel-matiasvaldivia/frigo-whatsapp:latest
     container_name: frigo-whatsapp
     restart: always
+    cap_add:
+      - SYS_ADMIN
     shm_size: '2gb'
     volumes:
       - ./whatsapp/session:/app/session

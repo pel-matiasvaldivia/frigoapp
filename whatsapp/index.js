@@ -19,20 +19,18 @@ async function start() {
         disableSpins: true,
         headless: true,
         hostNotificationLang: 'es-AR',
-        logConsole: true,
+        logConsole: false,
         popup: true,
         qrTimeout: 0,
         sessionDataPath: './session',
         useChrome: true,
         executablePath: '/usr/bin/google-chrome-stable',
-        // Try without custom args first but with dumpio to see why it fails
-        // If it still fails, I'll add --no-sandbox back
-        dumpio: true,
+        // Critical flags for Docker
         chromiumArgs: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu'
+          '--disable-extensions'
         ],
       });
     } catch (createError) {
