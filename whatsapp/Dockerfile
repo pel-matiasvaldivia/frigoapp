@@ -1,23 +1,20 @@
-FROM node:18-alpine
+FROM node:18-slim
 
-# Install chromium and all necessary libraries for Puppeteer on Alpine
-RUN apk add --no-cache \
-      chromium \
-      nss \
-      freetype \
-      harfbuzz \
-      ca-certificates \
-      ttf-freefont \
-      udev \
-      libstdc++ \
-      libc6-compat \
-      mesa-gbm \
-      nodejs \
-      npm
+# Install chromium and essential libraries for Puppeteer on Debian
+RUN apt-get update && apt-get install -y \
+    chromium \
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-thai-tlwg \
+    fonts-kacst \
+    fonts-freefont-ttf \
+    libxss1 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install dependencies first
+# Install dependencies
 COPY package*.json ./
 RUN npm install --production && \
     npm cache clean --force
@@ -25,13 +22,13 @@ RUN npm install --production && \
 COPY . .
 
 # Session persistence setup
-RUN mkdir -p session && chown -R node:node /app
+RUN mkdir -p session
 
-# Puppeteer configuration for Alpine
+# Puppeteer configuration for Debian-slim Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Reverted to root to avoid permission denied on volume mounts (EACCES)
+# Run as root to avoid volume permission issues (EACCES)
 # USER node
 
 CMD ["node", "index.js"]
