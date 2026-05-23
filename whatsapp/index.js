@@ -9,26 +9,36 @@ async function start() {
   console.log('--- Starting WhatsApp Bot ---');
   
   try {
-    const client = await wa.create({
-      sessionId: "FRIGO_SESSION",
-      multiDevice: true,
-      authTimeout: 60,
-      blockCrashLogs: true,
-      disableSpins: true,
-      headless: true,
-      hostNotificationLang: 'es-AR',
-      logConsole: false,
-      popup: true,
-      qrTimeout: 0,
-      sessionDataPath: './session',
-      useChrome: true,
-      executablePath: '/usr/bin/google-chrome-stable',
-      chromiumArgs: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-      ],
-    });
+    let client;
+    try {
+      client = await wa.create({
+        sessionId: "FRIGO_SESSION",
+        multiDevice: true,
+        authTimeout: 60,
+        blockCrashLogs: true,
+        disableSpins: true,
+        headless: true,
+        hostNotificationLang: 'es-AR',
+        logConsole: true,
+        popup: true,
+        qrTimeout: 0,
+        sessionDataPath: './session',
+        useChrome: true,
+        executablePath: '/usr/bin/google-chrome-stable',
+        // Try without custom args first but with dumpio to see why it fails
+        // If it still fails, I'll add --no-sandbox back
+        dumpio: true,
+        chromiumArgs: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ],
+      });
+    } catch (createError) {
+      console.error('FATAL ERROR DURING wa.create:', createError);
+      throw createError;
+    }
 
     console.log('WhatsApp Bot is Ready!');
 
