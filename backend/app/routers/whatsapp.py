@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.cliente import Cliente
@@ -6,14 +6,8 @@ from app.models.pedido import Pedido, PedidoItem
 from app.models.producto import Producto
 from app.models.listas_precios import ListaPreciosDetalle
 from app.services.ai_order import parse_whatsapp_order
-from pydantic import BaseModel
-from typing import List, Optional
-
-router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
-
-from pydantic import BaseModel, Field
-from typing import List, Optional, Any
-from pydantic import ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Any
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
 
