@@ -1,73 +1,72 @@
-const wa = require('@open-wa/wa-automate');
-const axios = require('axios');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
+const qrcode = require("qrcode-terminal");
+const axios = require("axios");
+const pino = require("pino");
 require('dotenv').config();
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:8000';
-const WEBHOOK_PATH = '/api/whatsapp/webhook';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8889';
 
-async function start() {
-  console.log('--- Starting WhatsApp Bot ---');
-  
-  try {
-    let client;
-    try {
-      client = await wa.create({
-        sessionId: "FRIGO_SESSION",
-        multiDevice: true,
-        authTimeout: 60,
-        blockCrashLogs: true,
-        disableSpins: true,
-        headless: true,
-        hostNotificationLang: 'es-AR',
-        logConsole: false,
-        popup: true,
-        qrTimeout: 0,
-        sessionDataPath: './session',
-        useChrome: true,
-        executablePath: '/usr/bin/google-chrome-stable',
-        // Do NOT add chromiumArgs with multiDevice: true.
-        // wa-automate overrides and strips them when using MD mode,
-        // which causes a silent browser crash.
-      });
-    } catch (createError) {
-      console.error('FATAL ERROR DURING wa.create:', createError);
-      throw createError;
-    }
-
-    console.log('WhatsApp Bot is Ready!');
-
-    // Handle incoming messages
-    client.onMessage(async (message) => {
-      // Ignore broadcast/group messages for now to keep it clean
-      if (message.isGroupMsg) return;
-
-      console.log(`New message from ${message.from}: ${message.body}`);
-
-      try {
-        await axios.post(`${BACKEND_URL}${WEBHOOK_PATH}`, {
-          from: message.from,
-          body: message.body,
-          sender: {
-            name: message.sender.pushname,
-            number: message.sender.id
-          },
-          timestamp: message.t
-        });
-      } catch (err) {
-        console.error('Error forwarding message to backend:', err.message);
-      }
+async function connectToWhatsApp() {
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    
+    const sock = makeWASocket({
+        printQRInTerminal: false, // We'll handle it manually
+        auth: state,
+        browser: ["FrigoApp", "Chrome", "1.0.0"],
+        logger: pino({ level: 'silent' })
     });
 
-    // Handle incoming calls (reject and notify)
-    client.onIncomingCall(async (call) => {
-      await client.sendText(call.peerJid, 'Lo siento, no puedo recibir llamadas. Por favor envíe su pedido por mensaje de texto.');
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        
+        if (qr) {
+            console.log('--- SCAN THE QR CODE BELOW ---');
+            qrcode.generate(qr, { small: true });
+        }
+
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
+            if (shouldReconnect) {
+                connectToWhatsApp();
+            }
+        } else if (connection === 'open') {
+            console.log('✅ CONECTADO CON ÉXITO (MODO LIGERO)');
+        }
     });
 
-  } catch (err) {
-    console.error('Fatal error starting WhatsApp client:', err);
-    process.exit(1);
-  }
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+        
+        const m = messages[0];
+        if (!m.message || m.key.fromMe) return;
+
+        const sender = m.key.remoteJid;
+        // Extract text from standard conversation or extended text (links, buttons, etc)
+        const body = m.message.conversation || m.message.extendedTextMessage?.text;
+
+        if (body) {
+            const pushName = m.pushName || 'Usuario WhatsApp';
+            console.log(`Mensaje de ${pushName} (${sender}): ${body}`);
+            
+            try {
+                await axios.post(`${BACKEND_URL}/api/whatsapp/webhook`, {
+                    from: sender,
+                    body: body,
+                    sender: { 
+                        name: pushName,
+                        number: sender
+                    },
+                    timestamp: m.messageTimestamp
+                });
+                console.log('Enviado al backend ok.');
+            } catch (e) {
+                console.error("Error al notificar al backend:", e.message);
+            }
+        }
+    });
 }
 
-// Start the bot
-start();
+connectToWhatsApp().catch(err => console.log("Error fatal:", err));
