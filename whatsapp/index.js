@@ -21,6 +21,13 @@ async function start() {
       popup: true,
       qrTimeout: 0,
       sessionDataPath: './session',
+      useChrome: true,
+      executablePath: '/usr/bin/google-chrome-stable',
+      chromiumArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage'
+      ],
     });
 
     console.log('WhatsApp Bot is Ready!');
