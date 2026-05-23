@@ -21,13 +21,6 @@ async function start() {
       popup: true,
       qrTimeout: 0,
       sessionDataPath: './session',
-      // Fixes for Docker/Alpine
-      useChrome: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      chromiumArgs: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox'
-      ],
     });
 
     console.log('WhatsApp Bot is Ready!');

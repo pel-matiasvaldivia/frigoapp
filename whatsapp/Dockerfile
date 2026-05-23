@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:16-bullseye
 
 # Install Google Chrome Stable
 RUN apt-get update && apt-get install -y wget gnupg \
