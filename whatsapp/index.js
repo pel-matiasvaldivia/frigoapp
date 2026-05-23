@@ -25,13 +25,9 @@ async function start() {
         sessionDataPath: './session',
         useChrome: true,
         executablePath: '/usr/bin/google-chrome-stable',
-        // Critical flags for Docker
-        chromiumArgs: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-extensions'
-        ],
+        // Do NOT add chromiumArgs with multiDevice: true.
+        // wa-automate overrides and strips them when using MD mode,
+        // which causes a silent browser crash.
       });
     } catch (createError) {
       console.error('FATAL ERROR DURING wa.create:', createError);
