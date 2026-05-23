@@ -24,7 +24,10 @@ async function start() {
       // Fixes for Docker/Alpine
       useChrome: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      // Removed custom chromiumArgs to avoid MD sync issues
+      chromiumArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+      ],
     });
 
     console.log('WhatsApp Bot is Ready!');

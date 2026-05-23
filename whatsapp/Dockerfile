@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-# Install chromium and common fonts
+# Install chromium and all necessary libraries for Puppeteer on Alpine
 RUN apk add --no-cache \
       chromium \
       nss \
@@ -10,6 +10,8 @@ RUN apk add --no-cache \
       ttf-freefont \
       udev \
       libstdc++ \
+      libc6-compat \
+      mesa-gbm \
       nodejs \
       npm
 
