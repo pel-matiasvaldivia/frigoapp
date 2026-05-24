@@ -4,6 +4,11 @@ const axios = require("axios");
 const pino = require("pino");
 require('dotenv').config();
 
+// Ensure crypto is available globally for Baileys (Node 18/20 slim compatibility)
+if (!global.crypto) {
+    global.crypto = require('crypto');
+}
+
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8889';
 
 async function connectToWhatsApp() {
