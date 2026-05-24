@@ -221,15 +221,62 @@ def update_pedido(
     current_user: Usuario = Depends(write_access)
 ):
     """
-    Update order details (e.g., status or observations).
+    Update order details.
+    Trigger preparation order creation if status moves to 'Pendiente de preparación'
+    and it doesn't already have one.
     """
     pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
         
+    old_status = pedido.estado
+    
     for field, value in pedido_in.model_dump(exclude_unset=True).items():
         setattr(pedido, field, value)
-        
+    
+    # Logic to trigger preparation if validated from WhatsApp
+    if pedido.estado == "Pendiente de preparación" and old_status != "Pendiente de preparación":
+        if not pedido.orden_preparacion:
+            cliente = pedido.cliente
+            prep_order = OrdenPreparacion(
+                pedido_id=pedido.id,
+                ruta_id=cliente.ruta_id if cliente else None,
+                fecha_despacho=datetime.datetime.utcnow(),
+                estado="Pendiente",
+                observaciones=pedido.observaciones
+            )
+            db.add(prep_order)
+            db.flush()
+            
+            # Create bultos
+            for item in pedido.items:
+                bulto = OrdenPreparacionBulto(
+                    orden_id=prep_order.id,
+                    producto_id=item.producto_id,
+                    unidades=item.cantidad_unidades,
+                    peso_estimado_kg=item.peso_estimado_kg,
+                    peso_real_kg=0.0,
+                    confirmado=False
+                )
+                db.add(bulto)
+
     db.commit()
     db.refresh(pedido)
     return pedido
+
+@router.delete("/{pedido_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_pedido(
+    pedido_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(write_access)
+):
+    """
+    Delete a sales order and its associated records.
+    """
+    pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    
+    db.delete(pedido)
+    db.commit()
+    return None
