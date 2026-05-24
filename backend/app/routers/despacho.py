@@ -40,10 +40,10 @@ def get_hoja_ruta(
     if not route_ids:
         return []
         
-    # 2. Get active delivery orders (Listo para despacho, En reparto, Entregado, etc.)
+    # 2. Get active delivery orders (Only those still pending delivery)
     orders = db.query(Pedido).join(Cliente).filter(
         Cliente.ruta_id.in_(route_ids),
-        Pedido.estado.in_(["Listo para despacho", "En reparto", "Entregado", "Entrega parcial", "No entregado"])
+        Pedido.estado.in_(["Listo para despacho", "En reparto"])
     ).order_by(Pedido.fecha.desc()).all()
     
     result = []
