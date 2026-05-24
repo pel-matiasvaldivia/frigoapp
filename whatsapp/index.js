@@ -1,8 +1,25 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
-const qrcode = require("qrcode-terminal");
+const qrcodeTerminal = require("qrcode-terminal");
+const QRCode = require("qrcode"); // For base64 generation
 const axios = require("axios");
 const pino = require("pino");
+const express = require("express");
 require('dotenv').config();
+
+// Simple state management
+let currentQR = null;
+let connectionStatus = 'disconnected';
+
+// Express Server to expose status and QR
+const app = express();
+app.get('/status', async (req, res) => {
+    let qrBase64 = null;
+    if (currentQR) {
+        qrBase64 = await QRCode.toDataURL(currentQR);
+    }
+    res.json({ status: connectionStatus, qr: qrBase64 });
+});
+app.listen(3001, () => console.log('Bot API listening on port 3001'));
 
 // Ensure crypto is available globally for Baileys (Node 18/20 slim compatibility)
 if (!global.crypto) {
@@ -35,17 +52,21 @@ async function connectToWhatsApp() {
         const { connection, lastDisconnect, qr } = update;
         
         if (qr) {
+            currentQR = qr; // Store for Express
             console.log('--- SCAN THE QR CODE BELOW ---');
-            qrcode.generate(qr, { small: true });
+            qrcodeTerminal.generate(qr, { small: true });
         }
 
         if (connection === 'close') {
+            connectionStatus = 'disconnected';
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log('connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
             if (shouldReconnect) {
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
+            connectionStatus = 'connected';
+            currentQR = null; // Clear QR once connected
             console.log('✅ CONECTADO CON ÉXITO (MODO LIGERO)');
         }
     });

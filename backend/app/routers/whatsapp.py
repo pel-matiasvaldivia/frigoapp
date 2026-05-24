@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -81,5 +82,11 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
 
 @router.get("/status")
 async def get_whatsapp_status():
-    # This would call the whatsapp-bot service
-    return {"status": "connected"} # Placeholder
+    async with httpx.AsyncClient() as client:
+        try:
+            # Connect to the bot's internal Express API
+            response = await client.get("http://whatsapp-bot:3001/status", timeout=2.0)
+            return response.json()
+        except Exception as e:
+            # If bot is starting or unreachable
+            return {"status": "loading", "qr": None}

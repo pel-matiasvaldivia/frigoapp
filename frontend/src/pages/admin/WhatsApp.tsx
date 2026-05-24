@@ -17,15 +17,20 @@ export const WhatsAppAdmin: React.FC = () => {
   useEffect(() => {
     fetchStatus();
     fetchPendingOrders();
+    
+    // Poll status every 5 seconds
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchStatus = async () => {
     try {
-      // Placeholder for now
-      setStatus('disconnected');
-      // setQrCode('base64_demo_qr'); 
+      const res = await api.get('/whatsapp/status');
+      setStatus(res.data.status);
+      setQrCode(res.data.qr);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching WhatsApp status:", err);
+      setStatus('disconnected');
     }
   };
 
