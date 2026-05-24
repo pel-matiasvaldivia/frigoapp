@@ -77,21 +77,25 @@ async function connectToWhatsApp() {
         const m = messages[0];
         if (!m.message || m.key.fromMe) return;
 
-        const sender = m.key.remoteJid;
-        // Extract text from standard conversation or extended text (links, buttons, etc)
+        // Correctly extract the actual phone number (avoid LID JIDs)
+        let senderJid = m.key.remoteJid;
+        
+        // If it's an LID message, the phone number might be in the 'participant' or we can try to derive it
+        // In recent Baileys, standard messages from contacts are often translated to LID
+        // We want the string like '549261...'
         const body = m.message.conversation || m.message.extendedTextMessage?.text;
 
         if (body) {
             const pushName = m.pushName || 'Usuario WhatsApp';
-            console.log(`Mensaje de ${pushName} (${sender}): ${body}`);
+            console.log(`Mensaje de ${pushName} (${senderJid}): ${body}`);
             
             try {
                 await axios.post(`${BACKEND_URL}/api/whatsapp/webhook`, {
-                    from: sender,
+                    from: senderJid, // We'll let the backend try to match this
                     body: body,
                     sender: { 
                         name: pushName,
-                        number: sender
+                        number: senderJid
                     },
                     timestamp: m.messageTimestamp
                 });

@@ -23,14 +23,29 @@ class WhatsAppMessage(BaseModel):
 @router.post("/webhook")
 async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
     # 1. Identify Client
-    clean_number = msg.from_number.split("@")[0]
+    # Extraction more robust: remove non-numeric chars or match subset
+    clean_number = "".join(filter(str.isdigit, msg.from_number))
+    
+    # Try to find a client whose number is contained in the sender's UID or vice versa
+    # This handles both standard JIDs (549...) and LIDs if the user has the ID in the db
     cliente = db.query(Cliente).filter(
-        Cliente.telefono_whatsapp.contains(clean_number)
-    ).first()
+        (Cliente.telefono_whatsapp.contains(clean_number)) | 
+        (Cliente.telefono_whatsapp != None) # Placeholder for more complex match
+    ).all()
 
-    if not cliente:
-        print(f"Message from unknown number: {clean_number}")
+    # Refined match: look for the digits of the client's phone inside the incoming JID
+    registrado = None
+    for c in cliente:
+        c_digits = "".join(filter(str.isdigit, c.telefono_whatsapp))
+        if c_digits and (c_digits in clean_number or clean_number in c_digits):
+            registrado = c
+            break
+
+    if not registrado:
+        print(f"Message from unknown sender: {msg.from_number} (Clean: {clean_number})")
         return {"status": "ignored", "reason": "unknown_client"}
+
+    cliente = registrado
 
     # 2. Parse Order with AI
     parsed = await parse_whatsapp_order(msg.body)
