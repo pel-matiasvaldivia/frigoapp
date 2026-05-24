@@ -29,10 +29,16 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
-COPY app ./app
 
 # Non-root user for security
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+# Copy application
+COPY app ./app
+
+# Create uploads directory and ensure correct permissions
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app/uploads && chmod -R 777 /app/uploads
+
 USER appuser
 
 EXPOSE 8000

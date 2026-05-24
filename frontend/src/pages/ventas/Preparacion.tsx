@@ -237,14 +237,18 @@ export const Preparacion: React.FC = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest ${
-                          selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO')
+                          selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO' && c.pdf_path)
                             ? 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 shadow-sm'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border-2 border-transparent'
+                            : 'bg-slate-100 text-slate-400 border-2 border-transparent'
                         }`}
                         onClick={(e) => {
-                          if (!selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO')) {
+                          const remito = selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO');
+                          if (!remito) {
                             e.preventDefault();
-                            alert("El PDF se está generando. Por favor, espere unos segundos y actualice.");
+                            alert("El remito aún no ha sido generado. Intente actualizar la lista.");
+                          } else if (!remito.pdf_path) {
+                            e.preventDefault();
+                            alert("El PDF se está procesando. Por favor, espere 5 segundos y vuelva a intentar.");
                           }
                         }}
                       >
