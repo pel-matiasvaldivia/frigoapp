@@ -330,8 +330,11 @@ export const Despacho: React.FC = () => {
 
             {/* Amount Field if Cash */}
             {metodoPago === 'EFECTIVO' && deliveryStatus !== 'No entregado' && (
-               <div>
-                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Monto Cobrado</label>
+               <div className="animate-in fade-in slide-in-from-top-2">
+                 <div className="flex justify-between items-center mb-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Recibido (Pesos)</label>
+                    <span className="text-[9px] font-bold text-brand-600 uppercase">Afecta Saldo CC</span>
+                 </div>
                  <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                     <input
@@ -339,8 +342,12 @@ export const Despacho: React.FC = () => {
                       value={montoPagado}
                       onChange={(e) => setMontoPagado(parseFloat(e.target.value))}
                       className="w-full pl-8 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="0.00"
                     />
                  </div>
+                 <p className="text-[9px] text-slate-400 mt-2 font-medium italic">
+                    Si el cliente entrega una suma diferente al total del remito, el saldo restante se ajustará en su cuenta corriente.
+                 </p>
                </div>
             )}
 
