@@ -43,14 +43,40 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
     };
   }, []);
 
+  const playSuccessSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+      console.warn("Audio feedback failed:", e);
+    }
+  };
+
+  const vibrateMobile = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(100);
+    }
+  };
+
   const onScanSuccess = async (decodedText: string) => {
-    if (processingRef.current) return; // Super fast block
+    if (processingRef.current) return;
     processingRef.current = true;
 
-    // Expected format: "TRK-XXXXXXXX"
     if (!decodedText.startsWith("TRK-")) {
       setError("Código QR no válido para bultos");
-      processingRef.current = false; // Release lock
+      processingRef.current = false;
       return;
     }
 
@@ -58,20 +84,24 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
     setError(null);
     try {
       const res = await preparacionAPI.escanearBulto(decodedText, action);
+      
+      // Sensory feedback
+      vibrateMobile();
+      playSuccessSound();
+
       setScanResult({
         uuid: decodedText,
         ...res
       });
       
-      // Automatic reset after 2 seconds
       setTimeout(() => {
         setScanResult(null);
-        processingRef.current = false; // Release lock after cooldown
+        processingRef.current = false;
         if (onSuccess) onSuccess();
       }, 2000);
-
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Error al procesar el bulto");
+      setError(err.response?.data?.detail || "Error al escanear bulto");
+      processingRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -82,27 +112,20 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
-      <div className="w-full max-w-lg bg-white rounded-[2.5rem] overflow-hidden shadow-2xl">
-        {/* Header */}
-        <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-brand-100 text-brand-600 rounded-xl">
-              <QrCode size={20} />
-            </div>
-            <div>
-              <h3 className="font-black text-slate-900 uppercase tracking-tighter">Escáner de Bultos</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Modo: {action}</p>
-            </div>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
+      <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200">
+        <div className="p-8 pb-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Escáner de Bultos</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Escaneando etiquetas con QR</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-            <X size={24} className="text-slate-400" />
+          <button onClick={onClose} className="p-3 bg-white text-slate-400 hover:text-brand-600 rounded-2xl border border-slate-200 shadow-sm transition-all active:scale-90">
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Action Toggle */}
-        <div className="p-4 bg-white flex justify-center">
-          <div className="flex bg-slate-100 p-1 rounded-2xl w-full">
+        <div className="p-6">
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
             <button
               onClick={() => setAction('CARGA')}
               className={`flex-1 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${
