@@ -13,34 +13,42 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<'CARGA' | 'ENTREGA'>('CARGA');
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
-    scannerRef.current = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false
-    );
+    const html5QrCode = new Html5Qrcode("reader");
+    scannerRef.current = html5QrCode;
 
-    scannerRef.current.render(onScanSuccess, onScanFailure);
+    const startScanner = async () => {
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          onScanSuccess,
+          onScanFailure
+        );
+      } catch (err) {
+        console.error("Failed to start scanner", err);
+        setError("No se pudo acceder a la cámara. Verifique los permisos.");
+      }
+    };
+
+    startScanner();
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(err => console.error("Failed to clear scanner", err));
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(err => console.error("Failed to stop scanner", err));
       }
     };
   }, []);
 
   const onScanSuccess = async (decodedText: string) => {
+    if (loading || scanResult) return; // Prevent multiple scans while processing
+
     // Expected format: "TRK-XXXXXXXX"
     if (!decodedText.startsWith("TRK-")) {
       setError("Código QR no válido para bultos");
       return;
-    }
-
-    // Stop scanner to handle the result
-    if (scannerRef.current) {
-      scannerRef.current.pause();
     }
 
     setLoading(true);
@@ -52,16 +60,14 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
         ...res
       });
       
-      // Automatic restart after 2 seconds
+      // Automatic reset after 2 seconds
       setTimeout(() => {
         setScanResult(null);
-        if (scannerRef.current) scannerRef.current.resume();
         if (onSuccess) onSuccess();
       }, 2000);
 
     } catch (err: any) {
       setError(err.response?.data?.detail || "Error al procesar el bulto");
-      if (scannerRef.current) scannerRef.current.resume();
     } finally {
       setLoading(false);
     }
