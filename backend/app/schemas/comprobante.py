@@ -22,5 +22,8 @@ class ComprobanteResponse(BaseModel):
 
 class RepartidorEntregaRequest(BaseModel):
     estado_pedido: str # "Entregado", "Entrega parcial", "No entregado"
+    metodo_pago: Optional[str] = "CTA CTE" # "EFECTIVO", "CTA CTE"
+    monto_pagado: Optional[float] = 0.0
+    motivo_rechazo: Optional[str] = None
     observaciones: Optional[str] = None
-    firma_base64: Optional[str] = None # canvas raw base64 data to save as png
+    firma_base64: Optional[str] = None 

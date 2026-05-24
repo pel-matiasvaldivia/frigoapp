@@ -23,6 +23,9 @@ export const Despacho: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<'Entregado' | 'Entrega parcial' | 'No entregado'>('Entregado');
   const [deliveryObs, setDeliveryObs] = useState('');
+  const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'CTA CTE'>('CTA CTE');
+  const [montoPagado, setMontoPagado] = useState<number>(0);
+  const [motivoRechazo, setMotivoRechazo] = useState('');
   const [firmaBase64, setFirmaBase64] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,6 +53,9 @@ export const Despacho: React.FC = () => {
     setSelectedItem(item);
     setDeliveryStatus('Entregado');
     setDeliveryObs('');
+    setMetodoPago('CTA CTE');
+    setMontoPagado(item.total || 0);
+    setMotivoRechazo('');
     setFirmaBase64(null);
     setDeliveryModalOpen(true);
   };
@@ -60,10 +66,13 @@ export const Despacho: React.FC = () => {
     try {
       await despachoAPI.entregar(selectedItem.comprobante.id, {
         estado_pedido: deliveryStatus,
+        metodo_pago: metodoPago,
+        monto_pagado: montoPagado,
+        motivo_rechazo: motivoRechazo,
         observaciones: deliveryObs,
         firma_base64: firmaBase64 || null
       });
-      alert(`¡Entrega registrada como: ${deliveryStatus}!`);
+      alert(`¡Entrega registrada exitosamente!`);
       setDeliveryModalOpen(false);
       setSelectedItem(null);
       fetchHojaRuta();
@@ -228,26 +237,30 @@ export const Despacho: React.FC = () => {
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <a
-                  href={`https://wa.me/${item.telefono_whatsapp?.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center py-4 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-2xl border border-emerald-100 transition-all uppercase tracking-widest shadow-sm"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  WhatsApp
-                </a>
-                {item.estado !== 'Entregado' && item.comprobante && (
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-4 pt-2">
                   <button
-                    onClick={() => handleOpenDelivery(item)}
-                    className="flex items-center justify-center py-4 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-brand-900/10"
+                    onClick={() => setScannerOpen(true)}
+                    className="flex items-center justify-center py-4 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-black rounded-2xl border border-emerald-100 transition-all uppercase tracking-widest shadow-sm"
                   >
-                    Confirmar
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Cargar
                   </button>
-                )}
-              </div>
+                  
+                  {item.estado !== 'Entregado' && item.comprobante && (
+                    <button
+                      onClick={() => handleOpenDelivery(item)}
+                      disabled={item.estado !== 'En reparto'}
+                      className={`flex items-center justify-center py-4 text-xs font-bold rounded-2xl transition-all uppercase tracking-widest shadow-lg ${
+                        item.estado === 'En reparto'
+                          ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-900/10'
+                          : 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none cursor-not-allowed opacity-50'
+                      }`}
+                    >
+                      Entregar
+                    </button>
+                  )}
+                </div>
             </div>
           ))}
         </div>
@@ -264,19 +277,22 @@ export const Despacho: React.FC = () => {
 
             {/* Status Picker */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Resultado</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Resultado de Entrega</label>
               <div className="grid grid-cols-3 gap-2">
                 {(['Entregado', 'Entrega parcial', 'No entregado'] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
-                    onClick={() => setDeliveryStatus(st)}
+                    onClick={() => {
+                        setDeliveryStatus(st);
+                        if (st === 'No entregado') setMetodoPago('CTA CTE');
+                    }}
                     className={`py-3 text-[9px] font-black rounded-2xl border transition-all uppercase tracking-tighter ${
                       deliveryStatus === st
                         ? st === 'Entregado' ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-sm'
                           : st === 'Entrega parcial' ? 'border-amber-600 bg-amber-50 text-amber-700 shadow-sm'
                           : 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
-                        : 'border-slate-100 bg-slate-50 text-slate-400 hover:text-slate-600'
+                        : 'border-slate-100 bg-slate-100 text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     {st}
@@ -284,6 +300,75 @@ export const Despacho: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Payment Method - Only if delivered */}
+            {deliveryStatus !== 'No entregado' && (
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Medio de Pago</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMetodoPago('EFECTIVO')}
+                    className={`py-3 text-[10px] font-black rounded-2xl border transition-all uppercase tracking-widest ${
+                      metodoPago === 'EFECTIVO' ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-100'
+                    }`}
+                  >
+                    Efectivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMetodoPago('CTA CTE')}
+                    className={`py-3 text-[10px] font-black rounded-2xl border transition-all uppercase tracking-widest ${
+                      metodoPago === 'CTA CTE' ? 'bg-sky-600 text-white border-sky-600 shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-100'
+                    }`}
+                  >
+                    Cuenta Corriente
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Amount Field if Cash */}
+            {metodoPago === 'EFECTIVO' && deliveryStatus !== 'No entregado' && (
+               <div>
+                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Monto Cobrado</label>
+                 <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <input
+                      type="number"
+                      value={montoPagado}
+                      onChange={(e) => setMontoPagado(parseFloat(e.target.value))}
+                      className="w-full pl-8 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                 </div>
+               </div>
+            )}
+
+            {/* Rejection Reasons */}
+            {deliveryStatus === 'No entregado' && (
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Motivo del Rechazo</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    "No tengo dinero", 
+                    "No me hace falta mercadería", 
+                    "No es lo que pedí", 
+                    "Problema con la entrega"
+                  ].map((motivo) => (
+                    <button
+                      key={motivo}
+                      type="button"
+                      onClick={() => setMotivoRechazo(motivo)}
+                      className={`py-3 px-4 text-[10px] font-black rounded-2xl border transition-all uppercase text-left tracking-tight ${
+                        motivoRechazo === motivo ? 'bg-brand-600 text-white border-brand-600 shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-100'
+                      }`}
+                    >
+                      {motivo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Observations */}
             <div>

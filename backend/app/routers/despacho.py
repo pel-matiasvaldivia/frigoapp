@@ -99,8 +99,15 @@ def entregar_pedido(
     
     # 1. Update pedido status to reflect delivery outcome
     pedido.estado = payload.estado_pedido  # "Entregado", "Entrega parcial", "No entregado"
-    if payload.observaciones:
-        pedido.observaciones = f"{pedido.observaciones or ''} | Chofer: {payload.observaciones}".strip()
+    
+    # Handle rejection reason
+    obs_extra = ""
+    if payload.estado_pedido == "No entregado" and payload.motivo_rechazo:
+        obs_extra = f" | RECHAZO: {payload.motivo_rechazo}"
+    
+    if payload.observaciones or obs_extra:
+        note = payload.observaciones or ""
+        pedido.observaciones = f"{pedido.observaciones or ''} | Chofer: {note}{obs_extra}".strip()
 
     # 2. Save Signature
     if payload.firma_base64:
@@ -123,13 +130,14 @@ def entregar_pedido(
     if payload.estado_pedido in ["Entregado", "Entrega parcial"]:
         comp.estado = "Entregado"
 
-        # Post DEBIT to Cuenta Corriente
+        # Post DEBIT to Cuenta Corriente (the debt)
         cc = db.query(CuentaCorriente).filter(CuentaCorriente.cliente_id == cliente.id).first()
         if cc:
+            # 3.1 Post the SALE (DEBIT)
             cc.saldo_actual = round(cc.saldo_actual + comp.total, 2)
             cc.fecha_actualizacion = datetime.datetime.utcnow()
 
-            mov = MovimientoCC(
+            mov_sale = MovimientoCC(
                 cuenta_id=cc.id,
                 tipo="DEBITO",
                 monto=comp.total,
@@ -137,7 +145,22 @@ def entregar_pedido(
                 fecha=datetime.datetime.utcnow(),
                 descripcion=f"Compra según {comp.tipo} N° {comp.numero}"
             )
-            db.add(mov)
+            db.add(mov_sale)
+
+            # 3.2 If paid in EFECTIVO, post the PAYMENT (CREDIT) immediately
+            if payload.metodo_pago == "EFECTIVO":
+                paid_amount = payload.monto_pagado if payload.monto_pagado > 0 else comp.total
+                cc.saldo_actual = round(cc.saldo_actual - paid_amount, 2)
+                
+                mov_pay = MovimientoCC(
+                    cuenta_id=cc.id,
+                    tipo="CREDITO",
+                    monto=paid_amount,
+                    referencia=f"COBRO-{comp.numero}",
+                    fecha=datetime.datetime.utcnow(),
+                    descripcion=f"Cobro en efectivo realizado por chofer - Ref {comp.numero}"
+                )
+                db.add(mov_pay)
 
             # Trigger celery task to regenerate PDF with embedded signature
             try:
@@ -146,7 +169,7 @@ def entregar_pedido(
             except Exception as e:
                 print(f"[Despacho] Error scheduling PDF task: {e}")
     else:
-        # No entregado — mark comprobante as not delivered (Anulado is reserved for admin cancellations)
+        # No entregado
         comp.estado = "No Entregado"
         # No debit posted since customer refused delivery
         
