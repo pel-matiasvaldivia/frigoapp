@@ -25,6 +25,9 @@ services:
       - redisdata:/data
 
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: ghcr.io/pel-matiasvaldivia/frigo-backend:latest
     container_name: frigo-backend
     restart: always
@@ -70,6 +73,9 @@ services:
         condition: service_started
 
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     image: ghcr.io/pel-matiasvaldivia/frigo-frontend:latest
     container_name: frigo-frontend
     restart: always
