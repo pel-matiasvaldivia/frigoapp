@@ -8,6 +8,9 @@ from app.core.security import get_current_user, RoleChecker
 from app.models.preparacion import OrdenPreparacion, OrdenPreparacionBulto
 from app.models.pedido import Pedido
 from app.models.usuario import Usuario
+from app.models.comprobante import Comprobante
+from app.models.configuracion import ConfiguracionSistema
+from app.core.celery_app import generar_pdf_comprobante_task, enviar_notificacion_factura_task
 from app.schemas.preparacion import OrdenPreparacionResponse, OrdenPreparacionUpdate
 
 router = APIRouter(prefix="/preparacion", tags=["Preparación de Bultos"])
@@ -52,7 +55,8 @@ def update_orden_preparacion(
 ):
     """
     Confirm weights and update status of preparation order.
-    When marked as 'Completado', transitions the parent order state.
+    When marked as 'Completado', transitions the parent order state and 
+    AUTOMATICALLY generates a Remito (Delivery Note).
     """
     prep = db.query(OrdenPreparacion).filter(OrdenPreparacion.id == orden_id).first()
     if not prep:
@@ -63,6 +67,7 @@ def update_orden_preparacion(
         raise HTTPException(status_code=404, detail="Pedido asociado no encontrado")
 
     # 1. Update preparation state
+    old_state = prep.estado
     if payload.estado:
         prep.estado = payload.estado
         if payload.estado == "En preparación":
@@ -83,19 +88,54 @@ def update_orden_preparacion(
             bulto_db.peso_real_kg = bulto_in.peso_real_kg
             bulto_db.confirmado = bulto_in.confirmado
             
-            # Keep parent PedidoItem weight synced for invoice rendering
-            # We lookup the matching item in Pedido
+            # Keep parent PedidoItem weight synced
             item_db = next((it for it in pedido.items if it.producto_id == bulto_db.producto_id), None)
             if item_db:
                 item_db.peso_real_kg = bulto_in.peso_real_kg
                 if bulto_in.confirmado:
-                    # Update item subtotal
                     item_db.subtotal = round(item_db.precio_unitario * bulto_in.peso_real_kg, 2)
             
-    # Re-compute total if completed
-    if prep.estado == "Completado":
+    # 3. Finalize and Auto-generate Remito
+    if prep.estado == "Completado" and old_state != "Completado":
         pedido.total = round(sum(it.subtotal for it in pedido.items), 2)
         
+        # Check if remito already exists
+        existing_comp = db.query(Comprobante).filter(
+            Comprobante.pedido_id == pedido.id,
+            Comprobante.tipo == "REMITO",
+            Comprobante.estado != "Anulado"
+        ).first()
+        
+        if not existing_comp:
+            # Generate numbering
+            config_num = db.query(ConfiguracionSistema).filter(ConfiguracionSistema.clave == "NUM_REMITO_SIGUIENTE").first()
+            next_num = 1
+            if config_num:
+                next_num = int(config_num.valor)
+                config_num.valor = str(next_num + 1)
+            
+            serial_str = f"RM-0001-{next_num:08d}"
+            
+            # Create Comprobante
+            new_comp = Comprobante(
+                pedido_id=pedido.id,
+                tipo="REMITO",
+                numero=serial_str,
+                fecha=datetime.datetime.utcnow(),
+                total=pedido.total,
+                estado="Emitido"
+            )
+            db.add(new_comp)
+            db.flush() # To get ID
+            
+            # Trigger tasks
+            try:
+                generar_pdf_comprobante_task.delay(new_comp.id)
+                if pedido.cliente.telefono_whatsapp:
+                    enviar_notificacion_factura_task.delay(pedido.cliente_id, new_comp.id)
+            except Exception as e:
+                print(f"[Auto-Remito] Error triggering tasks: {e}")
+
     db.commit()
     db.refresh(prep)
     db.refresh(pedido)

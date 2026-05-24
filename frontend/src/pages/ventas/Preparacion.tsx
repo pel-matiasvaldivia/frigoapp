@@ -7,7 +7,9 @@ import {
   CheckSquare, 
   Search, 
   AlertTriangle,
-  Scale
+  Scale,
+  FileText,
+  Printer
 } from 'lucide-react';
 
 export const Preparacion: React.FC = () => {
@@ -226,6 +228,30 @@ export const Preparacion: React.FC = () => {
                     <Play className="h-5 w-5 mr-3 fill-current" />
                     Iniciar Preparación
                   </button>
+                )}
+
+                {selectedOrden.estado === 'Completado' && (
+                   <div className="flex space-x-3">
+                     <a
+                        href={selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO')?.pdf_path || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest ${
+                          selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO')
+                            ? 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 shadow-sm'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border-2 border-transparent'
+                        }`}
+                        onClick={(e) => {
+                          if (!selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO')) {
+                            e.preventDefault();
+                            alert("El PDF se está generando. Por favor, espere unos segundos y actualice.");
+                          }
+                        }}
+                      >
+                        <FileText className="h-5 w-5 mr-3" />
+                        Ver Remito PDF
+                      </a>
+                   </div>
                 )}
               </div>
 

@@ -36,6 +36,7 @@ class OrdenPreparacionResponse(BaseModel):
     observaciones: Optional[str] = None
     bultos: List[OrdenPreparacionBultoResponse] = []
     ruta: Optional[RutaResponse] = None
-
+    pedido: Optional[dict] = None # Using dict to avoid circular deps for now, or just basic info
+    
     class Config:
         from_attributes = True
