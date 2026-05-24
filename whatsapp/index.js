@@ -1,10 +1,24 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
+const { 
+    default: makeWASocket, 
+    useMultiFileAuthState, 
+    DisconnectReason, 
+    Browsers, 
+    fetchLatestBaileysVersion,
+    downloadMediaMessage
+} = require("@whiskeysockets/baileys");
 const qrcodeTerminal = require("qrcode-terminal");
-const QRCode = require("qrcode"); // For base64 generation
+const QRCode = require("qrcode");
 const axios = require("axios");
 const pino = require("pino");
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const OpenAI = require("openai");
 require('dotenv').config();
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Simple state management
 let currentQR = null;
@@ -90,17 +104,39 @@ async function connectToWhatsApp() {
         if (senderJid.endsWith('@lid')) {
             // Check if there's a stored PN in the message
             // or if we can get it from the contact info
-            const contact = messages[0].key.participant || messages[0].participant || '';
+            const contact = m.key.participant || m.participant || '';
             if (contact && contact.includes('@s.whatsapp.net')) {
                 fromNumber = contact;
-            } else {
-                // Fallback: search for any PN string in the raw message object if possible
-                // For now, let's log the full 'm' to find where sender_pn is hidden
-                // console.log('DEBUG LID Message:', JSON.stringify(m, null, 2));
             }
         }
 
-        const body = m.message.conversation || m.message.extendedTextMessage?.text;
+        let body = m.message.conversation || m.message.extendedTextMessage?.text;
+
+        // --- NEW: Audio / Voice Note Handling ---
+        const isAudio = m.message.audioMessage;
+        if (isAudio) {
+            console.log(`Audio detectado de ${pushName} (${fromNumber}). Transcribiendo...`);
+            try {
+                const buffer = await downloadMediaMessage(m, 'buffer', {});
+                const tempFile = path.join('/tmp', `audio_${Date.now()}.ogg`);
+                fs.writeFileSync(tempFile, buffer);
+
+                const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream(tempFile),
+                    model: "whisper-1",
+                });
+                
+                body = transcription.text;
+                console.log(`Transcripción Exitosa: "${body}"`);
+                
+                // Cleanup
+                fs.unlinkSync(tempFile);
+            } catch (err) {
+                console.error("Error procesando audio:", err.message);
+                // We don't return here so it can still try to process any text if it was a hybrid? 
+                // Usually it's either text or audio.
+            }
+        }
 
         if (body) {
             console.log(`Mensaje de ${pushName} (${fromNumber}): ${body}`);

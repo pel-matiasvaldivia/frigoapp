@@ -2,8 +2,8 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Install git (required by some baileys dependencies)
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# Install git and ffmpeg (required for audio processing)
+RUN apt-get update && apt-get install -y git ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY package*.json ./
