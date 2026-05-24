@@ -197,11 +197,24 @@ def scan_bulto(
     if action == "CARGA":
         bulto.estado_logistico = "CARGADO"
         bulto.fecha_carga = datetime.datetime.utcnow()
+        # Update parent Pedido status to "En reparto"
+        if bulto.orden.pedido.estado == "Listo para despacho":
+            bulto.orden.pedido.estado = "En reparto"
+            
     elif action == "ENTREGA":
         bulto.estado_logistico = "ENTREGADO"
         bulto.fecha_entrega = datetime.datetime.utcnow()
+        # Check if all bultos are entregados
+        all_done = all(b.estado_logistico == "ENTREGADO" for b in bulto.orden.bultos)
+        if all_done:
+            bulto.orden.pedido.estado = "Entregado"
     else:
         raise HTTPException(status_code=400, detail="Acción no válida")
     
     db.commit()
-    return {"status": "ok", "new_state": bulto.estado_logistico}
+    return {
+        "status": "ok", 
+        "new_state": bulto.estado_logistico,
+        "pedido_id": bulto.orden.pedido.id,
+        "pedido_estado": bulto.orden.pedido.estado
+    }

@@ -14,6 +14,7 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<'CARGA' | 'ENTREGA'>('CARGA');
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const processingRef = useRef<boolean>(false);
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode("reader");
@@ -43,11 +44,13 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
   }, []);
 
   const onScanSuccess = async (decodedText: string) => {
-    if (loading || scanResult) return; // Prevent multiple scans while processing
+    if (processingRef.current) return; // Super fast block
+    processingRef.current = true;
 
     // Expected format: "TRK-XXXXXXXX"
     if (!decodedText.startsWith("TRK-")) {
       setError("Código QR no válido para bultos");
+      processingRef.current = false; // Release lock
       return;
     }
 
@@ -63,6 +66,7 @@ export const BultoScanner: React.FC<BultoScannerProps> = ({ onClose, onSuccess }
       // Automatic reset after 2 seconds
       setTimeout(() => {
         setScanResult(null);
+        processingRef.current = false; // Release lock after cooldown
         if (onSuccess) onSuccess();
       }, 2000);
 
