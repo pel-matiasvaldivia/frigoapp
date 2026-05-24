@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import datetime
+import uuid
 
 from app.core.database import get_db
 from app.core.security import get_current_user, RoleChecker
@@ -11,6 +12,7 @@ from app.models.usuario import Usuario
 from app.models.comprobante import Comprobante
 from app.models.configuracion import ConfiguracionSistema
 from app.core.celery_app import generar_pdf_comprobante_task, enviar_notificacion_factura_task
+from app.utils.label_generator import generate_labels_pdf
 from app.schemas.preparacion import OrdenPreparacionResponse, OrdenPreparacionUpdate
 
 router = APIRouter(prefix="/preparacion", tags=["Preparación de Bultos"])
@@ -87,6 +89,8 @@ def update_orden_preparacion(
         if bulto_db:
             bulto_db.peso_real_kg = bulto_in.peso_real_kg
             bulto_db.confirmado = bulto_in.confirmado
+            if bulto_in.confirmado and not bulto_db.tracking_uuid:
+                bulto_db.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
             
             # Keep parent PedidoItem weight synced
             item_db = next((it for it in pedido.items if it.producto_id == bulto_db.producto_id), None)
@@ -144,3 +148,60 @@ def update_orden_preparacion(
     db.refresh(prep)
     db.refresh(pedido)
     return prep
+
+@router.get("/{orden_id}/labels")
+def get_order_labels(
+    orden_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    orden = db.query(OrdenPreparacion).filter(OrdenPreparacion.id == orden_id).first()
+    if not orden:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+        
+    # Only allow if completed
+    if orden.estado != "Completado":
+        raise HTTPException(status_code=400, detail="La orden debe estar completada para generar etiquetas")
+        
+    pdf_path = generate_labels_pdf(db, orden, orden.bultos)
+    return {"pdf_path": pdf_path}
+
+@router.get("/bulto/{tracking_uuid}")
+def get_bulto_by_tracking(
+    tracking_uuid: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    bulto = db.query(OrdenPreparacionBulto).filter(OrdenPreparacionBulto.tracking_uuid == tracking_uuid).first()
+    if not bulto:
+        raise HTTPException(status_code=404, detail="Bulto no encontrado")
+    return {
+        "id": bulto.id,
+        "producto": bulto.producto.descripcion,
+        "peso": bulto.peso_real_kg,
+        "estado_logistico": bulto.estado_logistico,
+        "cliente": bulto.orden.pedido.cliente.razon_social
+    }
+
+@router.post("/scan/{tracking_uuid}")
+def scan_bulto(
+    tracking_uuid: str,
+    action: str, # "CARGA", "ENTREGA"
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    bulto = db.query(OrdenPreparacionBulto).filter(OrdenPreparacionBulto.tracking_uuid == tracking_uuid).first()
+    if not bulto:
+        raise HTTPException(status_code=404, detail="Bulto no encontrado")
+    
+    if action == "CARGA":
+        bulto.estado_logistico = "CARGADO"
+        bulto.fecha_carga = datetime.datetime.utcnow()
+    elif action == "ENTREGA":
+        bulto.estado_logistico = "ENTREGADO"
+        bulto.fecha_entrega = datetime.datetime.utcnow()
+    else:
+        raise HTTPException(status_code=400, detail="Acción no válida")
+    
+    db.commit()
+    return {"status": "ok", "new_state": bulto.estado_logistico}

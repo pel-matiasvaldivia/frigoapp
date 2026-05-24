@@ -93,6 +93,10 @@ export const preparacionAPI = {
   list: async (filters: Record<string, unknown> = {}) => (await api.get('/preparacion/', { params: filters })).data,
   get: async (id: number) => (await api.get(`/preparacion/${id}`)).data,
   update: async (id: number, data: Record<string, unknown>) => (await api.put(`/preparacion/${id}`, data)).data,
+  getEtiquetas: async (id: number) => (await api.get(`/preparacion/${id}/labels`)).data,
+  getBulto: async (uuid: string) => (await api.get(`/preparacion/bulto/${uuid}`)).data,
+  escanearBulto: async (uuid: string, action: 'CARGA' | 'ENTREGA') => 
+    (await api.post(`/preparacion/scan/${uuid}`, null, { params: { action } })).data,
 };
 
 export const comprobantesAPI = {

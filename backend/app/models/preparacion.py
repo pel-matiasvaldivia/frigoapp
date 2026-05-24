@@ -28,6 +28,12 @@ class OrdenPreparacionBulto(Base):
     peso_estimado_kg = Column(Float, default=0.0)
     peso_real_kg = Column(Float, default=0.0)
     confirmado = Column(Boolean, default=False)
+    
+    # Traceability
+    tracking_uuid = Column(String, unique=True, index=True, nullable=True)
+    estado_logistico = Column(String, default="PREPARADO")  # "PREPARADO", "CARGADO", "ENTREGADO"
+    fecha_carga = Column(DateTime, nullable=True)
+    fecha_entrega = Column(DateTime, nullable=True)
 
     # Relationships
     orden = relationship("OrdenPreparacion", back_populates="bultos")

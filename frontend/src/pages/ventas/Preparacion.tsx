@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   Scale,
   FileText,
-  Printer
+  Printer,
+  QrCode
 } from 'lucide-react';
 
 export const Preparacion: React.FC = () => {
@@ -119,6 +120,20 @@ export const Preparacion: React.FC = () => {
       fetchOrdenes();
     } catch (err) {
       alert("Error al guardar cambios de preparación");
+    }
+  };
+
+  const handlePrintLabels = async () => {
+    if (!selectedOrden) return;
+    try {
+      const res = await preparacionAPI.getEtiquetas(selectedOrden.id);
+      if (res.pdf_path) {
+        window.open(res.pdf_path, '_blank');
+      } else {
+        alert("No se pudo generar el PDF de etiquetas.");
+      }
+    } catch {
+      alert("Error al generar etiquetas. Verifique que la orden esté completada.");
     }
   };
 
@@ -255,6 +270,13 @@ export const Preparacion: React.FC = () => {
                         <FileText className="h-5 w-5 mr-3" />
                         Ver Remito PDF
                       </a>
+                      <button
+                        onClick={handlePrintLabels}
+                        className="flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm"
+                      >
+                        <QrCode className="h-5 w-5 mr-3" />
+                        Etiquetas QR
+                      </button>
                    </div>
                 )}
               </div>

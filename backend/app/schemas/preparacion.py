@@ -23,6 +23,10 @@ class OrdenPreparacionBultoResponse(BaseModel):
     peso_real_kg: float
     confirmado: bool
     producto: Optional[ProductoResponse] = None
+    tracking_uuid: Optional[str] = None
+    estado_logistico: Optional[str] = "PREPARADO"
+    fecha_carga: Optional[datetime] = None
+    fecha_entrega: Optional[datetime] = None
 
     class Config:
         from_attributes = True
