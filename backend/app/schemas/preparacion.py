@@ -27,6 +27,26 @@ class OrdenPreparacionBultoResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ComprobanteBasic(BaseModel):
+    id: int
+    tipo: str
+    numero: str
+    pdf_path: Optional[str] = None
+    estado: str
+
+    class Config:
+        from_attributes = True
+
+class PedidoBasicInfo(BaseModel):
+    id: int
+    cliente_id: int
+    estado: str
+    total: float
+    comprobantes: List[ComprobanteBasic] = []
+
+    class Config:
+        from_attributes = True
+
 class OrdenPreparacionResponse(BaseModel):
     id: int
     pedido_id: int
@@ -36,7 +56,7 @@ class OrdenPreparacionResponse(BaseModel):
     observaciones: Optional[str] = None
     bultos: List[OrdenPreparacionBultoResponse] = []
     ruta: Optional[RutaResponse] = None
-    pedido: Optional[dict] = None # Using dict to avoid circular deps for now, or just basic info
+    pedido: Optional[PedidoBasicInfo] = None
     
     class Config:
         from_attributes = True
