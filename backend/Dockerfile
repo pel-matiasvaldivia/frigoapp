@@ -36,10 +36,15 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 # Copy application
 COPY app ./app
 
+# Copy and configure entrypoint (runs DB migrations on startup)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Create uploads directory and ensure correct permissions
 RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app/uploads && chmod -R 777 /app/uploads
 
 USER appuser
 
 EXPOSE 8000
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
