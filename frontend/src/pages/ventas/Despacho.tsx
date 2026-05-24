@@ -8,12 +8,15 @@ import {
   Phone, 
   Package,
   FileText,
-  PenLine
+  PenLine,
+  QrCode
 } from 'lucide-react';
+import { BultoScanner } from '../../components/Scanner/BultoScanner';
 
 export const Despacho: React.FC = () => {
   const [hojaRuta, setHojaRuta] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   // Delivery modal
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
@@ -131,7 +134,7 @@ export const Despacho: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-brand-50 rounded-2xl text-brand-600">
             <Truck className="h-8 w-8" />
@@ -141,7 +144,22 @@ export const Despacho: React.FC = () => {
             <p className="text-slate-500 text-sm mt-1 font-medium">Gestión de entregas y seguimiento de logística en tiempo real.</p>
           </div>
         </div>
+        
+        <button
+          onClick={() => setScannerOpen(true)}
+          className="w-full md:w-auto flex items-center justify-center px-8 py-4 bg-brand-600 text-white font-black text-sm rounded-2xl hover:bg-brand-700 transition-all shadow-xl shadow-brand-900/20 active:scale-95 uppercase tracking-widest"
+        >
+          <QrCode className="h-5 w-5 mr-3" />
+          Escanear Bultos (QR)
+        </button>
       </div>
+
+      {scannerOpen && (
+        <BultoScanner 
+          onClose={() => setScannerOpen(false)} 
+          onSuccess={() => fetchHojaRuta()} 
+        />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">

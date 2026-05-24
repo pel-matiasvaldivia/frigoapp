@@ -108,6 +108,7 @@ const HomeRedirect: React.FC = () => {
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.rol === 'CLIENTE') return <Navigate to="/mis-pedidos" replace />;
+  if (user.rol === 'REPARTIDOR') return <Navigate to="/despacho" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
