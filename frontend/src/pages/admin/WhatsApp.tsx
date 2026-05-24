@@ -49,7 +49,7 @@ export const WhatsAppAdmin: React.FC = () => {
 
   const handleValidate = async (pedidoId: number) => {
     try {
-      await api.patch(`/pedidos/${pedidoId}/`, { estado: 'Pendiente de preparación' });
+      await api.put(`/pedidos/${pedidoId}`, { estado: 'Pendiente de preparación' });
       fetchPendingOrders();
     } catch (err) {
       console.error("Error al validar pedido:", err);
@@ -60,7 +60,7 @@ export const WhatsAppAdmin: React.FC = () => {
   const handleDiscard = async (pedidoId: number) => {
     if (!confirm("¿Está seguro de descartar este pedido?")) return;
     try {
-      await api.delete(`/pedidos/${pedidoId}/`);
+      await api.delete(`/pedidos/${pedidoId}`);
       fetchPendingOrders();
     } catch (err) {
       console.error("Error al descartar pedido:", err);
