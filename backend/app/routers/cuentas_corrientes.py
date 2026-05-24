@@ -92,3 +92,20 @@ def registrar_pago(
     db.commit()
     db.refresh(mov)
     return mov
+@router.patch("/cliente/{cliente_id}/limite-credito", response_model=dict)
+def update_limite_credito(
+    cliente_id: int,
+    nuevo_limite: float,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_staff)
+):
+    """
+    Update the credit limit for a specific client.
+    """
+    cc = db.query(CuentaCorriente).filter(CuentaCorriente.cliente_id == cliente_id).first()
+    if not cc:
+        raise HTTPException(status_code=404, detail="Cuenta corriente no encontrada")
+        
+    cc.limite_credito = nuevo_limite
+    db.commit()
+    return {"status": "ok", "nuevo_limite": cc.limite_credito}

@@ -116,6 +116,8 @@ export const cuentasCorrientesAPI = {
   getCliente: async (clienteId: number) => (await api.get(`/cuentas-corrientes/cliente/${clienteId}`)).data,
   pagar: async (clienteId: number, data: Record<string, unknown>) =>
     (await api.post(`/cuentas-corrientes/cliente/${clienteId}/pagar`, data)).data,
+  updateLimiteCredito: async (clienteId: number, nuevoLimite: number) =>
+    (await api.patch(`/cuentas-corrientes/cliente/${clienteId}/limite-credito`, null, { params: { nuevo_limite: nuevoLimite } })).data,
 };
 
 export const rutasAPI = {
