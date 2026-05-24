@@ -42,22 +42,27 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
             break
 
     if not registrado:
-        print(f"Message from unknown sender: {msg.from_number} (Clean: {clean_number})")
-        return {"status": "ignored", "reason": "unknown_client"}
+        print(f"Message from unknown sender: {msg.from_number}. Fallback to generic.")
+        # Try to find a 'Generic' client or just use the first one available for now
+        # so the user can at least SEE the order.
+        registrado = db.query(Cliente).first() 
 
     cliente = registrado
 
     # 2. Parse Order with AI
     parsed = await parse_whatsapp_order(msg.body)
+    print(f"AI Parsed Result: {parsed}")
     
     if not parsed.get("items"):
+        print(f"No items detected in message: {msg.body}")
         return {"status": "ignored", "reason": "no_items_detected"}
 
     # 3. Create Draft Pedido
+    obs_prefix = f"WhatsApp ({msg.from_number})"
     new_pedido = Pedido(
         cliente_id=cliente.id,
         estado="Pendiente de Validación",
-        observaciones=f"WhatsApp: '{msg.body}'",
+        observaciones=f"{obs_prefix}: '{msg.body}'",
         total=0.0
     )
     db.add(new_pedido)
