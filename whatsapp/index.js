@@ -77,25 +77,41 @@ async function connectToWhatsApp() {
         const m = messages[0];
         if (!m.message || m.key.fromMe) return;
 
-        // Correctly extract the actual phone number (avoid LID JIDs)
-        let senderJid = m.key.remoteJid;
+        const senderJid = m.key.remoteJid;
+        const pushName = m.pushName || 'Usuario WhatsApp';
         
-        // If it's an LID message, the phone number might be in the 'participant' or we can try to derive it
-        // In recent Baileys, standard messages from contacts are often translated to LID
-        // We want the string like '549261...'
+        // WhatsApp is using LID (Linked Identity) instead of PN (Phone Number) JIDs.
+        // We need to extract the real phone number if it's an LID.
+        let fromNumber = senderJid;
+        
+        // If it's an LID, try to find the PN in the message metadata
+        // In the logs we saw "sender_pn". Baileys stores this in some places.
+        // If the JID ends in @lid, we try to get the PN from the message info.
+        if (senderJid.endsWith('@lid')) {
+            // Check if there's a stored PN in the message
+            // or if we can get it from the contact info
+            const contact = messages[0].key.participant || messages[0].participant || '';
+            if (contact && contact.includes('@s.whatsapp.net')) {
+                fromNumber = contact;
+            } else {
+                // Fallback: search for any PN string in the raw message object if possible
+                // For now, let's log the full 'm' to find where sender_pn is hidden
+                // console.log('DEBUG LID Message:', JSON.stringify(m, null, 2));
+            }
+        }
+
         const body = m.message.conversation || m.message.extendedTextMessage?.text;
 
         if (body) {
-            const pushName = m.pushName || 'Usuario WhatsApp';
-            console.log(`Mensaje de ${pushName} (${senderJid}): ${body}`);
+            console.log(`Mensaje de ${pushName} (${fromNumber}): ${body}`);
             
             try {
                 await axios.post(`${BACKEND_URL}/api/whatsapp/webhook`, {
-                    from: senderJid, // We'll let the backend try to match this
+                    from: fromNumber,
                     body: body,
                     sender: { 
                         name: pushName,
-                        number: senderJid
+                        number: fromNumber
                     },
                     timestamp: m.messageTimestamp
                 });
