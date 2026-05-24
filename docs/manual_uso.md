@@ -49,11 +49,11 @@ El transportista gestiona la logística final.
 
 ---
 
-## 4. Nuevo Canal: WhatsApp Business + AI
-Ahora los clientes pueden enviar pedidos por mensaje de texto.
-- **Vincular Sesión:** En `Admin > WhatsApp`, escanee el código QR para conectar el bot.
+## 4. Nuevo Canal: WhatsApp Business (Baileys)
+El sistema integra WhatsApp sin necesidad de un navegador abierto, usando una infraestructura ligera.
+- **Vincular Sesión:** Al iniciar el contenedor `whatsapp-bot` o el servicio en la VM, el código QR aparecerá en los **logs** (ej: `docker-compose logs -f whatsapp-bot`). Escanéelo para vincular la cuenta.
 - **Detección Automática:** El sistema utiliza Inteligencia Artificial (GPT-4o) para entender el pedido (ej: "mandame 2 bondiolas y 5kg de asado").
-- **Validación:** Los pedidos recibidos aparecen en la lista de "Pedidos Detectados". Usted solo debe revisar que los productos coincidan y presionar **"Validar Pedido"** para que entre al flujo normal de preparación.
+- **Validación:** Los pedidos recibidos aparecen en la lista de "Pedidos Detectados" (o "Pendientes de Validación"). Usted solo debe revisar que los productos coincidan y presionar **"Validar Pedido"** para que entre al flujo normal de preparación.
 
 ---
 
