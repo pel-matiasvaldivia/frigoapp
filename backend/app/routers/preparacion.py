@@ -96,10 +96,10 @@ def update_orden_preparacion(
                     item_db.subtotal = round(item_db.precio_unitario * bulto_in.peso_real_kg, 2)
             
     # 3. Finalize and Auto-generate Remito
-    if prep.estado == "Completado" and old_state != "Completado":
+    if prep.estado == "Completado":
         pedido.total = round(sum(it.subtotal for it in pedido.items), 2)
         
-        # Check if remito already exists
+        # Check if remito already exists (any active remito)
         existing_comp = db.query(Comprobante).filter(
             Comprobante.pedido_id == pedido.id,
             Comprobante.tipo == "REMITO",
@@ -107,6 +107,7 @@ def update_orden_preparacion(
         ).first()
         
         if not existing_comp:
+            print(f"[Auto-Remito] Iniciando generación automática para Pedido #{pedido.id}")
             # Generate numbering
             config_num = db.query(ConfiguracionSistema).filter(ConfiguracionSistema.clave == "NUM_REMITO_SIGUIENTE").first()
             next_num = 1
@@ -131,10 +132,13 @@ def update_orden_preparacion(
             # Trigger tasks
             try:
                 generar_pdf_comprobante_task.delay(new_comp.id)
+                print(f"[Auto-Remito] Tarea de PDF encolada para Comprobante #{new_comp.id}")
                 if pedido.cliente.telefono_whatsapp:
                     enviar_notificacion_factura_task.delay(pedido.cliente_id, new_comp.id)
             except Exception as e:
                 print(f"[Auto-Remito] Error triggering tasks: {e}")
+        else:
+            print(f"[Auto-Remito] El pedido #{pedido.id} ya tiene un remito activo (N° {existing_comp.numero})")
 
     db.commit()
     db.refresh(prep)
