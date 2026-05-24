@@ -128,8 +128,8 @@ export const Preparacion: React.FC = () => {
     try {
       const res = await preparacionAPI.getEtiquetas(selectedOrden.id);
       if (res.pdf_path) {
-        // Build absolute URL to bypass React Router interception
-        const absoluteUrl = `${window.location.origin}${res.pdf_path}`;
+        // Build absolute URL with cache-busting timestamp to bypass Service Worker interception
+        const absoluteUrl = `${window.location.origin}${res.pdf_path}?t=${new Date().getTime()}`;
         window.open(absoluteUrl, '_blank');
       } else {
         alert("No se pudo generar el PDF de etiquetas.");
@@ -249,8 +249,10 @@ export const Preparacion: React.FC = () => {
 
                 {selectedOrden.estado === 'Completado' && (
                    <div className="flex space-x-3">
-                     <a
-                        href={selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO')?.pdf_path || '#'}
+                      <a
+                        href={selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO')?.pdf_path 
+                          ? `${window.location.origin}${selectedOrden.pedido.comprobantes.find((c: any) => c.tipo === 'REMITO').pdf_path}?t=${new Date().getTime()}` 
+                          : '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest ${
