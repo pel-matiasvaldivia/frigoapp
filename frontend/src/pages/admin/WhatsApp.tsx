@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, QrCode, CheckCircle2, XCircle, 
   RefreshCw, Smartphone, ShieldCheck, AlertCircle,
