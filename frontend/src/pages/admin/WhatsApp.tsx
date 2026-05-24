@@ -47,6 +47,27 @@ export const WhatsAppAdmin: React.FC = () => {
     }
   };
 
+  const handleValidate = async (pedidoId: number) => {
+    try {
+      await api.patch(`/pedidos/${pedidoId}/`, { estado: 'Pendiente de preparación' });
+      fetchPendingOrders();
+    } catch (err) {
+      console.error("Error al validar pedido:", err);
+      alert("No se pudo validar el pedido");
+    }
+  };
+
+  const handleDiscard = async (pedidoId: number) => {
+    if (!confirm("¿Está seguro de descartar este pedido?")) return;
+    try {
+      await api.delete(`/pedidos/${pedidoId}/`);
+      fetchPendingOrders();
+    } catch (err) {
+      console.error("Error al descartar pedido:", err);
+      alert("No se pudo descartar el pedido");
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -186,11 +207,17 @@ export const WhatsAppAdmin: React.FC = () => {
                         ))}
                       </div>
                       <div className="flex space-x-3">
-                        <button className="flex items-center space-x-2 px-4 py-2 text-slate-400 hover:text-red-500 font-bold text-[10px] uppercase tracking-widest transition-all">
+                        <button 
+                          onClick={() => handleDiscard(pedido.id)}
+                          className="flex items-center space-x-2 px-4 py-2 text-slate-400 hover:text-red-500 font-bold text-[10px] uppercase tracking-widest transition-all"
+                        >
                           <XCircle className="h-4 w-4" />
                           <span>Descartar</span>
                         </button>
-                        <button className="flex items-center space-x-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-brand-900/10">
+                        <button 
+                          onClick={() => handleValidate(pedido.id)}
+                          className="flex items-center space-x-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-brand-900/10"
+                        >
                           <span>Validar Pedido</span>
                           <ArrowRight className="h-3.5 w-3.5" />
                         </button>
