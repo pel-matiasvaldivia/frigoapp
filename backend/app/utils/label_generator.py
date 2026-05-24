@@ -16,16 +16,24 @@ def generate_qr_image(data: str):
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=10,
-        border=0,
+        border=1,
     )
     qr.add_data(data)
     qr.make(fit=True)
     
-    img = qr.make_image(fill_color="black", back_color="white")
     buffer = BytesIO()
-    img.save(buffer, format='PNG')
+    try:
+        # Use PIL (Pillow) if available
+        img = qr.make_image(fill_color="black", back_color="white")
+        img.save(buffer)
+    except Exception:
+        # Fallback: write PNG bytes directly
+        img = qr.make_image()
+        img.save(buffer)
+    
     buffer.seek(0)
     return buffer
+
 
 def generate_labels_pdf(db, orden, bultos):
     """

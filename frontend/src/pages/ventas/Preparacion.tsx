@@ -128,7 +128,9 @@ export const Preparacion: React.FC = () => {
     try {
       const res = await preparacionAPI.getEtiquetas(selectedOrden.id);
       if (res.pdf_path) {
-        window.open(res.pdf_path, '_blank');
+        // Build absolute URL to bypass React Router interception
+        const absoluteUrl = `${window.location.origin}${res.pdf_path}`;
+        window.open(absoluteUrl, '_blank');
       } else {
         alert("No se pudo generar el PDF de etiquetas.");
       }
