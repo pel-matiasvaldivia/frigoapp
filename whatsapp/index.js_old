@@ -1,0 +1,72 @@
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
+const qrcode = require("qrcode-terminal");
+const axios = require("axios");
+const pino = require("pino");
+require('dotenv').config();
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8889';
+
+async function connectToWhatsApp() {
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    
+    const sock = makeWASocket({
+        printQRInTerminal: false, // We'll handle it manually
+        auth: state,
+        browser: ["FrigoApp", "Chrome", "1.0.0"],
+        logger: pino({ level: 'silent' })
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        
+        if (qr) {
+            console.log('--- SCAN THE QR CODE BELOW ---');
+            qrcode.generate(qr, { small: true });
+        }
+
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
+            if (shouldReconnect) {
+                connectToWhatsApp();
+            }
+        } else if (connection === 'open') {
+            console.log('✅ CONECTADO CON ÉXITO (MODO LIGERO)');
+        }
+    });
+
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+        
+        const m = messages[0];
+        if (!m.message || m.key.fromMe) return;
+
+        const sender = m.key.remoteJid;
+        // Extract text from standard conversation or extended text (links, buttons, etc)
+        const body = m.message.conversation || m.message.extendedTextMessage?.text;
+
+        if (body) {
+            const pushName = m.pushName || 'Usuario WhatsApp';
+            console.log(`Mensaje de ${pushName} (${sender}): ${body}`);
+            
+            try {
+                await axios.post(`${BACKEND_URL}/api/whatsapp/webhook`, {
+                    from: sender,
+                    body: body,
+                    sender: { 
+                        name: pushName,
+                        number: sender
+                    },
+                    timestamp: m.messageTimestamp
+                });
+                console.log('Enviado al backend ok.');
+            } catch (e) {
+                console.error("Error al notificar al backend:", e.message);
+            }
+        }
+    });
+}
+
+connectToWhatsApp().catch(err => console.log("Error fatal:", err));
