@@ -6,8 +6,9 @@ import {
   Search, 
   Eye, 
   AlertTriangle, 
-  CheckCircle,
+  CheckCircle2,
   FileSpreadsheet,
+  X,
   ArrowDownRight,
   ArrowUpRight
 } from 'lucide-react';
@@ -93,25 +94,25 @@ export const CuentasCorrientes: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in bg-slate-50/50 p-6 rounded-[2.5rem]">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-white">Cuentas Corrientes</h1>
-        <p className="text-slate-400 text-sm mt-1">Control de saldos, límites de créditos financieros y registro de cobranzas de clientes.</p>
-      </div>
-
-      {/* Searchbar */}
-      <div className="flex flex-wrap gap-4 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl items-center justify-between">
-        <div className="flex-1 min-w-[250px] relative">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-            <Search className="h-4 w-4" />
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Cuentas Corrientes</h1>
+          <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">Gestión de Saldos y Límites de Crédito</p>
+        </div>
+        
+        {/* Searchbar */}
+        <div className="relative min-w-[300px]">
+          <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+            <Search className="h-5 w-5" />
           </span>
           <input
             type="text"
-            placeholder="Buscar por cliente o CUIT..."
+            placeholder="BUSCAR CLIENTE O CUIT..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-350 focus:outline-none focus:border-rose-500 text-white"
+            className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-sm transition-all"
           />
         </div>
       </div>
@@ -122,7 +123,7 @@ export const CuentasCorrientes: React.FC = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600"></div>
         </div>
       ) : filteredCuentas.length === 0 ? (
-        <div className="border border-dashed border-slate-200 rounded-[2rem] p-16 text-center bg-slate-50/50">
+        <div className="border border-dashed border-slate-200 rounded-[2rem] p-16 text-center bg-white">
           <Coins className="h-16 w-16 text-slate-200 mx-auto mb-4" />
           <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">Sin Cuentas</h3>
           <p className="text-sm text-slate-400 mt-2 font-medium">No se encontraron clientes que coincidan con la búsqueda.</p>
@@ -148,7 +149,7 @@ export const CuentasCorrientes: React.FC = () => {
                    </span>
                 ) : (
                    <span className="shrink-0 flex items-center px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                      <CheckCircle className="h-3 w-3 mr-1" /> OK
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> OK
                    </span>
                 )}
               </div>
@@ -241,29 +242,31 @@ export const CuentasCorrientes: React.FC = () => {
 
       {/* Register Payment Modal Dialogue */}
       {payModalOpen && selectedClientPay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="pb-3 border-b border-slate-800 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white flex items-center">
-                <Coins className="h-5 w-5 mr-2 text-emerald-500" />
-                Registrar Cobro de Saldo
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-slate-100">
+            <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Registrar Cobro</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ingreso de fondos a CC</p>
+              </div>
               <button 
                 onClick={() => { setSelectedClientPay(null); setPayModalOpen(false); }}
-                className="text-slate-400 hover:text-white"
+                className="p-3 bg-slate-50 text-slate-400 hover:text-brand-600 rounded-2xl border border-slate-200 transition-all active:scale-90"
               >
-                Cerrar
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-850 text-xs">
-                <p><span className="text-slate-450">Cliente:</span> <strong className="text-white">{selectedClientPay.cliente_razon_social}</strong></p>
-                <p><span className="text-slate-450">Saldo actual:</span> <strong className="text-rose-400">${selectedClientPay.saldo_actual.toLocaleString('es-AR')}</strong></p>
+              <div className="p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cliente</p>
+                <p className="text-md font-black text-slate-900 uppercase">{selectedClientPay.cliente_razon_social}</p>
+                <p className="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p>
+                <p className="text-xl font-black text-rose-600">${selectedClientPay.saldo_actual.toLocaleString('es-AR')}</p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Monto a Cobrar ($)</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Monto a Cobrar ($)</label>
                 <input
                   type="number"
                   required
@@ -271,16 +274,17 @@ export const CuentasCorrientes: React.FC = () => {
                   step="0.01"
                   value={monto}
                   onChange={(e) => setMonto(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-rose-500"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Medio de Pago</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Medio de Pago</label>
                 <select
                   value={tipoPago}
                   onChange={(e) => setTipoPago(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="Transferencia">Transferencia Bancaria</option>
                   <option value="Efectivo">Efectivo en Mano</option>
@@ -289,40 +293,29 @@ export const CuentasCorrientes: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Referencia / N° Operación</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Referencia / N° Operación</label>
                 <input
                   type="text"
                   value={referencia}
                   onChange={(e) => setReferencia(e.target.value)}
-                  placeholder="Número de cheque o ID de transferencia..."
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Concepto / Descripción</label>
-                <input
-                  type="text"
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  placeholder="Ej: Pago de factura N°..."
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500"
+                  placeholder="ID DE TRANSACCIÓN O CHEQUE..."
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 />
               </div>
             </div>
 
-            <div className="flex space-x-3 pt-2">
+            <div className="flex gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => { setSelectedClientPay(null); setPayModalOpen(false); }}
-                className="flex-1 py-2 bg-slate-850 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl"
+                className="flex-1 py-4 bg-slate-50 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-2xl border border-slate-200 active:scale-95 transition-all"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handlePostPayment}
-                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md"
+                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-900/10 active:scale-95 transition-all"
               >
                 Registrar Pago
               </button>
@@ -333,49 +326,51 @@ export const CuentasCorrientes: React.FC = () => {
 
       {/* Account Statement Details Modal Dialogue */}
       {detailModalOpen && selectedAccountDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 max-h-[85vh] flex flex-col">
-            <div className="pb-3 border-b border-slate-800 flex justify-between items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-4xl bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
+            <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-bold text-white">Extracto de Cuenta Corriente</h3>
-                <p className="text-xs text-rose-500 font-semibold">{selectedAccountDetail.cliente_razon_social}</p>
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">Extracto Histórico</h3>
+                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-2">{selectedAccountDetail.cliente_razon_social}</p>
               </div>
               <button 
                 onClick={() => { setSelectedAccountDetail(null); setDetailModalOpen(false); }}
-                className="text-slate-400 hover:text-white"
+                className="p-3 bg-slate-50 text-slate-400 hover:text-brand-600 rounded-2xl border border-slate-200 transition-all active:scale-90"
               >
-                Cerrar
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
               {movements.length === 0 ? (
-                <p className="text-center text-xs text-slate-500 py-12">No hay movimientos comerciales registrados en esta cuenta</p>
+                <div className="py-20 text-center">
+                    <Coins className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No hay movimientos registrados</p>
+                </div>
               ) : (
-                <div className="border border-slate-800 rounded-xl overflow-hidden">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-950/50 text-slate-400 font-bold">
+                <div className="border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50/30">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
                       <tr>
-                        <th className="p-3">Fecha</th>
-                        <th className="p-3">Descripción</th>
-                        <th className="p-3">Ref</th>
-                        <th className="p-3 text-right">Débito (Factura)</th>
-                        <th className="p-3 text-right">Crédito (Pago)</th>
+                        <th className="p-5 border-b border-slate-100">Fecha</th>
+                        <th className="p-5 border-b border-slate-100">Descripción</th>
+                        <th className="p-5 border-b border-slate-100">Referencia</th>
+                        <th className="p-5 border-b border-slate-100 text-right">Monto</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800">
+                    <tbody className="divide-y divide-slate-100">
                       {movements.map((mov) => (
-                        <tr key={mov.id} className="text-slate-300">
-                          <td className="p-3 font-mono">{new Date(mov.fecha).toLocaleDateString('es-AR')}</td>
-                          <td className="p-3">
-                            <span className="block font-semibold">{mov.descripcion}</span>
+                        <tr key={mov.id} className="text-slate-600 hover:bg-white transition-colors">
+                          <td className="p-5 text-[10px] font-black tabular-nums">{new Date(mov.fecha).toLocaleDateString('es-AR')}</td>
+                          <td className="p-5">
+                            <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{mov.descripcion}</span>
+                            <span className={`ml-3 px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${mov.tipo === 'DEBITO' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                {mov.tipo === 'DEBITO' ? 'VENTA' : 'COBRO'}
+                            </span>
                           </td>
-                          <td className="p-3 font-mono text-slate-450">{mov.referencia}</td>
-                          <td className="p-3 text-right text-rose-400 font-mono">
-                            {mov.tipo === 'DEBITO' ? `$${mov.monto.toLocaleString('es-AR')}` : '-'}
-                          </td>
-                          <td className="p-3 text-right text-emerald-450 font-mono">
-                            {mov.tipo === 'CREDITO' ? `$${mov.monto.toLocaleString('es-AR')}` : '-'}
+                          <td className="p-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{mov.referencia}</td>
+                          <td className={`p-5 text-right font-black tabular-nums ${mov.tipo === 'DEBITO' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            {mov.tipo === 'DEBITO' ? '-' : '+'}${mov.monto.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
@@ -385,11 +380,19 @@ export const CuentasCorrientes: React.FC = () => {
               )}
             </div>
 
-            <div className="border-t border-slate-800 pt-4 flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-bold uppercase">Saldo Acumulado Total:</span>
-              <strong className={`text-sm font-extrabold ${selectedAccountDetail.saldo_actual > 0 ? 'text-rose-405' : 'text-emerald-405'}`}>
-                ${selectedAccountDetail.saldo_actual.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-              </strong>
+            <div className="bg-slate-900 rounded-[1.5rem] p-6 flex justify-between items-center shadow-xl">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Saldo Acumulado Total</p>
+                <p className="text-xs text-brand-500 font-bold uppercase">Balance Final en CC</p>
+              </div>
+              <div className="text-right">
+                <p className={`text-3xl font-black tracking-tighter ${selectedAccountDetail.saldo_actual > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  ${Math.abs(selectedAccountDetail.saldo_actual).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                    {selectedAccountDetail.saldo_actual > 0 ? 'DEUDA PENDIENTE' : 'SALDO A FAVOR'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
