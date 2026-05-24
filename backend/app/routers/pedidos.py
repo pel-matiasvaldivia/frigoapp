@@ -224,23 +224,70 @@ def update_pedido(
     Update order details.
     Trigger preparation order creation if status moves to 'Pendiente de preparación'
     and it doesn't already have one.
+    Supports updating items (syncing).
     """
     pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
-        
+    
     old_status = pedido.estado
     
-    for field, value in pedido_in.model_dump(exclude_unset=True).items():
+    # 1. Update basic fields
+    update_data = pedido_in.model_dump(exclude_unset=True)
+    if "items" in update_data:
+        items_in = update_data.pop("items")
+        # Sync items
+        # Delete old items
+        db.query(PedidoItem).filter(PedidoItem.pedido_id == pedido.id).delete()
+        
+        # Add new items
+        new_total = 0.0
+        cliente = pedido.cliente
+        
+        for item_in in items_in:
+            # Lookup price
+            det = db.query(ListaPreciosDetalle).filter(
+                ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
+                ListaPreciosDetalle.producto_id == item_in["producto_id"]
+            ).first()
+            
+            if not det:
+                 raise HTTPException(
+                    status_code=400,
+                    detail=f"El producto ID {item_in['producto_id']} no tiene precio para este cliente"
+                )
+            
+            precio_unit = det.precio_venta
+            weight_est = item_in.get("peso_estimado_kg") or (item_in["cantidad_unidades"] * 10.0)
+            sub = round(precio_unit * weight_est, 2)
+            
+            db_item = PedidoItem(
+                pedido_id=pedido.id,
+                producto_id=item_in["producto_id"],
+                cantidad_unidades=item_in["cantidad_unidades"],
+                peso_estimado_kg=weight_est,
+                precio_unitario=precio_unit,
+                subtotal=sub
+            )
+            db.add(db_item)
+            new_total += sub
+        
+        pedido.total = new_total
+
+    # Update other fields (estado, observaciones)
+    for field, value in update_data.items():
         setattr(pedido, field, value)
     
-    # Logic to trigger preparation if validated from WhatsApp
+    # 2. Logic to trigger preparation if validated
     if pedido.estado == "Pendiente de preparación" and old_status != "Pendiente de preparación":
         if not pedido.orden_preparacion:
-            cliente = pedido.cliente
+            # Refresh to ensure items are loaded if updated
+            db.flush()
+            db.refresh(pedido)
+            
             prep_order = OrdenPreparacion(
                 pedido_id=pedido.id,
-                ruta_id=cliente.ruta_id if cliente else None,
+                ruta_id=pedido.cliente.ruta_id if pedido.cliente else None,
                 fecha_despacho=datetime.datetime.utcnow(),
                 estado="Pendiente",
                 observaciones=pedido.observaciones
@@ -248,7 +295,7 @@ def update_pedido(
             db.add(prep_order)
             db.flush()
             
-            # Create bultos
+            # Create bultos from items
             for item in pedido.items:
                 bulto = OrdenPreparacionBulto(
                     orden_id=prep_order.id,
