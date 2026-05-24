@@ -39,7 +39,7 @@ if settings.CORS_ORIGINS:
 
 # 4. Mount Uploads folder for direct static serving of PDFs in case Nginx is not fully up
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 # 5. Register Routers
 app.include_router(auth.router, prefix=settings.API_V1_STR)

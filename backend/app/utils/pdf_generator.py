@@ -232,4 +232,4 @@ def generate_pdf_for_comprobante(db: Session, comprobante: Comprobante) -> str:
     doc.build(story)
     
     # Return relative URL path
-    return f"/uploads/{filename}"
+    return f"/api/uploads/{filename}"

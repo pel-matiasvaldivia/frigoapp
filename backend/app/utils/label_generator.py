@@ -103,4 +103,4 @@ def generate_labels_pdf(db, orden, bultos):
             story.append(PageBreak())
 
     doc.build(story)
-    return f"/uploads/{filename}"
+    return f"/api/uploads/{filename}"
