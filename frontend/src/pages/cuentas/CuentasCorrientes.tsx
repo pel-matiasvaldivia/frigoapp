@@ -380,16 +380,16 @@ export const CuentasCorrientes: React.FC = () => {
               )}
             </div>
 
-            <div className="bg-slate-900 rounded-[1.5rem] p-6 flex justify-between items-center shadow-xl">
+            <div className="bg-slate-50 rounded-[1.5rem] p-8 flex justify-between items-center border border-slate-100">
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Saldo Acumulado Total</p>
-                <p className="text-xs text-brand-500 font-bold uppercase">Balance Final en CC</p>
+                <p className="text-xs text-brand-600 font-bold uppercase tracking-tight">Balance Final en CC</p>
               </div>
               <div className="text-right">
-                <p className={`text-3xl font-black tracking-tighter ${selectedAccountDetail.saldo_actual > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                <p className={`text-4xl font-black tracking-tighter ${selectedAccountDetail.saldo_actual > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                   ${Math.abs(selectedAccountDetail.saldo_actual).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
                     {selectedAccountDetail.saldo_actual > 0 ? 'DEUDA PENDIENTE' : 'SALDO A FAVOR'}
                 </p>
               </div>
