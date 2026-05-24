@@ -42,10 +42,17 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
             break
 
     if not registrado:
-        print(f"Message from unknown sender: {msg.from_number}. Fallback to generic.")
-        # Try to find a 'Generic' client or just use the first one available for now
-        # so the user can at least SEE the order.
-        registrado = db.query(Cliente).first() 
+        print(f"Message from unknown sender: {msg.from_number}. Trying name match: {msg.sender}")
+        # Fallback 2: Try to match by Name (pushName)
+        if msg.sender and msg.sender.get("name"):
+            clean_name = msg.sender["name"].split(" ")[0].strip() # Take first word (e.g. Marisol)
+            registrado = db.query(Cliente).filter(
+                Cliente.razon_social.ilike(f"%{clean_name}%")
+            ).first()
+            
+        if not registrado:
+            print("No name match found either. Fallback to first client.")
+            registrado = db.query(Cliente).first() 
 
     cliente = registrado
 
