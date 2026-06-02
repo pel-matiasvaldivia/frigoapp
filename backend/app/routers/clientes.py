@@ -75,34 +75,68 @@ async def import_clientes(
 
     reader = csv.DictReader(io.StringIO(decoded), delimiter=';')
     
+    # Try to detect if the delimiter is different (if first row has no known headers)
+    first_row = next(reader, None)
+    if first_row and len(first_row) == 1 and ',' in list(first_row.keys())[0]:
+        # Likely comma delimited
+        reader = csv.DictReader(io.StringIO(decoded), delimiter=',')
+    else:
+        # Reset reader if first row was okay or just use semicolon
+        reader = csv.DictReader(io.StringIO(decoded), delimiter=';')
+
     imported_count = 0
     errors = []
     
     for i, row in enumerate(reader):
         try:
-            # Basic validation
-            razon_social = row.get("razon_social", "").strip()
+            # Helper to get value from multiple possible keys (aliases)
+            def get_val(prefixes):
+                for p in prefixes:
+                    for k in row.keys():
+                        if k and p.lower() in k.lower():
+                            return row[k]
+                return None
+
+            # Support aliases: Razón Social / Nombre / Cliente
+            razon_social = (get_val(["razon_social", "nombre", "cliente"]) or "").strip()
+            
             if not razon_social:
-                errors.append(f"Fila {i+1}: Razón Social es requerida")
+                # If the row is completely empty, just skip it
+                if not any(row.values()):
+                    continue
+                errors.append(f"Fila {i+1}: Razón Social/Nombre es requerida")
                 continue
                 
-            cuit = row.get("cuit", "").strip() or None
+            cuit = (get_val(["cuit"]) or "").strip() or None
             if cuit:
                 existing = db.query(Cliente).filter(Cliente.cuit == cuit).first()
                 if existing:
                     errors.append(f"Fila {i+1}: CUIT {cuit} ya existe")
                     continue
             
+            # Support aliases: Teléfono / Celular / WhatsApp / Numero
+            telefono = (get_val(["telefono", "celular", "whatsapp", "numero"]) or "").strip()
+            # Support aliases: Dirección / Calle / Domicilio
+            direccion = (get_val(["direccion", "domicilio", "calle", "address"]) or "Sin dirección").strip()
+
             # Convert numeric fields
-            ruta_id = int(row["ruta_id"]) if row.get("ruta_id") and row["ruta_id"].isdigit() else None
-            lista_id = int(row["lista_precios_id"]) if row.get("lista_precios_id") and row["lista_precios_id"].isdigit() else None
-            limite = float(row["limite_credito"]) if row.get("limite_credito") else 0.0
+            def get_num(prefixes, default=None):
+                val = get_val(prefixes)
+                if val and str(val).strip().isdigit():
+                    return int(str(val).strip())
+                return default
+
+            ruta_id = get_num(["ruta_id", "ruta"], None)
+            lista_id = get_num(["lista_precios_id", "lista"], None)
+            
+            limite_val = get_val(["limite_credito", "credito", "limite"])
+            limite = float(limite_val) if limite_val and str(limite_val).replace('.','',1).isdigit() else 0.0
             
             new_cliente = Cliente(
                 razon_social=razon_social,
                 cuit=cuit,
-                direccion=row.get("direccion", "Sin dirección"),
-                telefono_whatsapp=row.get("telefono_whatsapp"),
+                direccion=direccion,
+                telefono_whatsapp=telefono,
                 ruta_id=ruta_id,
                 lista_precios_id=lista_id,
                 limite_credito=limite,
@@ -121,7 +155,7 @@ async def import_clientes(
             imported_count += 1
             
         except Exception as e:
-            errors.append(f"Fila {i+1}: Error inesperado: {str(e)}")
+            errors.append(f"Fila {i+1}: Error: {str(e)}")
 
     db.commit()
     return {
