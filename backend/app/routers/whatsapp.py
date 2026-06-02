@@ -25,40 +25,31 @@ class WhatsAppMessage(BaseModel):
 @router.post("/webhook")
 async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
     # 1. Identify Client
-    # Extraction more robust: remove non-numeric chars or match subset
     clean_number = "".join(filter(str.isdigit, msg.from_number))
     
-    # Try to find a client whose number is contained in the sender's UID or vice versa
-    # This handles both standard JIDs (549...) and LIDs if the user has the ID in the db
-    cliente = db.query(Cliente).filter(
-        (Cliente.telefono_whatsapp.contains(clean_number)) | 
-        (Cliente.telefono_whatsapp != None) # Placeholder for more complex match
-    ).all()
+    # Strictly search for the number/LID in the database
+    # We match if the incoming number (clean) matches exactly or if one is contained in the other
+    # but ONLY if it's a long enough sequence to avoid collision
+    clientes = db.query(Cliente).filter(Cliente.telefono_whatsapp != None).all()
 
-    # Improved match: look for the digits of the client's phone inside the incoming JID
     registrado = None
-    for c in cliente:
-        if not c.telefono_whatsapp:
-            continue
+    for c in clientes:
         c_digits = "".join(filter(str.isdigit, c.telefono_whatsapp))
-        # Match if the client number is at the end of the incoming number (handling country codes)
-        # or if the incoming number is at the end of the client number
-        if c_digits and (clean_number.endswith(c_digits) or c_digits.endswith(clean_number)):
+        if not c_digits: continue
+        
+        # If incoming number is a real phone number
+        if len(clean_number) >= 8:
+            if clean_number.endswith(c_digits) or c_digits.endswith(clean_number):
+                registrado = c
+                break
+        # If it's a LID or shorter ID, we need exact match
+        elif clean_number == c_digits:
             registrado = c
             break
 
     if not registrado:
-        print(f"Mensaje de remitente desconocido: {msg.from_number}. Intentando por nombre: {msg.sender}")
-        # Fallback 2: Try to match by Name (pushName)
-        if msg.sender and msg.sender.get("name"):
-            clean_name = msg.sender["name"].split(" ")[0].strip()
-            # Search for client where razon_social contains the first name
-            registrado = db.query(Cliente).filter(
-                Cliente.razon_social.ilike(f"%{clean_name}%")
-            ).first()
-            
-            if registrado:
-                print(f"Cliente encontrado por nombre: {registrado.razon_social}")
+        print(f"Mensaje de remitente desconocido: {msg.from_number}.")
+        return {"status": "ignored", "reason": "unknown_sender"}
 
     if not registrado:
         print(f"ERROR: No se pudo identificar al cliente para el mensaje: {msg.from_number}")
