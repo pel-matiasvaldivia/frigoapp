@@ -50,12 +50,16 @@ app.post('/logout', async (req, res) => {
             }
         }
 
-        // 2. Delete auth folder
+        // 2. Delete auth folder contents
         const authPath = path.join(__dirname, 'auth_info_baileys');
         if (fs.existsSync(authPath)) {
-            // Using a shell command for recursive deletion to be safer across Node versions
-            require('child_process').execSync(`rm -rf "${authPath}"`);
-            console.log('[WhatsApp] Carpeta de sesión eliminada.');
+            console.log('[WhatsApp] Limpiando archivos de sesión...');
+            try {
+                // Try to delete contents only
+                require('child_process').execSync(`rm -rf "${authPath}"/*`);
+            } catch (e) {
+                console.log('[WhatsApp] Aviso: Algunos archivos no se pudieron borrar (en uso), pero se continuará con el reinicio.');
+            }
         }
 
         connectionStatus = 'disconnected';
@@ -129,9 +133,10 @@ async function connectToWhatsApp() {
                 const authPath = path.join(__dirname, 'auth_info_baileys');
                 if (fs.existsSync(authPath)) {
                     try {
-                        require('child_process').execSync(`rm -rf "${authPath}"`);
+                        // Delete contents only to avoid "Device or resource busy" on the mount point
+                        require('child_process').execSync(`rm -rf "${authPath}"/*`);
                     } catch (e) {
-                         console.error('Error eliminando carpeta auth:', e.message);
+                         console.error('Error limpiando archivos auth:', e.message);
                     }
                 }
                 // Always reconnect to show the new QR

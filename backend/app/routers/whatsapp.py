@@ -117,6 +117,17 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "pedido_id": new_pedido.id}
 
+@router.get("/status")
+async def get_whatsapp_status():
+    async with httpx.AsyncClient() as client:
+        try:
+            # Connect to the bot's internal Express API
+            response = await client.get("http://whatsapp-bot:3001/status", timeout=2.0)
+            return response.json()
+        except Exception as e:
+            # If bot is starting or unreachable
+            return {"status": "loading", "qr": None}
+
 @router.post("/logout")
 async def logout_whatsapp(current_user: Usuario = Depends(get_current_user)):
     """
