@@ -117,9 +117,24 @@ async function connectToWhatsApp() {
 
         if (connection === 'close') {
             connectionStatus = 'disconnected';
-            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
+            const statusCode = (lastDisconnect.error)?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            
+            console.log(`[WhatsApp] Conexión cerrada. Razón: ${statusCode}, Reintentar: ${shouldReconnect}`);
+            
             if (shouldReconnect) {
+                connectToWhatsApp();
+            } else {
+                console.log('[WhatsApp] Sesión invalidada (401). Limpiando datos y generando nuevo QR...');
+                const authPath = path.join(__dirname, 'auth_info_baileys');
+                if (fs.existsSync(authPath)) {
+                    try {
+                        require('child_process').execSync(`rm -rf "${authPath}"`);
+                    } catch (e) {
+                         console.error('Error eliminando carpeta auth:', e.message);
+                    }
+                }
+                // Always reconnect to show the new QR
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
