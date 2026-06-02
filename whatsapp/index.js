@@ -15,6 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const OpenAI = require("openai");
 require('dotenv').config();
+const { resolveWhatsappContact } = require('./whatsapp-contact-resolver');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -190,6 +191,13 @@ async function connectToWhatsApp() {
             }
         }
 
+        // --- NEW: Resolve Contact and Update ID ---
+        const resolvedClient = await resolveWhatsappContact(senderJid);
+        const clientId = resolvedClient ? resolvedClient.id : null;
+        if (resolvedClient) {
+            console.log(`[WhatsApp] Mensaje vinculado al Cliente ID: ${clientId} (${resolvedClient.razon_social})`);
+        }
+
         let body = m.message.conversation || m.message.extendedTextMessage?.text;
 
         // --- NEW: Audio / Voice Note Handling ---
@@ -225,9 +233,11 @@ async function connectToWhatsApp() {
                 await axios.post(`${BACKEND_URL}/api/whatsapp/webhook`, {
                     from: fromNumber,
                     body: body,
+                    cliente_id: clientId, // Support direct ID linking
                     sender: { 
                         name: pushName,
-                        number: fromNumber
+                        number: fromNumber,
+                        whatsapp_id: senderJid // Pass the original JID/LID
                     },
                     timestamp: m.messageTimestamp
                 });

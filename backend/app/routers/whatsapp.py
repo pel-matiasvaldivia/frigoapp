@@ -20,14 +20,23 @@ class WhatsAppMessage(BaseModel):
     
     from_number: str = Field(..., alias="from")
     body: str = ""
+    cliente_id: Optional[int] = None # Direct link from bot resolver
     sender: Optional[Any] = None
     timestamp: Optional[Any] = None
 
 @router.post("/webhook")
 async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
-    # 1. Identify Client
-    # Try exact match by WhatsApp ID (JID/LID) first - This is 100% accurate
-    registrado = db.query(Cliente).filter(Cliente.whatsapp_id == msg.from_number).first()
+    # 0. Direct ID resolution (highest priority from bot side)
+    registrado = None
+    if msg.cliente_id:
+        registrado = db.query(Cliente).filter(Cliente.id == msg.cliente_id).first()
+        if registrado:
+            print(f"[Webhook] Cliente identificado por ID directo: {registrado.razon_social}")
+
+    # 1. Identify Client (Standard Fallbacks)
+    if not registrado:
+        # Try exact match by WhatsApp ID (JID/LID) first - This is 100% accurate
+        registrado = db.query(Cliente).filter(Cliente.whatsapp_id == msg.from_number).first()
     
     if not registrado:
         # Fallback 1: Phone number matching
