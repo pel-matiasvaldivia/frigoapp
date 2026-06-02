@@ -21,6 +21,9 @@ graph TD
 El proceso comienza registrando al cliente en el sistema.
 - **Acción:** Ir a `Admin > Clientes`.
 - **Datos Clave:** Razón Social, CUIT (para facturación), Dirección de entrega y **Ruta Logística** asignada.
+- **Carga Masiva (Recomendado):** 
+    - Use el botón **"Plantilla"** para descargar el formato CSV.
+    - El sistema permite **"Actualización Inteligente (Upsert)"**: si sube un cliente con un CUIT o Razón Social existente, sus datos se actualizarán (útil para asociar IDs de WhatsApp masivamente).
 - **Importante:** La ruta determina qué transportista verá el pedido en su hoja de ruta.
 
 ### Paso 2: Carga del Pedido (Módulo Pedidos)
@@ -49,11 +52,30 @@ El transportista gestiona la logística final.
 
 ---
 
-## 4. Nuevo Canal: WhatsApp Business (Baileys)
-El sistema integra WhatsApp sin necesidad de un navegador abierto, usando una infraestructura ligera.
-- **Vincular Sesión:** Al iniciar el contenedor `whatsapp-bot` o el servicio en la VM, el código QR aparecerá en los **logs** (ej: `docker-compose logs -f whatsapp-bot`). Escanéelo para vincular la cuenta.
-- **Detección Automática:** El sistema utiliza Inteligencia Artificial (GPT-4o) para entender el pedido (ej: "mandame 2 bondiolas y 5kg de asado").
-- **Validación:** Los pedidos recibidos aparecen en la lista de "Pedidos Detectados" (o "Pendientes de Validación"). Usted solo debe revisar que los productos coincidan y presionar **"Validar Pedido"** para que entre al flujo normal de preparación.
+## 3. Identificación Persistente de WhatsApp
+Para que el sistema asocie automáticamente los mensajes al cliente correcto, se utiliza un **ID de WhatsApp (LID/JID)**.
+
+### A. Vinculación Automática (Self-Healing)
+El sistema es inteligente. La primera vez que un cliente te escriba (si ya está cargado en tu lista con su número de celular), el bot:
+1. Buscará al cliente por su número.
+2. Extraerá su ID único de WhatsApp.
+3. **Guardará automáticamente** ese ID en la ficha del cliente. 
+4. A partir de allí, la identificación será instantánea y 100% precisa.
+
+### B. Vinculación Manual
+Si un pedido aparece como **"DESCONOCIDO"**:
+1. En el panel de WhatsApp, verás un botón de **Copiar** al lado del ID (ej: `22436925939911@lid`).
+2. Copia el ID y pégalo en el campo **"ID de WhatsApp"** editando al cliente correspondiente.
+
+---
+
+## 4. Gestión del Bot de WhatsApp
+El sistema integra WhatsApp sin necesidad de un navegador abierto.
+- **Estado del Servicio:** Verificable en `Admin > WhatsApp`.
+- **Vincular Sesión:** Si el servicio está desconectado, se mostrará un código QR. Escanéelo desde dispositivos vinculados en su teléfono.
+- **Cerrar Sesión (Logout):** Use el botón **"Cerrar Sesión"** para desvincular el teléfono actual y generar un nuevo QR. El sistema se reiniciará automáticamente.
+- **Detección Automática (IA):** El sistema utiliza GPT-4o para entender el pedido. También procesa **Notas de Voz**.
+- **Validación:** Los pedidos recibidos aparecen en "Pedidos Detectados". Puede revisar y editar el pedido antes de presionar **"Validar Pedido"**.
 
 ---
 
@@ -66,4 +88,4 @@ El sistema integra WhatsApp sin necesidad de un navegador abierto, usando una in
 - **Entregado:** Proceso finalizado con firma del cliente.
 
 > [!TIP]
-> Use el **Dashboard** para ver el estado general de la operación en tiempo real y detectar cuellos de botella en la preparación o el despacho.
+> Use el **Dashboard** para ver el estado general de la operación en tiempo real y detectar cuellos de botella. La nueva **Búsqueda Avanzada** en clientes permite filtrar por CUIT o Razón Social instantáneamente.
