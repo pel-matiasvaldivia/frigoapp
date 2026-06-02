@@ -78,6 +78,7 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
             desconocido = Cliente(
                 razon_social=f"DESCONOCIDO ({msg.sender.get('name') or 'S/N'})",
                 telefono_whatsapp=msg.from_number,
+                direccion="Sin dirección",
                 activo=True
             )
             db.add(desconocido)
