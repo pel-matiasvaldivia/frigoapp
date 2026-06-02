@@ -165,21 +165,28 @@ async function connectToWhatsApp() {
         let fromNumber = senderJid;
         
         if (senderJid.endsWith('@lid')) {
-            console.log(`[WhatsApp] JID tipo LID detectado: ${senderJid}.`);
+            console.log(`[WhatsApp] JID tipo LID detectado: ${senderJid}. Intentando resolución activa...`);
             
-            // Debug the message structure to find the PN
-            console.log(`[WhatsApp] Metadata del mensaje LID:`, JSON.stringify({
-                participant: m.key.participant,
-                m_participant: m.participant,
-                remoteJid: m.key.remoteJid,
-                pushName: m.pushName
-            }));
+            try {
+                // onWhatsApp can resolve LID to JID in some cases
+                const [result] = await sock.onWhatsApp(senderJid);
+                if (result && result.jid && result.jid.includes('@s.whatsapp.net')) {
+                    fromNumber = result.jid;
+                    console.log(`[WhatsApp] JID resuelto exitosamente via onWhatsApp: ${fromNumber}`);
+                } else {
+                    console.log(`[WhatsApp] onWhatsApp no devolvió un JID válido para ${senderJid}.`);
+                }
+            } catch (err) {
+                console.log(`[WhatsApp] Error resolviendo LID via onWhatsApp: ${err.message}`);
+            }
 
-            // Try to extract real number
-            const pn = m.key.participant || m.participant || '';
-            if (pn && pn.includes('@s.whatsapp.net')) {
-                fromNumber = pn;
-                console.log(`[WhatsApp] Número real extraído exitosamente: ${fromNumber}`);
+            // Fallback for metadata check if onWhatsApp failed
+            if (fromNumber === senderJid) {
+                const pn = m.key.participant || m.participant || '';
+                if (pn && pn.includes('@s.whatsapp.net')) {
+                    fromNumber = pn;
+                    console.log(`[WhatsApp] Número real extraído de metadata: ${fromNumber}`);
+                }
             }
         }
 

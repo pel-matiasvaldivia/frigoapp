@@ -48,7 +48,22 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
             break
 
     if not registrado:
-        print(f"Mensaje de remitente desconocido: {msg.from_number}.")
+        # Fallback 2: Try to match by Name (ONLY if exact match or very close to avoid errors)
+        if msg.sender and msg.sender.get("name"):
+            push_name = msg.sender["name"].strip()
+            # Try exact match first
+            registrado = db.query(Cliente).filter(Cliente.razon_social.ilike(push_name)).first()
+            if registrado:
+                print(f"Cliente identificado por nombre exacto: {registrado.razon_social}")
+            else:
+                # Try to see if pushName is part of razon_social and it's long enough
+                if len(push_name) > 5:
+                    registrado = db.query(Cliente).filter(Cliente.razon_social.ilike(f"%{push_name}%")).first()
+                    if registrado:
+                        print(f"Cliente identificado por coincidencia de nombre: {registrado.razon_social}")
+
+    if not registrado:
+        print(f"Mensaje de remitente desconocido: {msg.from_number} ({msg.sender.get('name') if msg.sender else 'SN'})")
         return {"status": "ignored", "reason": "unknown_sender"}
 
     if not registrado:
