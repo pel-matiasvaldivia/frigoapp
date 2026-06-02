@@ -10,7 +10,9 @@ import {
   Plus, 
   UserPlus, 
   RefreshCw,
-  X
+  X,
+  Download,
+  UploadCloud
 } from 'lucide-react';
 
 export const Clientes: React.FC = () => {
@@ -36,6 +38,30 @@ export const Clientes: React.FC = () => {
   const [crearUsuario, setCrearUsuario] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setLoading(true);
+    try {
+      const res = await clientesAPI.importarCSV(file);
+      if (res.success) {
+        alert(`Carga completada: ${res.imported} clientes importados.`);
+        if (res.errors.length > 0) {
+          console.error("Errores de importación:", res.errors);
+          alert(`Atención: Se encontraron ${res.errors.length} errores en algunas filas. Revise la consola.`);
+        }
+        fetchData();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error crítico al procesar el archivo CSV");
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -132,13 +158,29 @@ export const Clientes: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
           <p className="text-slate-500 text-sm">Gestión de cartera, rutas y listas de precios.</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-brand-900/10 active:scale-95"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Nuevo Cliente
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => clientesAPI.descargarPlantilla()}
+            className="flex items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-all active:scale-95 text-sm"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Plantilla
+          </button>
+          
+          <label className="flex items-center px-4 py-2.5 bg-white border border-slate-200 text-brand-600 font-medium rounded-xl hover:bg-brand-50 cursor-pointer transition-all active:scale-95 text-sm">
+            <UploadCloud className="h-4 w-4 mr-2" />
+            Importar CSV
+            <input type="file" accept=".csv" className="hidden" onChange={handleImport} />
+          </label>
+
+          <button
+            onClick={openCreate}
+            className="flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-brand-900/10 active:scale-95"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nuevo Cliente
+          </button>
+        </div>
       </div>
 
       <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">

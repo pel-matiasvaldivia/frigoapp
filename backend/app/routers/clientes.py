@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -152,3 +152,107 @@ def delete_cliente(
     db.delete(cliente)
     db.commit()
     return {"detail": "Cliente eliminado exitosamente"}
+
+@router.get("/template")
+def get_clientes_template(current_user: Usuario = Depends(write_access)):
+    """
+    Returns a CSV template for bulk client import.
+    """
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+    writer.writerow([
+        "razon_social", "cuit", "direccion", "telefono_whatsapp", 
+        "ruta_id", "lista_precios_id", "limite_credito"
+    ])
+    # Add a sample row
+    writer.writerow([
+        "Cliente Ejemplo S.A.", "30712345678", "Av. Principal 123", "54911223344", 
+        "1", "1", "50000"
+    ])
+    
+    output.seek(0)
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode('utf-8-sig')), 
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=plantilla_clientes.csv"}
+    )
+
+@router.post("/import")
+async def import_clientes(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(write_access)
+):
+    """
+    Bulk import clients from a semicolon-delimited CSV file.
+    """
+    import csv
+    import io
+
+    content = await file.read()
+    try:
+        # Handle BOM if present (utf-8-sig)
+        decoded = content.decode('utf-8-sig')
+    except Exception:
+        decoded = content.decode('latin-1')
+
+    reader = csv.DictReader(io.StringIO(decoded), delimiter=';')
+    
+    imported_count = 0
+    errors = []
+    
+    for i, row in enumerate(reader):
+        try:
+            # Basic validation
+            razon_social = row.get("razon_social", "").strip()
+            if not razon_social:
+                errors.append(f"Fila {i+1}: Razón Social es requerida")
+                continue
+                
+            cuit = row.get("cuit", "").strip() or None
+            if cuit:
+                existing = db.query(Cliente).filter(Cliente.cuit == cuit).first()
+                if existing:
+                    errors.append(f"Fila {i+1}: CUIT {cuit} ya existe")
+                    continue
+            
+            # Convert numeric fields
+            ruta_id = int(row["ruta_id"]) if row.get("ruta_id") and row["ruta_id"].isdigit() else None
+            lista_id = int(row["lista_precios_id"]) if row.get("lista_precios_id") and row["lista_precios_id"].isdigit() else None
+            limite = float(row["limite_credito"]) if row.get("limite_credito") else 0.0
+            
+            new_cliente = Cliente(
+                razon_social=razon_social,
+                cuit=cuit,
+                direccion=row.get("direccion", "Sin dirección"),
+                telefono_whatsapp=row.get("telefono_whatsapp"),
+                ruta_id=ruta_id,
+                lista_precios_id=lista_id,
+                limite_credito=limite,
+                activo=True
+            )
+            db.add(new_cliente)
+            db.flush() # To get ID
+            
+            # Initialize Cuenta Corriente
+            cc = CuentaCorriente(
+                cliente_id=new_cliente.id,
+                saldo_actual=0.0,
+                limite_credito=limite
+            )
+            db.add(cc)
+            imported_count += 1
+            
+        except Exception as e:
+            errors.append(f"Fila {i+1}: Error inesperado: {str(e)}")
+
+    db.commit()
+    return {
+        "success": True, 
+        "imported": imported_count, 
+        "errors": errors
+    }

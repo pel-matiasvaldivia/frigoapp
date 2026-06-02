@@ -51,6 +51,23 @@ export const clientesAPI = {
   create: async (data: Record<string, unknown>) => (await api.post('/clientes/', data)).data,
   update: async (id: number, data: Record<string, unknown>) => (await api.put(`/clientes/${id}`, data)).data,
   delete: async (id: number) => (await api.delete(`/clientes/${id}`)).data,
+  importarCSV: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return (await api.post('/clientes/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).data;
+  },
+  descargarPlantilla: async () => {
+    const response = await api.get('/clientes/template', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'plantilla_clientes.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
 };
 
 export const productosAPI = {
