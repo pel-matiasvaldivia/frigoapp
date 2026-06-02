@@ -12,6 +12,8 @@ class ClienteBase(BaseModel):
     ruta_id: Optional[int] = None
     lista_precios_id: Optional[int] = None
     limite_credito: Optional[float] = 0.0
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     activo: Optional[bool] = True
     usuario_id: Optional[int] = None
 
@@ -30,6 +32,8 @@ class ClienteUpdate(BaseModel):
     ruta_id: Optional[int] = None
     lista_precios_id: Optional[int] = None
     limite_credito: Optional[float] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     activo: Optional[bool] = None
     usuario_id: Optional[int] = None
 

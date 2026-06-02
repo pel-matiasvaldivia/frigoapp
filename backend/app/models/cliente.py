@@ -15,6 +15,8 @@ class Cliente(Base):
     ruta_id = Column(Integer, ForeignKey("rutas.id"), nullable=True)
     lista_precios_id = Column(Integer, ForeignKey("listas_precios.id"), nullable=True)
     limite_credito = Column(Float, default=0.0)
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
     activo = Column(Boolean, default=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
 

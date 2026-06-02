@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import text, func
+from typing import List, Optional
+import httpx
+import asyncio
+from datetime import datetime, timedelta
 
 from app.core.database import get_db
 from app.core.security import get_current_user, RoleChecker, get_password_hash
 from app.models.cliente import Cliente
 from app.models.usuario import Usuario
 from app.models.cuenta_corriente import CuentaCorriente
+from app.models.pedido import Pedido
 from app.schemas.cliente import ClienteCreate, ClienteUpdate, ClienteResponse
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
@@ -188,7 +193,7 @@ def get_cliente(
     return cliente
 
 @router.post("/", response_model=ClienteResponse)
-def create_cliente(
+async def create_cliente(
     cliente_in: ClienteCreate, 
     db: Session = Depends(get_db), 
     current_user: Usuario = Depends(write_access)
@@ -247,10 +252,21 @@ def create_cliente(
     db.commit()
     
     # Re-retrieve to populate relations
-    return db.query(Cliente).filter(Cliente.id == new_cliente.id).first()
+    cliente = db.query(Cliente).filter(Cliente.id == new_cliente.id).first()
+    
+    # Try geocoding asynchronously (fire and forget for now, or just await since it's fast)
+    try:
+        coords = await geocode_address(cliente.direccion)
+        if coords:
+            cliente.latitud, cliente.longitud = coords
+            db.commit()
+    except Exception as geo_err:
+        print(f"Error post-creación geocoding: {geo_err}")
+        
+    return cliente
 
 @router.put("/{cliente_id}", response_model=ClienteResponse)
-def update_cliente(
+async def update_cliente(
     cliente_id: int, 
     cliente_in: ClienteUpdate, 
     db: Session = Depends(get_db), 
@@ -275,6 +291,17 @@ def update_cliente(
         db.commit()
         
     db.refresh(cliente)
+    
+    # Try geocoding if address changed
+    if cliente_in.direccion:
+        try:
+            coords = await geocode_address(cliente.direccion)
+            if coords:
+                cliente.latitud, cliente.longitud = coords
+                db.commit()
+        except Exception as geo_err:
+            print(f"Error post-vincular geocoding: {geo_err}")
+            
     return cliente
 
 @router.delete("/{cliente_id}")
@@ -300,3 +327,62 @@ def delete_cliente(
     db.commit()
     return {"detail": "Cliente eliminado exitosamente"}
 
+async def geocode_address(address: str) -> Optional[tuple[float, float]]:
+    """
+    Geocodes an address to (lat, lng) using OpenStreetMap Nominatim.
+    """
+    if not address or len(address) < 5:
+        return None
+        
+    try:
+        async with httpx.AsyncClient() as client:
+            headers = {"User-Agent": "FrigoApp/1.0 (matias@pymesonline.com.ar)"}
+            params = {
+                "q": address,
+                "format": "json",
+                "limit": 1
+            }
+            response = await client.get("https://nominatim.openstreetmap.org/search", params=params, headers=headers, timeout=5.0)
+            data = response.json()
+            
+            if data and len(data) > 0:
+                return float(data[0]["lat"]), float(data[0]["lon"])
+    except Exception as e:
+        print(f"Error geocodificando dirección '{address}': {e}")
+    
+    return None
+
+@router.get("/geodata")
+async def get_clientes_geodata(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_or_staff)
+):
+    """
+    Returns client coordinates and their sales ranking (sum of last 30 days).
+    """
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    
+    # Query clients with their total sales in the last 30 days
+    results = db.query(
+        Cliente.id,
+        Cliente.razon_social,
+        Cliente.direccion,
+        Cliente.latitud,
+        Cliente.longitud,
+        func.sum(Pedido.total).label("total_ventas")
+    ).outerjoin(
+        Pedido, (Pedido.cliente_id == Cliente.id) & (Pedido.fecha_creacion >= thirty_days_ago)
+    ).group_by(Cliente.id, Cliente.razon_social, Cliente.direccion, Cliente.latitud, Cliente.longitud).all()
+    
+    geodata = []
+    for r in results:
+        geodata.append({
+            "id": r.id,
+            "razon_social": r.razon_social,
+            "direccion": r.direccion,
+            "lat": r.latitud,
+            "lng": r.longitud,
+            "ventas_30d": float(r.total_ventas or 0.0)
+        })
+    
+    return geodata

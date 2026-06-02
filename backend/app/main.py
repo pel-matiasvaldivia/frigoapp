@@ -21,8 +21,10 @@ try:
         try:
             # Check if column exists, if not add it
             connection.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS whatsapp_id VARCHAR"))
+            connection.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS latitud FLOAT"))
+            connection.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS longitud FLOAT"))
             connection.commit()
-            print("Migración de whatsapp_id completada.")
+            print("Migración de columnas de geolocalización completada.")
         except Exception as migr_err:
             print(f"Aviso migración: {migr_err}")
 
