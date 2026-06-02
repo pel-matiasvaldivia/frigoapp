@@ -165,19 +165,21 @@ async function connectToWhatsApp() {
         let fromNumber = senderJid;
         
         if (senderJid.endsWith('@lid')) {
-            console.log(`[WhatsApp] JID tipo LID detectado: ${senderJid}. Intentando extraer número real.`);
-            // Try different ways to find the phone number (PN) in a LID message
-            // Baileys sometimes puts it in the message object itself or metadata
-            const pn = m.key.participant || m.participant || '';
+            console.log(`[WhatsApp] JID tipo LID detectado: ${senderJid}.`);
             
-            // If the participant has a phone number format (ending in @s.whatsapp.net)
+            // Debug the message structure to find the PN
+            console.log(`[WhatsApp] Metadata del mensaje LID:`, JSON.stringify({
+                participant: m.key.participant,
+                m_participant: m.participant,
+                remoteJid: m.key.remoteJid,
+                pushName: m.pushName
+            }));
+
+            // Try to extract real number
+            const pn = m.key.participant || m.participant || '';
             if (pn && pn.includes('@s.whatsapp.net')) {
                 fromNumber = pn;
-                console.log(`[WhatsApp] Número real extraído del contacto: ${fromNumber}`);
-            } else {
-                // If we can't find it directly, let's look if it's hidden in another field
-                // This is a common pattern for LID to JID mapping in some Baileys versions
-                console.log(`[WhatsApp] No se pudo extraer el PN del JID LID. Se usará el LID para identificación.`);
+                console.log(`[WhatsApp] Número real extraído exitosamente: ${fromNumber}`);
             }
         }
 
