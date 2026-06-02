@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.cliente import Cliente
+from app.models.cuenta_corriente import CuentaCorriente
 from app.models.pedido import Pedido, PedidoItem
 from app.models.producto import Producto
 from app.models.listas_precios import ListaPreciosDetalle
@@ -48,27 +49,47 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
             break
 
     if not registrado:
-        # Fallback 2: Try to match by Name (ONLY if exact match or very close to avoid errors)
+        # Fallback 2: Smarter name matching (intersection of words)
         if msg.sender and msg.sender.get("name"):
-            push_name = msg.sender["name"].strip()
-            # Try exact match first
-            registrado = db.query(Cliente).filter(Cliente.razon_social.ilike(push_name)).first()
-            if registrado:
-                print(f"Cliente identificado por nombre exacto: {registrado.razon_social}")
-            else:
-                # Try to see if pushName is part of razon_social and it's long enough
-                if len(push_name) > 5:
-                    registrado = db.query(Cliente).filter(Cliente.razon_social.ilike(f"%{push_name}%")).first()
-                    if registrado:
-                        print(f"Cliente identificado por coincidencia de nombre: {registrado.razon_social}")
+            push_name_words = set(msg.sender["name"].lower().split())
+            all_clientes = db.query(Cliente).all()
+            
+            best_match = None
+            max_intersection = 0
+            
+            for c in all_clientes:
+                c_words = set(c.razon_social.lower().split())
+                intersection = len(push_name_words.intersection(c_words))
+                if intersection > max_intersection:
+                    max_intersection = intersection
+                    best_match = c
+            
+            # If we have a good match (at least one significant word)
+            if max_intersection >= 1:
+                registrado = best_match
+                print(f"Cliente identificado por coincidencia de palabras ({max_intersection}): {registrado.razon_social}")
 
     if not registrado:
-        print(f"Mensaje de remitente desconocido: {msg.from_number} ({msg.sender.get('name') if msg.sender else 'SN'})")
-        return {"status": "ignored", "reason": "unknown_sender"}
-
-    if not registrado:
-        print(f"ERROR: No se pudo identificar al cliente para el mensaje: {msg.from_number}")
-        return {"status": "ignored", "reason": "unknown_sender"}
+        # Fallback 3: Create or use a 'WhatsApp Desconocido' client so it shows in dashboard
+        # Try to find a client named 'DESCONOCIDO'
+        desconocido = db.query(Cliente).filter(Cliente.razon_social.ilike("%DESCONOCIDO%")).first()
+        if not desconocido:
+            # Create one if it doesn't exist
+            desconocido = Cliente(
+                razon_social=f"DESCONOCIDO ({msg.sender.get('name') or 'S/N'})",
+                telefono_whatsapp=msg.from_number,
+                activo=True
+            )
+            db.add(desconocido)
+            db.flush()
+            # Init account
+            cc = CuentaCorriente(cliente_id=desconocido.id, saldo_actual=0.0)
+            db.add(cc)
+            db.commit()
+            db.refresh(desconocido)
+            
+        registrado = desconocido
+        print(f"Mensaje de remitente NO identificado ({msg.from_number}). Usando Cliente Desconocido.")
 
     cliente = registrado
 
