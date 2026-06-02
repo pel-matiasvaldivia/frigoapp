@@ -9,6 +9,8 @@ from app.models.listas_precios import ListaPreciosDetalle
 from app.services.ai_order import parse_whatsapp_order
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Any
+from app.core.security import get_current_user
+from app.models.usuario import Usuario
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
 
@@ -115,13 +117,20 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "pedido_id": new_pedido.id}
 
-@router.get("/status")
-async def get_whatsapp_status():
+@router.post("/logout")
+async def logout_whatsapp(current_user: Usuario = Depends(get_current_user)):
+    """
+    Triggers a logout in the WhatsApp bot, clearing the session data.
+    Only accessible by authenticated staff/admins.
+    """
+    if current_user.rol not in ["SUPERADMIN", "ADMINISTRATIVO"]:
+        raise HTTPException(status_code=403, detail="No tiene permisos para cerrar sesión de WhatsApp")
+
     async with httpx.AsyncClient() as client:
         try:
             # Connect to the bot's internal Express API
-            response = await client.get("http://whatsapp-bot:3001/status", timeout=2.0)
+            response = await client.post("http://whatsapp-bot:3001/logout", timeout=5.0)
             return response.json()
         except Exception as e:
-            # If bot is starting or unreachable
-            return {"status": "loading", "qr": None}
+            print(f"[WhatsApp] Error proxying logout: {e}")
+            raise HTTPException(status_code=500, detail="El servicio de WhatsApp no está disponible")

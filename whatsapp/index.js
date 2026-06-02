@@ -23,6 +23,7 @@ const openai = new OpenAI({
 // Simple state management
 let currentQR = null;
 let connectionStatus = 'disconnected';
+let activeSock = null;
 
 // Express Server to expose status and QR
 const app = express();
@@ -33,6 +34,47 @@ app.get('/status', async (req, res) => {
     }
     res.json({ status: connectionStatus, qr: qrBase64 });
 });
+
+app.post('/logout', async (req, res) => {
+    try {
+        console.log('[WhatsApp] Petición de cierre de sesión recibida...');
+        
+        // 1. Close connection if open
+        if (activeSock) {
+            try {
+                // sock.logout() is a Baileys method
+                await activeSock.logout();
+                activeSock.end();
+            } catch (e) {
+                console.log('[WhatsApp] Error al cerrar socket (posiblemente ya cerrado):', e.message);
+            }
+        }
+
+        // 2. Delete auth folder
+        const authPath = path.join(__dirname, 'auth_info_baileys');
+        if (fs.existsSync(authPath)) {
+            // Using a shell command for recursive deletion to be safer across Node versions
+            require('child_process').execSync(`rm -rf "${authPath}"`);
+            console.log('[WhatsApp] Carpeta de sesión eliminada.');
+        }
+
+        connectionStatus = 'disconnected';
+        currentQR = null;
+
+        res.json({ status: 'logged_out', message: 'Sesión cerrada exitosamente. Reiniciando...' });
+        
+        // 3. Exit and let Docker restart the service
+        setTimeout(() => {
+            console.log('[WhatsApp] Reiniciando proceso para generar nuevo QR...');
+            process.exit(0);
+        }, 1500);
+
+    } catch (err) {
+        console.error('[WhatsApp] Error en logout:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(3001, () => console.log('Bot API listening on port 3001'));
 
 // Ensure crypto is available globally for Baileys (Node 18/20 slim compatibility)
@@ -59,6 +101,8 @@ async function connectToWhatsApp() {
         keepAliveIntervalMs: 15000,
         generateHighQualityLinkPreview: true
     });
+
+    activeSock = sock;
 
     sock.ev.on('creds.update', saveCreds);
 

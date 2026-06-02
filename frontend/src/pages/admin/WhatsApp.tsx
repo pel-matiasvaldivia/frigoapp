@@ -149,6 +149,21 @@ export const WhatsAppAdmin: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    if (!confirm("¿Está seguro de que desea cerrar la sesión de WhatsApp? Esto eliminará el vínculo actual y generará un nuevo QR.")) return;
+    
+    setStatus('loading');
+    try {
+      await api.post('/whatsapp/logout');
+      setStatus('disconnected');
+      setQrCode(null);
+    } catch (err) {
+      console.error("Error al cerrar sesión de WhatsApp:", err);
+      alert("Hubo un error al intentar cerrar la sesión.");
+      fetchStatus();
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -176,7 +191,7 @@ export const WhatsAppAdmin: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">Vincular Celular</h2>
             </div>
 
-            {status === 'disconnected' ? (
+            {status === 'disconnected' || status === 'loading' ? (
               <div className="space-y-6">
                 <div className="aspect-square bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center">
                   {qrCode ? (
@@ -184,7 +199,9 @@ export const WhatsAppAdmin: React.FC = () => {
                   ) : (
                     <>
                       <Smartphone className="h-12 w-12 text-slate-300 mb-4" />
-                      <p className="text-xs text-slate-400 font-medium px-4">Iniciando sesión en WhatsApp Web...</p>
+                      <p className="text-xs text-slate-400 font-medium px-4">
+                        {status === 'loading' ? 'Reiniciando servicio...' : 'Iniciando sesión en WhatsApp Web...'}
+                      </p>
                     </>
                   )}
                 </div>
@@ -208,7 +225,10 @@ export const WhatsAppAdmin: React.FC = () => {
                   <p className="text-slate-900 font-bold uppercase tracking-tight">Sesión Vinculada</p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Bot operando normalmente</p>
                 </div>
-                <button className="text-[10px] font-bold text-red-500 uppercase tracking-widest border border-red-100 px-4 py-2 rounded-xl hover:bg-red-50 transition-all">
+                <button 
+                  onClick={handleLogout}
+                  className="text-[10px] font-bold text-red-500 uppercase tracking-widest border border-red-100 px-4 py-2 rounded-xl hover:bg-red-50 transition-all"
+                >
                   Cerrar Sesión
                 </button>
               </div>
