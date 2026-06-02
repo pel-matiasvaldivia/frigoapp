@@ -131,7 +131,11 @@ def create_pedido(
         # Pig slaughterhouse pricing rule: price per kg.
         # Initial estimated subtotal: price * estimated kg
         # If estimated kg is not provided, use units * 10kg as a placeholder or units * venta
-        weight_est = item.peso_estimado_kg if item.peso_estimado_kg and item.peso_estimado_kg > 0 else (item.cantidad_unidades * 10.0) # default 10kg per unit
+        if item.peso_estimado_kg and item.peso_estimado_kg > 0:
+            weight_est = item.peso_estimado_kg
+        else:
+            weight_est = (item.cantidad_unidades * 10.0)
+            print(f"[Pedidos] ADVERTENCIA: Usando peso estimado por defecto (10kg/u) para producto_id {item.producto_id}")
         
         # We record the selling price from the list
         precio_unit = det.precio_venta

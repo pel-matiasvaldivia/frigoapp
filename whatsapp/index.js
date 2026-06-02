@@ -94,19 +94,21 @@ async function connectToWhatsApp() {
         const senderJid = m.key.remoteJid;
         const pushName = m.pushName || 'Usuario WhatsApp';
         
+        console.log(`[WhatsApp] Nuevo mensaje de ${pushName} (JID: ${senderJid})`);
+
         // WhatsApp is using LID (Linked Identity) instead of PN (Phone Number) JIDs.
         // We need to extract the real phone number if it's an LID.
         let fromNumber = senderJid;
         
-        // If it's an LID, try to find the PN in the message metadata
-        // In the logs we saw "sender_pn". Baileys stores this in some places.
-        // If the JID ends in @lid, we try to get the PN from the message info.
         if (senderJid.endsWith('@lid')) {
+            console.log(`[WhatsApp] JID tipo LID detectado: ${senderJid}. Intentando extraer número real.`);
             // Check if there's a stored PN in the message
-            // or if we can get it from the contact info
             const contact = m.key.participant || m.participant || '';
             if (contact && contact.includes('@s.whatsapp.net')) {
                 fromNumber = contact;
+                console.log(`[WhatsApp] Número real extraído del contacto: ${fromNumber}`);
+            } else {
+                 console.log(`[WhatsApp] No se pudo extraer el PN del JID LID. Se usará el LID para identificación.`);
             }
         }
 

@@ -33,26 +33,34 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
         (Cliente.telefono_whatsapp != None) # Placeholder for more complex match
     ).all()
 
-    # Refined match: look for the digits of the client's phone inside the incoming JID
+    # Improved match: look for the digits of the client's phone inside the incoming JID
     registrado = None
     for c in cliente:
+        if not c.telefono_whatsapp:
+            continue
         c_digits = "".join(filter(str.isdigit, c.telefono_whatsapp))
-        if c_digits and (c_digits in clean_number or clean_number in c_digits):
+        # Match if the client number is at the end of the incoming number (handling country codes)
+        # or if the incoming number is at the end of the client number
+        if c_digits and (clean_number.endswith(c_digits) or c_digits.endswith(clean_number)):
             registrado = c
             break
 
     if not registrado:
-        print(f"Message from unknown sender: {msg.from_number}. Trying name match: {msg.sender}")
+        print(f"Mensaje de remitente desconocido: {msg.from_number}. Intentando por nombre: {msg.sender}")
         # Fallback 2: Try to match by Name (pushName)
         if msg.sender and msg.sender.get("name"):
-            clean_name = msg.sender["name"].split(" ")[0].strip() # Take first word (e.g. Marisol)
+            clean_name = msg.sender["name"].split(" ")[0].strip()
+            # Search for client where razon_social contains the first name
             registrado = db.query(Cliente).filter(
                 Cliente.razon_social.ilike(f"%{clean_name}%")
             ).first()
             
-        if not registrado:
-            print("No name match found either. Fallback to first client.")
-            registrado = db.query(Cliente).first() 
+            if registrado:
+                print(f"Cliente encontrado por nombre: {registrado.razon_social}")
+
+    if not registrado:
+        print(f"ERROR: No se pudo identificar al cliente para el mensaje: {msg.from_number}")
+        return {"status": "ignored", "reason": "unknown_sender"}
 
     cliente = registrado
 
