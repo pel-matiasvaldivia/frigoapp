@@ -14,6 +14,18 @@ from app.routers import auth, clientes, productos, listas_precios, pedidos, desp
 try:
     print("Iniciando y migrando base de datos...")
     Base.metadata.create_all(bind=engine)
+    
+    # Manual migration for whatsapp_id if needed
+    from sqlalchemy import text
+    with engine.connect() as connection:
+        try:
+            # Check if column exists, if not add it
+            connection.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS whatsapp_id VARCHAR"))
+            connection.commit()
+            print("Migración de whatsapp_id completada.")
+        except Exception as migr_err:
+            print(f"Aviso migración: {migr_err}")
+
     seed_db()
 except Exception as e:
     print(f"Error al iniciar base de datos: {e}")

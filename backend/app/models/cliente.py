@@ -9,6 +9,7 @@ class Cliente(Base):
     id = Column(Integer, primary_key=True, index=True)
     razon_social = Column(String, nullable=False, index=True)
     cuit = Column(String, nullable=True, unique=True, index=True)
+    whatsapp_id = Column(String, nullable=True, unique=True, index=True)
     direccion = Column(String, nullable=False)
     telefono_whatsapp = Column(String, nullable=True)
     ruta_id = Column(Integer, ForeignKey("rutas.id"), nullable=True)

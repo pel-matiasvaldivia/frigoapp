@@ -26,27 +26,25 @@ class WhatsAppMessage(BaseModel):
 @router.post("/webhook")
 async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
     # 1. Identify Client
-    clean_number = "".join(filter(str.isdigit, msg.from_number))
+    # Try exact match by WhatsApp ID (JID/LID) first - This is 100% accurate
+    registrado = db.query(Cliente).filter(Cliente.whatsapp_id == msg.from_number).first()
     
-    # Strictly search for the number/LID in the database
-    # We match if the incoming number (clean) matches exactly or if one is contained in the other
-    # but ONLY if it's a long enough sequence to avoid collision
-    clientes = db.query(Cliente).filter(Cliente.telefono_whatsapp != None).all()
+    if not registrado:
+        # Fallback 1: Phone number matching
+        clean_number = "".join(filter(str.isdigit, msg.from_number))
+        clientes = db.query(Cliente).filter(Cliente.telefono_whatsapp != None).all()
 
-    registrado = None
-    for c in clientes:
-        c_digits = "".join(filter(str.isdigit, c.telefono_whatsapp))
-        if not c_digits: continue
-        
-        # If incoming number is a real phone number
-        if len(clean_number) >= 8:
-            if clean_number.endswith(c_digits) or c_digits.endswith(clean_number):
+        for c in clientes:
+            c_digits = "".join(filter(str.isdigit, c.telefono_whatsapp))
+            if not c_digits: continue
+            
+            if len(clean_number) >= 8:
+                if clean_number.endswith(c_digits) or c_digits.endswith(clean_number):
+                    registrado = c
+                    break
+            elif clean_number == c_digits:
                 registrado = c
                 break
-        # If it's a LID or shorter ID, we need exact match
-        elif clean_number == c_digits:
-            registrado = c
-            break
 
     if not registrado:
         # Fallback 2: Smarter name matching (intersection of words)
@@ -64,8 +62,7 @@ async def whatsapp_webhook(msg: WhatsAppMessage, db: Session = Depends(get_db)):
                     max_intersection = intersection
                     best_match = c
             
-            # If we have a good match (at least one significant word)
-            if max_intersection >= 1:
+            if max_intersection >= 2: # Require at least 2 words matching for auto-link safety
                 registrado = best_match
                 print(f"Cliente identificado por coincidencia de palabras ({max_intersection}): {registrado.razon_social}")
 

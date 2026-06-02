@@ -1,8 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  MessageSquare, QrCode, CheckCircle2, XCircle, 
-  RefreshCw, Smartphone, ShieldCheck, AlertCircle,
-  ExternalLink, ArrowRight, Pencil, Trash2, Plus, ShoppingCart
+  ExternalLink, ArrowRight, Pencil, Trash2, Plus, ShoppingCart, Copy
 } from 'lucide-react';
 import { pedidosAPI, listasPreciosAPI, productosAPI } from '../../services/api';
 // Assuming we'll add whatsappAPI to services/api.ts. For now we use the general api structure.
@@ -284,7 +280,19 @@ export const WhatsAppAdmin: React.FC = () => {
                             {new Date(pedido.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Via WhatsApp: {pedido.cliente?.telefono_whatsapp}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Via WhatsApp: {pedido.cliente?.telefono_whatsapp}</p>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(pedido.cliente?.telefono_whatsapp || '');
+                              alert("ID copiado al portapapeles");
+                            }}
+                            className="p-1 hover:bg-white rounded border border-transparent hover:border-slate-200 text-slate-400 hover:text-brand-600 transition-all"
+                            title="Copiar ID para asociar a cliente"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                       <div className="text-right flex items-start space-x-4">
                         <div>

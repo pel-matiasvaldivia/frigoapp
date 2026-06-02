@@ -35,6 +35,7 @@ export const Clientes: React.FC = () => {
   const [listaId, setListaId] = useState<number | ''>('');
   const [limiteCredito, setLimiteCredito] = useState<number>(0);
   const [activo, setActivo] = useState(true);
+  const [whatsappId, setWhatsappId] = useState('');
   const [crearUsuario, setCrearUsuario] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,6 +90,7 @@ export const Clientes: React.FC = () => {
     setEditingCliente(null);
     setRazonSocial(''); setCuit(''); setDireccion(''); setTelefono('');
     setRutaId(''); setListaId(''); setLimiteCredito(0); setActivo(true);
+    setWhatsappId('');
     setCrearUsuario(false); setEmail(''); setPassword('');
     setIsModalOpen(true);
   };
@@ -102,6 +104,7 @@ export const Clientes: React.FC = () => {
     setRutaId(c.ruta_id || '');
     setListaId(c.lista_precios_id || '');
     setLimiteCredito(c.limite_credito || 0);
+    setWhatsappId(c.whatsapp_id || '');
     setActivo(c.activo);
     setCrearUsuario(false); setEmail(''); setPassword('');
     setIsModalOpen(true);
@@ -116,6 +119,7 @@ export const Clientes: React.FC = () => {
       ruta_id: rutaId || null,
       lista_precios_id: listaId || null,
       limite_credito: limiteCredito,
+      whatsapp_id: whatsappId || null,
       activo,
       crear_usuario: crearUsuario,
       email: crearUsuario ? email : undefined,
@@ -261,6 +265,14 @@ export const Clientes: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Teléfono WhatsApp</label>
                 <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="3515551234"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex justify-between">
+                  ID de WhatsApp (LID)
+                  <span className="text-slate-400 font-normal lowercase italic text-[9px]">Opcional. Úselo para resolver fallas de identificación.</span>
+                </label>
+                <input type="text" value={whatsappId} onChange={(e) => setWhatsappId(e.target.value)} placeholder="22436925939911@lid"
+                  className="w-full px-4 py-3 bg-brand-50/50 border border-brand-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-slate-300" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Dirección</label>

@@ -6,6 +6,7 @@ from app.schemas.listas_precios import ListaPreciosResponse
 class ClienteBase(BaseModel):
     razon_social: str
     cuit: Optional[str] = None
+    whatsapp_id: Optional[str] = None
     direccion: str
     telefono_whatsapp: Optional[str] = None
     ruta_id: Optional[int] = None
@@ -23,6 +24,7 @@ class ClienteCreate(ClienteBase):
 class ClienteUpdate(BaseModel):
     razon_social: Optional[str] = None
     cuit: Optional[str] = None
+    whatsapp_id: Optional[str] = None
     direccion: Optional[str] = None
     telefono_whatsapp: Optional[str] = None
     ruta_id: Optional[int] = None
