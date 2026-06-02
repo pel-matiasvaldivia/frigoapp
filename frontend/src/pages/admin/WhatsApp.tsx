@@ -1,3 +1,7 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  MessageSquare, QrCode, CheckCircle2, XCircle, 
+  RefreshCw, Smartphone, ShieldCheck, AlertCircle,
   ExternalLink, ArrowRight, Pencil, Trash2, Plus, ShoppingCart, Copy
 } from 'lucide-react';
 import { pedidosAPI, listasPreciosAPI, productosAPI } from '../../services/api';
