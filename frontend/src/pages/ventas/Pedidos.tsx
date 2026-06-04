@@ -47,6 +47,7 @@ export const Pedidos: React.FC = () => {
   const [addProductId, setAddProductId] = useState<number | ''>('');
   const [addUnits, setAddUnits] = useState<number>(1);
   const [addWeight, setAddWeight] = useState<number>(10); // default weight estimate
+  const [productFilter, setProductFilter] = useState('');
 
   // Warning Modal
   const [warningModalOpen, setWarningModalOpen] = useState(false);
@@ -141,6 +142,7 @@ export const Pedidos: React.FC = () => {
     setAddProductId('');
     setAddUnits(1);
     setAddWeight(10);
+    setProductFilter('');
   };
 
   const handleRemoveItem = (prodId: number) => {
@@ -205,6 +207,7 @@ export const Pedidos: React.FC = () => {
     setAddProductId('');
     setAddUnits(1);
     setAddWeight(10);
+    setProductFilter('');
   };
 
   return (
@@ -391,19 +394,49 @@ export const Pedidos: React.FC = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-widest">Producto del Catálogo</label>
-                        <select
-                          value={addProductId}
-                          onChange={(e) => setAddProductId(Number(e.target.value))}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
-                        >
-                          <option value="">Seleccionar producto...</option>
-                          {clientPriceList.detalles.map((det: any) => (
-                            <option key={det.producto_id} value={det.producto_id}>
-                              {det.producto.descripcion} (${det.precio_venta}/kg)
-                            </option>
-                          ))}
-                        </select>
+                      <div className="md:col-span-2 relative">
+                        <label className="block text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-widest">Producto (Código o Nombre)</label>
+                        <input
+                          type="text"
+                          placeholder="Escriba código o descripción..."
+                          value={productFilter}
+                          onChange={(e) => setProductFilter(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-sans"
+                        />
+                        {productFilter && (
+                          <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
+                            {clientPriceList.detalles
+                              .filter((d: any) => 
+                                d.producto.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                                d.producto.codigo?.toLowerCase().includes(productFilter.toLowerCase())
+                              )
+                              .slice(0, 10)
+                              .map((det: any) => (
+                                <button
+                                  key={det.producto_id}
+                                  onClick={() => {
+                                    setAddProductId(det.producto_id);
+                                    setProductFilter(`${det.producto.codigo} - ${det.producto.descripcion}`);
+                                  }}
+                                  className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded leading-none">{det.producto.codigo}</span>
+                                    <span className="text-xs font-bold text-slate-800">{det.producto.descripcion}</span>
+                                    <span className="text-[10px] text-brand-600 font-bold ml-auto">${det.precio_venta}</span>
+                                  </div>
+                                </button>
+                              ))
+                            }
+                            {clientPriceList.detalles.filter((d: any) => 
+                              d.producto.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                              d.producto.codigo?.toLowerCase().includes(productFilter.toLowerCase())
+                            ).length === 0 && (
+                              <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos en esta lista</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       </div>
 
                       <div>

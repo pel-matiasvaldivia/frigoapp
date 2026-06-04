@@ -27,6 +27,7 @@ export const WhatsAppAdmin: React.FC = () => {
   const [addProductId, setAddProductId] = useState<number | ''>('');
   const [addUnits, setAddUnits] = useState(1);
   const [addWeight, setAddWeight] = useState(10);
+  const [productFilter, setProductFilter] = useState('');
 
   useEffect(() => {
     fetchStatus();
@@ -108,26 +109,33 @@ export const WhatsAppAdmin: React.FC = () => {
   };
 
   const handleAddItemToEdit = () => {
-    if (!addProductId || !clientPriceList) return;
-    const priceDetail = clientPriceList.detalles.find((d: any) => d.producto_id === addProductId);
-    if (!priceDetail) {
-      alert("El producto no está en la lista de precios del cliente");
-      return;
-    }
+    if (!addProductId) return;
+    
     const product = allProductos.find(p => p.id === addProductId);
+    if (!product) return;
+
+    // Determine price: from client list or fallback to 0
+    let precio = 0;
+    if (clientPriceList) {
+      const priceDetail = clientPriceList.detalles.find((d: any) => d.producto_id === addProductId);
+      if (priceDetail) {
+        precio = priceDetail.precio_venta;
+      }
+    }
     
     const newItem = {
       producto_id: addProductId,
       cantidad_unidades: addUnits,
       peso_estimado_kg: addWeight,
       producto: product, // For display
-      precio_unitario: priceDetail.precio_venta
+      precio_unitario: precio
     };
     
     setEditItems([...editItems, newItem]);
     setAddProductId('');
     setAddUnits(1);
     setAddWeight(10);
+    setProductFilter('');
   };
 
   const handleSaveEdit = async () => {
@@ -386,29 +394,72 @@ export const WhatsAppAdmin: React.FC = () => {
                </div>
 
                {/* Add product Inline */}
-               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white border border-slate-200 p-4 rounded-3xl shadow-sm">
-                  <div className="md:col-span-2">
-                     <select 
-                        value={addProductId} 
-                        onChange={(e) => setAddProductId(Number(e.target.value))}
-                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                     >
-                        <option value="">Añadir producto...</option>
-                        {clientPriceList?.detalles.map((d: any) => (
-                           <option key={d.producto_id} value={d.producto_id}>{d.producto.descripcion} (${d.precio_venta})</option>
-                        ))}
-                     </select>
+               <div className="bg-white border border-slate-200 p-6 rounded-[2rem] shadow-sm space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2 relative">
+                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Producto (Buscar por Nombre o Código)</label>
+                       <input
+                          type="text"
+                          placeholder="Filtrar por código o nombre..."
+                          value={productFilter}
+                          onChange={(e) => setProductFilter(e.target.value)}
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none"
+                       />
+                       {productFilter && (
+                         <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
+                           {allProductos
+                             .filter(p => 
+                               p.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                               p.codigo?.toLowerCase().includes(productFilter.toLowerCase())
+                             )
+                             .slice(0, 10)
+                             .map(p => (
+                               <button
+                                 key={p.id}
+                                 onClick={() => {
+                                   setAddProductId(p.id);
+                                   setProductFilter(`${p.codigo} - ${p.descripcion}`);
+                                 }}
+                                 className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
+                               >
+                                 <div className="flex items-center space-x-2">
+                                   <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded leading-none">{p.codigo}</span>
+                                   <span className="text-xs font-bold text-slate-800">{p.descripcion}</span>
+                                 </div>
+                               </button>
+                             ))
+                           }
+                           {allProductos.filter(p => 
+                             p.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                             p.codigo?.toLowerCase().includes(productFilter.toLowerCase())
+                           ).length === 0 && (
+                             <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos</div>
+                           )}
+                         </div>
+                       )}
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Cantidad</label>
+                      <input 
+                        type="number" value={addUnits} onChange={(e) => setAddUnits(Number(e.target.value))}
+                        className="p-3 border border-slate-200 rounded-2xl text-xs font-bold text-center bg-slate-50" placeholder="Cant"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-end">
+                      <button 
+                        onClick={handleAddItemToEdit}
+                        disabled={!addProductId}
+                        className="flex items-center justify-center h-[46px] bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-black transition-all disabled:opacity-30 shadow-lg"
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Añadir
+                      </button>
+                    </div>
                   </div>
-                  <input 
-                    type="number" value={addUnits} onChange={(e) => setAddUnits(Number(e.target.value))}
-                    className="p-2 border border-slate-200 rounded-xl text-xs font-bold text-center" placeholder="Cant"
-                  />
-                  <button 
-                    onClick={handleAddItemToEdit}
-                    className="flex items-center justify-center bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-black transition-all"
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Añadir
-                  </button>
+                  {!clientPriceList && addProductId && (
+                    <p className="text-[10px] text-amber-600 font-bold flex items-center mt-2 px-2">
+                      <AlertCircle className="h-3 w-3 mr-1.5" /> El cliente no tiene lista de precios. El precio se deberá ajustar manualmente.
+                    </p>
+                  )}
                </div>
 
                {/* Items List */}
