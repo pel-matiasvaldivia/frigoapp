@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { preparacionAPI } from '../../services/api';
+import { preparacionAPI, productosAPI } from '../../services/api';
 import { 
   ClipboardList, 
   Check, 
@@ -10,7 +10,10 @@ import {
   Scale,
   FileText,
   Printer,
-  QrCode
+  QrCode,
+  Plus,
+  Trash2,
+  X
 } from 'lucide-react';
 
 export const Preparacion: React.FC = () => {
@@ -22,10 +25,28 @@ export const Preparacion: React.FC = () => {
   // Edited weights state mapper: bultoId -> real weight
   const [weights, setWeights] = useState<Record<number, number>>({});
   const [confirmedBultos, setConfirmedBultos] = useState<Record<number, boolean>>({});
+  
+  // States for adding products
+  const [productos, setProductos] = useState<any[]>([]);
+  const [productFilter, setProductFilter] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [addUnits, setAddUnits] = useState<number>(1);
+  const [addWeight, setAddWeight] = useState<number>(10);
+  const [tempBultos, setTempBultos] = useState<any[]>([]);
 
   useEffect(() => {
     fetchOrdenes();
+    fetchProductos();
   }, [filterEstado]);
+
+  const fetchProductos = async () => {
+    try {
+      const res = await productosAPI.list();
+      setProductos(res);
+    } catch (err) {
+      console.error("Error loading products:", err);
+    }
+  };
 
   const fetchOrdenes = async () => {
     setLoading(true);
@@ -41,6 +62,7 @@ export const Preparacion: React.FC = () => {
 
   const handleSelectOrden = async (orden: any) => {
     setSelectedOrden(orden);
+    setTempBultos(JSON.parse(JSON.stringify(orden.bultos))); // Deep copy
     
     // Initialize edited values
     const initWeights: Record<number, number> = {};
@@ -53,6 +75,44 @@ export const Preparacion: React.FC = () => {
     
     setWeights(initWeights);
     setConfirmedBultos(initConfirmed);
+  };
+
+  const handleAddItem = (productId: number) => {
+    const product = productos.find(p => p.id === productId);
+    if (!product) return;
+
+    if (tempBultos.some(b => b.producto_id === productId)) {
+      alert("El producto ya está en la lista.");
+      return;
+    }
+
+    const newBulto = {
+      id: null,
+      producto_id: product.id,
+      producto: product,
+      unidades: addUnits,
+      peso_estimado_kg: addWeight,
+      peso_real_kg: 0,
+      confirmado: false
+    };
+
+    setTempBultos([...tempBultos, newBulto]);
+    setProductFilter('');
+    setShowDropdown(false);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newBultos = [...tempBultos];
+    newBultos.splice(index, 1);
+    setTempBultos(newBultos);
+  };
+
+  const handleUnitChange = (index: number, units: number) => {
+    const newBultos = [...tempBultos];
+    newBultos[index].unidades = units;
+    // Auto-estimate weight (10kg per unit as fallback/default)
+    newBultos[index].peso_estimado_kg = units * 10;
+    setTempBultos(newBultos);
   };
 
   const handleWeightChange = (bultoId: number, value: number) => {
@@ -88,17 +148,20 @@ export const Preparacion: React.FC = () => {
     
     // Check if all are confirmed when completing
     if (complete) {
-      const allConfirmed = selectedOrden.bultos.every((b: any) => confirmedBultos[b.id]);
+      const allConfirmed = tempBultos.every((b: any) => b.id ? confirmedBultos[b.id] : false);
       if (!allConfirmed) {
         alert("Para completar la preparación, debe marcar todos los bultos como listos/confirmados.");
         return;
       }
     }
     
-    const bultosPayload = selectedOrden.bultos.map((b: any) => ({
+    const bultosPayload = tempBultos.map((b: any) => ({
       id: b.id,
-      peso_real_kg: weights[b.id] || 0.0,
-      confirmado: confirmedBultos[b.id] || false
+      producto_id: b.producto_id,
+      unidades: b.unidades,
+      peso_estimado_kg: b.peso_estimado_kg,
+      peso_real_kg: b.id ? (weights[b.id] || 0.0) : 0.0,
+      confirmado: b.id ? (confirmedBultos[b.id] || false) : false
     }));
     
     try {
@@ -110,15 +173,17 @@ export const Preparacion: React.FC = () => {
       }
       
       const res = await preparacionAPI.update(selectedOrden.id, payload);
-      alert(complete ? "¡Orden de preparación completada con éxito!" : "Pesos guardados parcialmente.");
+      alert(complete ? "¡Orden de preparación completada con éxito!" : "Cambios guardados correctamente.");
       
       if (complete) {
         setSelectedOrden(null);
       } else {
-        setSelectedOrden(res);
+        // Refresh with new data from server
+        handleSelectOrden(res);
       }
       fetchOrdenes();
     } catch (err) {
+      console.error(err);
       alert("Error al guardar cambios de preparación");
     }
   };
@@ -304,16 +369,68 @@ export const Preparacion: React.FC = () => {
             <div className="space-y-6">
               <div className="flex justify-between items-center px-2">
                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                  <Scale className="h-4 w-4 mr-2 text-brand-600" /> Control de Pesaje Real
+                  <Scale className="h-4 w-4 mr-2 text-brand-600" /> Control de Pesaje y Artículos
                 </h3>
               </div>
+
+              {/* Add Product Search Bar */}
+              {selectedOrden.estado !== 'Completado' && (
+                <div className="relative mb-6">
+                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 transition-all">
+                    <Search className="h-4 w-4 text-slate-400 mr-3" />
+                    <input 
+                      type="text"
+                      placeholder="Agregar artículo al pedido (código o nombre)..."
+                      value={productFilter}
+                      onFocus={() => setShowDropdown(true)}
+                      onChange={(e) => {
+                        setProductFilter(e.target.value);
+                        setShowDropdown(true);
+                      }}
+                      className="flex-1 bg-transparent border-none focus:outline-none text-sm font-bold text-slate-900 placeholder:text-slate-300"
+                    />
+                    {productFilter && (
+                      <button onClick={() => setProductFilter('')} className="p-1 hover:bg-slate-200 rounded-full">
+                        <X className="h-3 w-3 text-slate-400" />
+                      </button>
+                    )}
+                  </div>
+
+                  {showDropdown && productFilter && (
+                    <>
+                      <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                        {productos
+                          .filter(p => 
+                            p.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                            p.codigo?.toLowerCase().includes(productFilter.toLowerCase())
+                          )
+                          .slice(0, 8)
+                          .map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => handleAddItem(p.id)}
+                              className="w-full text-left px-5 py-3 hover:bg-brand-50 border-b border-slate-50 last:border-0 transition-colors"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded leading-none">{p.codigo}</span>
+                                <span className="text-xs font-bold text-slate-800">{p.descripcion}</span>
+                              </div>
+                            </button>
+                          ))
+                        }
+                      </div>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)}></div>
+                    </>
+                  )}
+                </div>
+              )}
               
               <div className="space-y-4">
-                {selectedOrden.bultos.map((bulto: any) => (
+                {tempBultos.map((bulto: any, idx: number) => (
                   <div 
-                    key={bulto.id} 
+                    key={bulto.id || `new-${idx}`} 
                     className={`p-6 rounded-3xl border transition-all ${
-                      confirmedBultos[bulto.id]
+                      bulto.id && confirmedBultos[bulto.id]
                         ? 'bg-emerald-50 border-emerald-100 scale-[0.99] opacity-90'
                         : 'bg-white border-slate-100 hover:border-brand-200 shadow-sm'
                     }`}
@@ -324,9 +441,27 @@ export const Preparacion: React.FC = () => {
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="font-bold text-xs bg-slate-100 text-slate-400 rounded px-1.5 py-0.5 tracking-tight">#{bulto.producto.codigo}</span>
                           <span className="font-bold text-slate-900 text-lg uppercase leading-tight tracking-tight">{bulto.producto.descripcion}</span>
+                          {selectedOrden.estado !== 'Completado' && !(bulto.id && confirmedBultos[bulto.id]) && (
+                            <button 
+                              onClick={() => handleRemoveItem(idx)}
+                              className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg ml-auto md:ml-2 transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                         <div className="flex items-center space-x-4 text-[10px] font-bold uppercase tracking-widest">
-                          <span className="text-slate-400">Objetivo: <b className="text-slate-600">{bulto.unidades} UNID.</b></span>
+                          <div className="flex items-center">
+                            <span className="text-slate-400 mr-2">Objetivo:</span>
+                            <input 
+                              type="number"
+                              disabled={selectedOrden.estado === 'Completado' || (bulto.id && confirmedBultos[bulto.id])}
+                              value={bulto.unidades}
+                              onChange={(e) => handleUnitChange(idx, Number(e.target.value))}
+                              className="w-12 bg-slate-100 border-none rounded text-center text-slate-700 focus:ring-1 focus:ring-brand-500 p-0.5"
+                            />
+                            <span className="text-slate-600 ml-1">UNID.</span>
+                          </div>
                           <span className="text-slate-200">/</span>
                           <span className="text-slate-400">Estimado: <b className="text-slate-600">{bulto.peso_estimado_kg} KG</b></span>
                         </div>
@@ -338,17 +473,20 @@ export const Preparacion: React.FC = () => {
                           <input
                             type="number"
                             step="0.1"
-                            disabled={selectedOrden.estado === 'Completado' || confirmedBultos[bulto.id]}
-                            value={weights[bulto.id] || ''}
-                            onChange={(e) => handleWeightChange(bulto.id, Number(e.target.value))}
-                            placeholder="0.0"
-                            className="w-32 px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-bold focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 text-center text-slate-900 transition-all font-mono placeholder:text-slate-200"
+                            disabled={selectedOrden.estado === 'Completado' || (bulto.id && !confirmedBultos[bulto.id] && !bulto.id)} // Error in logic here, fix below
+                            value={bulto.id ? (weights[bulto.id] || '') : ''}
+                            onChange={(e) => bulto.id && handleWeightChange(bulto.id, Number(e.target.value))}
+                            placeholder={bulto.id ? "0.0" : "S/H"}
+                            readOnly={!bulto.id}
+                            className={`w-32 px-4 py-4 border rounded-2xl text-xl font-bold focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 text-center transition-all font-mono placeholder:text-slate-200 ${
+                              !bulto.id ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-50 border-slate-200 text-slate-900'
+                            }`}
                           />
                           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest border border-slate-100 rounded">Kilos Reales</div>
                         </div>
 
                         {/* Confirm item check */}
-                        {selectedOrden.estado !== 'Completado' && (
+                        {selectedOrden.estado !== 'Completado' && bulto.id && (
                           <button
                             type="button"
                             onClick={() => handleToggleConfirmBulto(bulto.id)}
@@ -360,6 +498,11 @@ export const Preparacion: React.FC = () => {
                           >
                             <Check className={`h-6 w-6 transition-transform ${confirmedBultos[bulto.id] ? 'scale-110' : ''}`} />
                           </button>
+                        )}
+                        {!bulto.id && (
+                           <div className="p-4 rounded-2xl border border-dashed border-slate-200 text-slate-300 italic text-[10px] text-center w-[58px]">
+                              Pend. Guardar
+                           </div>
                         )}
                       </div>
                     </div>

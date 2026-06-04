@@ -291,6 +291,34 @@ def update_pedido(
             new_total += sub
         
         pedido.total = new_total
+        
+        # 3. Sync associated OrdenPreparacionBultos if they exist
+        if pedido.orden_preparacion:
+            prep = pedido.orden_preparacion
+            existing_bultos = {b.producto_id: b for b in prep.bultos}
+            new_item_prod_ids = [it.producto_id for it in pedido.items]
+            
+            # Delete bultos whose product is no longer in the order
+            for prod_id, bulto in list(existing_bultos.items()):
+                if prod_id not in new_item_prod_ids:
+                    db.delete(bulto)
+            
+            # Add or update bultos
+            for item in pedido.items:
+                if item.producto_id in existing_bultos:
+                    bulto = existing_bultos[item.producto_id]
+                    bulto.unidades = item.cantidad_unidades
+                    bulto.peso_estimado_kg = item.peso_estimado_kg
+                else:
+                    new_bulto = OrdenPreparacionBulto(
+                        orden_id=prep.id,
+                        producto_id=item.producto_id,
+                        unidades=item.cantidad_unidades,
+                        peso_estimado_kg=item.peso_estimado_kg,
+                        peso_real_kg=0.0,
+                        confirmado=False
+                    )
+                    db.add(new_bulto)
 
     # Update other fields (estado, observaciones)
     for field, value in update_data.items():

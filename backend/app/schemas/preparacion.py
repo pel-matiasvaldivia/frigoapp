@@ -5,7 +5,10 @@ from app.schemas.producto import ProductoResponse
 from app.schemas.ruta import RutaResponse
 
 class OrdenPreparacionBultoUpdate(BaseModel):
-    id: int
+    id: Optional[int] = None
+    producto_id: int
+    unidades: float
+    peso_estimado_kg: float
     peso_real_kg: float
     confirmado: bool
 
