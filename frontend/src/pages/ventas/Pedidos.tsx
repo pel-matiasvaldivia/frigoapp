@@ -9,6 +9,7 @@ import {
   AlertTriangle, 
   CheckCircle, 
   Eye, 
+  Pencil,
   Calendar, 
   User, 
   FileCheck,
@@ -57,6 +58,7 @@ export const Pedidos: React.FC = () => {
   
   // View Order Modal
   const [viewOrderModal, setViewOrderModal] = useState<any | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
 
   const location = useLocation();
   
@@ -91,22 +93,48 @@ export const Pedidos: React.FC = () => {
     }
   };
 
-  // Triggered when client changes in order creation
-  const handleClientChange = async (clientId: number) => {
-    setSelectedClienteId(clientId);
-    setItems([]);
+  const fetchPriceList = async (clientId: number) => {
     const client = clientes.find(c => c.id === clientId);
     if (client && client.lista_precios_id) {
       try {
         const listDetails = await listasPreciosAPI.getDetalles(client.lista_precios_id);
         setClientPriceList(listDetails);
       } catch (err) {
-        alert("Error al cargar la lista de precios del cliente");
+        console.error("Error al cargar la lista de precios del cliente", err);
         setClientPriceList(null);
       }
     } else {
       setClientPriceList(null);
     }
+  };
+
+  // Triggered when client changes in order creation
+  const handleClientChange = async (clientId: number) => {
+    setSelectedClienteId(clientId);
+    setItems([]);
+    await fetchPriceList(clientId);
+  };
+
+  const handleEditClick = async (pedido: any) => {
+    setEditingOrderId(pedido.id);
+    setSelectedClienteId(pedido.cliente_id);
+    setObservaciones(pedido.observaciones || '');
+    
+    // Transform items to input format
+    const transformedItems = pedido.items.map((item: any) => ({
+      producto_id: item.producto_id,
+      codigo: item.producto.codigo,
+      descripcion: item.producto.descripcion,
+      cantidad_unidades: item.cantidad_unidades,
+      peso_estimado_kg: item.peso_estimado_kg,
+      precio_unitario: item.precio_unitario
+    }));
+    setItems(transformedItems);
+    
+    // Fetch price list details for the client
+    await fetchPriceList(pedido.cliente_id);
+    
+    setDrawerOpen(true);
   };
 
   const handleAddItem = () => {
@@ -168,24 +196,29 @@ export const Pedidos: React.FC = () => {
       items: items.map(it => ({
         producto_id: it.producto_id,
         cantidad_unidades: it.cantidad_unidades,
-        peso_estimado_kg: it.peso_estimado_kg
+        peso_estimado_kg: it.peso_estimado_kg,
+        precio_unitario: it.precio_unitario
       }))
     };
     
-    if (ignoreWarning) {
-      try {
+    try {
+      if (editingOrderId) {
+        await pedidosAPI.update(editingOrderId, payload);
+        setDrawerOpen(false);
+        resetForm();
+        fetchInitialData();
+        return;
+      }
+
+      if (ignoreWarning) {
         await pedidosAPI.create(payload);
         setWarningModalOpen(false);
         setDrawerOpen(false);
         resetForm();
         fetchInitialData();
-      } catch (err: any) {
-        alert("Error al guardar el pedido");
+        return;
       }
-      return;
-    }
 
-    try {
       const res = await pedidosAPI.create(payload);
       if (res.warning_credito) {
         // Credit limit warnings
@@ -198,11 +231,12 @@ export const Pedidos: React.FC = () => {
         fetchInitialData();
       }
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Error al crear pedido");
+      alert(err.response?.data?.detail || "Error al guardar pedido");
     }
   };
 
   const resetForm = () => {
+    setEditingOrderId(null);
     setSelectedClienteId('');
     setClientPriceList(null);
     setItems([]);
@@ -323,13 +357,22 @@ export const Pedidos: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <button
-                        onClick={() => setViewOrderModal(pedido)}
-                        className="p-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl transition-all"
-                        title="Ver detalles"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => setViewOrderModal(pedido)}
+                          className="p-2 bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-xl transition-all"
+                          title="Ver detalles"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditClick(pedido)}
+                          className="p-2 bg-brand-50 text-brand-400 hover:bg-brand-100 hover:text-brand-600 rounded-xl transition-all"
+                          title="Editar pedido"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -352,12 +395,19 @@ export const Pedidos: React.FC = () => {
                   <ShoppingCart className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Agregar Pedido Manual</h2>
-                  <p className="text-slate-400 text-xs font-medium">Complete el detalle para iniciar la preparación.</p>
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                    {editingOrderId ? 'Editar Pedido Manual' : 'Agregar Pedido Manual'}
+                  </h2>
+                  <p className="text-slate-400 text-xs font-medium">
+                    {editingOrderId ? `Modificando pedido #${editingOrderId}` : 'Complete el detalle para iniciar la preparación.'}
+                  </p>
                 </div>
               </div>
               <button 
-                onClick={() => setDrawerOpen(false)}
+                onClick={() => {
+                  setDrawerOpen(false);
+                  resetForm();
+                }}
                 className="p-2 text-slate-300 hover:text-slate-900 transition-colors"
               >
                 <X className="h-6 w-6" />
@@ -569,7 +619,7 @@ export const Pedidos: React.FC = () => {
                 onClick={() => handleCreateOrder(false)}
                 className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-2xl transition-all shadow-xl shadow-brand-900/20 disabled:opacity-30 disabled:shadow-none uppercase tracking-widest active:scale-[0.98]"
               >
-                Confirmar Registro de Pedido
+                {editingOrderId ? 'Guardar Cambios' : 'Confirmar Registro de Pedido'}
               </button>
             </div>
           </div>

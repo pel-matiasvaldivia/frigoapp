@@ -10,7 +10,7 @@ class PedidoItemBase(BaseModel):
     peso_estimado_kg: Optional[float] = 0.0
 
 class PedidoItemCreate(PedidoItemBase):
-    pass
+    precio_unitario: Optional[float] = None
 
 class PedidoItemResponse(PedidoItemBase):
     id: int

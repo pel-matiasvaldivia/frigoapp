@@ -116,17 +116,25 @@ def create_pedido(
     
     for item in pedido_in.items:
         # Retrieve price of product on client's list
-        det = db.query(ListaPreciosDetalle).filter(
-            ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
-            ListaPreciosDetalle.producto_id == item.producto_id
-        ).first()
+        precio_unit = item.precio_unitario
         
-        if not det:
-            # Try to fetch default price or throw error
-            raise HTTPException(
-                status_code=400,
-                detail=f"El producto con ID {item.producto_id} no tiene precio en la lista {cliente.lista_precios_id}"
-            )
+        if precio_unit is None:
+            det = db.query(ListaPreciosDetalle).filter(
+                ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
+                ListaPreciosDetalle.producto_id == item.producto_id
+            ).first()
+            
+            if not det:
+                if cliente.lista_precios_id:
+                    # Try to fetch default price or throw error
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"El producto con ID {item.producto_id} no tiene precio en la lista {cliente.lista_precios_id}"
+                    )
+                else:
+                    precio_unit = 0.0 # Default if no list
+            else:
+                precio_unit = det.precio_venta
             
         # Pig slaughterhouse pricing rule: price per kg.
         # Initial estimated subtotal: price * estimated kg
@@ -137,8 +145,7 @@ def create_pedido(
             weight_est = (item.cantidad_unidades * 10.0)
             print(f"[Pedidos] ADVERTENCIA: Usando peso estimado por defecto (10kg/u) para producto_id {item.producto_id}")
         
-        # We record the selling price from the list
-        precio_unit = det.precio_venta
+        # We record the selling price
         sub = round(precio_unit * weight_est, 2)
         
         db_item = PedidoItem(
@@ -250,18 +257,25 @@ def update_pedido(
         
         for item_in in items_in:
             # Lookup price
-            det = db.query(ListaPreciosDetalle).filter(
-                ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
-                ListaPreciosDetalle.producto_id == item_in["producto_id"]
-            ).first()
+            precio_unit = item_in.get("precio_unitario")
             
-            if not det:
-                 raise HTTPException(
-                    status_code=400,
-                    detail=f"El producto ID {item_in['producto_id']} no tiene precio para este cliente"
-                )
+            if precio_unit is None:
+                det = db.query(ListaPreciosDetalle).filter(
+                    ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
+                    ListaPreciosDetalle.producto_id == item_in["producto_id"]
+                ).first()
+                
+                if not det:
+                    if cliente.lista_precios_id:
+                         raise HTTPException(
+                            status_code=400,
+                            detail=f"El producto con ID {item_in['producto_id']} no tiene precio en la lista {cliente.lista_precios_id}"
+                        )
+                    else:
+                        precio_unit = 0.0
+                else:
+                    precio_unit = det.precio_venta
             
-            precio_unit = det.precio_venta
             weight_est = item_in.get("peso_estimado_kg") or (item_in["cantidad_unidades"] * 10.0)
             sub = round(precio_unit * weight_est, 2)
             
