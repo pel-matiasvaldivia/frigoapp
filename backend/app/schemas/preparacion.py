@@ -41,12 +41,21 @@ class ComprobanteBasic(BaseModel):
     class Config:
         from_attributes = True
 
+class ClienteBasic(BaseModel):
+    id: int
+    razon_social: str
+    direccion: str
+
+    class Config:
+        from_attributes = True
+
 class PedidoBasicInfo(BaseModel):
     id: int
     cliente_id: int
     estado: str
     total: float
     comprobantes: List[ComprobanteBasic] = []
+    cliente: Optional[ClienteBasic] = None
 
     class Config:
         from_attributes = True

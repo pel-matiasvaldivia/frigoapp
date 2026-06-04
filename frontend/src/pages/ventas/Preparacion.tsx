@@ -192,14 +192,17 @@ export const Preparacion: React.FC = () => {
                 }`}
               >
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Orden #{orden.id}</span>
-                  <span className="text-[10px] font-bold text-brand-600 bg-white px-2 py-0.5 rounded-full border border-brand-100 shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Orden #{orden.id}</span>
+                    <span className="text-slate-300 text-[10px]">|</span>
+                    <span className="text-xs font-black text-slate-900 uppercase truncate max-w-[140px] tracking-tight">
+                      {orden.pedido?.cliente?.razon_social}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-brand-600 bg-white px-2 py-0.5 rounded-full border border-brand-100 shadow-sm whitespace-nowrap">
                     {orden.bultos?.length} Bultos
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 leading-tight mb-2 uppercase">
-                  {orden.pedido?.cliente?.razon_social}
-                </h4>
                 <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase tracking-tight">
                   <span className="bg-slate-200/50 text-slate-600 px-1.5 py-0.5 rounded mr-2">#{orden.pedido_id}</span>
                   <span>{orden.ruta?.nombre || 'General'}</span>
