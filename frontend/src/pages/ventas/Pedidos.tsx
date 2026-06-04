@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { pedidosAPI, clientesAPI, listasPreciosAPI, productosAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -55,9 +56,17 @@ export const Pedidos: React.FC = () => {
   // View Order Modal
   const [viewOrderModal, setViewOrderModal] = useState<any | null>(null);
 
+  const location = useLocation();
+  
   useEffect(() => {
     fetchInitialData();
-  }, [filterEstado, filterCliente]);
+    
+    // Check if we should open drawer automatically
+    const params = new URLSearchParams(location.search);
+    if (params.get('new') === 'true') {
+      setDrawerOpen(true);
+    }
+  }, [filterEstado, filterCliente, location.search]);
 
   const fetchInitialData = async () => {
     try {
@@ -184,7 +193,7 @@ export const Pedidos: React.FC = () => {
         fetchInitialData();
       }
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Error al crear nota de pedido");
+      alert(err.response?.data?.detail || "Error al crear pedido");
     }
   };
 
@@ -214,7 +223,7 @@ export const Pedidos: React.FC = () => {
             className="flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-900/20 active:scale-95"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Nueva Nota de Pedido
+            Agregar Pedido Manual
           </button>
         )}
       </div>
@@ -337,7 +346,7 @@ export const Pedidos: React.FC = () => {
                   <ShoppingCart className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Nueva Nota de Pedido</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Agregar Pedido Manual</h2>
                   <p className="text-slate-400 text-xs font-medium">Complete el detalle para iniciar la preparación.</p>
                 </div>
               </div>
@@ -513,7 +522,7 @@ export const Pedidos: React.FC = () => {
                 onClick={() => handleCreateOrder(false)}
                 className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-2xl transition-all shadow-xl shadow-brand-900/20 disabled:opacity-30 disabled:shadow-none uppercase tracking-widest active:scale-[0.98]"
               >
-                Registrar Nota de Pedido
+                Confirmar Registro de Pedido
               </button>
             </div>
           </div>

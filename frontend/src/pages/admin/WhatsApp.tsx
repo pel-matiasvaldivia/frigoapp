@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, QrCode, CheckCircle2, XCircle, 
   RefreshCw, Smartphone, ShieldCheck, AlertCircle,
@@ -13,6 +14,7 @@ export const WhatsAppAdmin: React.FC = () => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const navigate = useNavigate();
 
   // Edit States
   const [editingPedido, setEditingPedido] = useState<any | null>(null);
@@ -172,11 +174,20 @@ export const WhatsAppAdmin: React.FC = () => {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">WhatsApp Business</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium italic">Automatización de pedidos mediante OpenWA e Inteligencia Artificial.</p>
         </div>
-        <div className={`flex items-center space-x-2 px-4 py-2 rounded-2xl border ${
-          status === 'connected' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-        }`}>
-          <div className={`w-2 h-2 rounded-full animate-pulse ${status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-          <span className="text-xs font-bold uppercase tracking-widest">{status === 'connected' ? 'Servicio Activo' : 'Esperando Conexión'}</span>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate('/pedidos?new=true')}
+            className="flex items-center px-6 py-2.5 bg-white border border-slate-200 hover:border-brand-300 text-slate-700 font-bold rounded-2xl transition-all shadow-sm active:scale-95"
+          >
+            <Plus className="h-4 w-4 mr-2 text-brand-600" />
+            <span className="text-xs uppercase tracking-widest">Agregar Pedido Manual</span>
+          </button>
+          <div className={`flex items-center space-x-2 px-4 py-2 rounded-2xl border ${
+            status === 'connected' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+          }`}>
+            <div className={`w-2 h-2 rounded-full animate-pulse ${status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span className="text-xs font-bold uppercase tracking-widest">{status === 'connected' ? 'Servicio Activo' : 'Esperando Conexión'}</span>
+          </div>
         </div>
       </div>
 
