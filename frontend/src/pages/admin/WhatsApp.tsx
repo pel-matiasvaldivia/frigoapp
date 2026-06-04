@@ -28,6 +28,7 @@ export const WhatsAppAdmin: React.FC = () => {
   const [addUnits, setAddUnits] = useState(1);
   const [addWeight, setAddWeight] = useState(10);
   const [productFilter, setProductFilter] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -402,10 +403,15 @@ export const WhatsAppAdmin: React.FC = () => {
                           type="text"
                           placeholder="Filtrar por código o nombre..."
                           value={productFilter}
-                          onChange={(e) => setProductFilter(e.target.value)}
+                          onFocus={() => setShowDropdown(true)}
+                          onChange={(e) => {
+                            setProductFilter(e.target.value);
+                            setShowDropdown(true);
+                            if (addProductId) setAddProductId('');
+                          }}
                           className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none"
                        />
-                       {productFilter && (
+                       {showDropdown && productFilter && (
                          <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
                            {allProductos
                              .filter(p => 
@@ -416,9 +422,11 @@ export const WhatsAppAdmin: React.FC = () => {
                              .map(p => (
                                <button
                                  key={p.id}
+                                 type="button"
                                  onClick={() => {
                                    setAddProductId(p.id);
                                    setProductFilter(`${p.codigo} - ${p.descripcion}`);
+                                   setShowDropdown(false);
                                  }}
                                  className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
                                >
@@ -436,6 +444,9 @@ export const WhatsAppAdmin: React.FC = () => {
                              <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos</div>
                            )}
                          </div>
+                       )}
+                       {showDropdown && productFilter && (
+                          <div className="fixed inset-0 z-0" onClick={() => setShowDropdown(false)} />
                        )}
                     </div>
                     <div className="flex flex-col">

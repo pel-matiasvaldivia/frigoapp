@@ -48,6 +48,7 @@ export const Pedidos: React.FC = () => {
   const [addUnits, setAddUnits] = useState<number>(1);
   const [addWeight, setAddWeight] = useState<number>(10); // default weight estimate
   const [productFilter, setProductFilter] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Warning Modal
   const [warningModalOpen, setWarningModalOpen] = useState(false);
@@ -402,10 +403,15 @@ export const Pedidos: React.FC = () => {
                           type="text"
                           placeholder="Escriba código o descripción..."
                           value={productFilter}
-                          onChange={(e) => setProductFilter(e.target.value)}
+                          onFocus={() => setShowDropdown(true)}
+                          onChange={(e) => {
+                            setProductFilter(e.target.value);
+                            setShowDropdown(true);
+                            if (addProductId) setAddProductId(''); // Clear selection if typing
+                          }}
                           className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-sans"
                         />
-                        {productFilter && (
+                        {showDropdown && productFilter && (
                           <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
                             {(clientPriceList ? clientPriceList.detalles : productos.map(p => ({ producto: p, producto_id: p.id, precio_venta: 0 })))
                               .filter((d: any) => 
@@ -416,9 +422,11 @@ export const Pedidos: React.FC = () => {
                               .map((det: any) => (
                                 <button
                                   key={det.producto_id}
+                                  type="button"
                                   onClick={() => {
                                     setAddProductId(det.producto_id);
                                     setProductFilter(`${det.producto.codigo} - ${det.producto.descripcion}`);
+                                    setShowDropdown(false);
                                   }}
                                   className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
                                 >
@@ -438,6 +446,9 @@ export const Pedidos: React.FC = () => {
                               <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos</div>
                             )}
                           </div>
+                        )}
+                        {showDropdown && productFilter && (
+                          <div className="fixed inset-0 z-0" onClick={() => setShowDropdown(false)} />
                         )}
                       </div>
                       </div>
