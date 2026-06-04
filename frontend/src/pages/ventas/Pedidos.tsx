@@ -109,17 +109,19 @@ export const Pedidos: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    if (!addProductId || !clientPriceList) return;
-    
-    // Find price detail inside lists
-    const priceDetail = clientPriceList.detalles.find((d: any) => d.producto_id === addProductId);
-    if (!priceDetail) {
-      alert("El producto seleccionado no está en la lista de precios de este cliente");
-      return;
-    }
+    if (!addProductId) return;
     
     const product = productos.find(p => p.id === addProductId);
     if (!product) return;
+
+    // Find price detail inside lists (if available)
+    let precio = 0;
+    if (clientPriceList) {
+      const priceDetail = clientPriceList.detalles.find((d: any) => d.producto_id === addProductId);
+      if (priceDetail) {
+        precio = priceDetail.precio_venta;
+      }
+    }
     
     // Check if already in items
     const exists = items.some(item => item.producto_id === addProductId);
@@ -134,7 +136,7 @@ export const Pedidos: React.FC = () => {
       descripcion: product.descripcion,
       cantidad_unidades: addUnits,
       peso_estimado_kg: addWeight,
-      precio_unitario: priceDetail.precio_venta
+      precio_unitario: precio
     };
     
     setItems([...items, newItem]);
@@ -383,7 +385,7 @@ export const Pedidos: React.FC = () => {
                 </select>
               </div>
 
-              {selectedClienteId && clientPriceList && (
+              {selectedClienteId && (
                 <>
                   {/* Add Product Section */}
                   {/* Add Product Section */}
@@ -405,7 +407,7 @@ export const Pedidos: React.FC = () => {
                         />
                         {productFilter && (
                           <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
-                            {clientPriceList.detalles
+                            {(clientPriceList ? clientPriceList.detalles : productos.map(p => ({ producto: p, producto_id: p.id, precio_venta: 0 })))
                               .filter((d: any) => 
                                 d.producto.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
                                 d.producto.codigo?.toLowerCase().includes(productFilter.toLowerCase())
@@ -428,11 +430,12 @@ export const Pedidos: React.FC = () => {
                                 </button>
                               ))
                             }
-                            {clientPriceList.detalles.filter((d: any) => 
-                              d.producto.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
-                              d.producto.codigo?.toLowerCase().includes(productFilter.toLowerCase())
-                            ).length === 0 && (
-                              <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos en esta lista</div>
+                            {(clientPriceList ? clientPriceList.detalles : productos).filter((det: any) => {
+                              const p = det.producto || det;
+                              return p.descripcion.toLowerCase().includes(productFilter.toLowerCase()) || 
+                                     p.codigo?.toLowerCase().includes(productFilter.toLowerCase());
+                            }).length === 0 && (
+                              <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron productos</div>
                             )}
                           </div>
                         )}
