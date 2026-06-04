@@ -8,7 +8,7 @@ from app.core.database import engine, Base
 from app.db.seed import seed_db
 
 # Import routers
-from app.routers import auth, clientes, productos, listas_precios, pedidos, despacho, comprobantes, cuentas_corrientes, configuracion, preparacion, rutas, dashboard, whatsapp
+from app.routers import auth, clientes, productos, listas_precios, pedidos, despacho, comprobantes, cuentas_corrientes, configuracion, preparacion, rutas, dashboard, whatsapp, caja
 
 # 1. Initialize DB and Seed Data
 try:
@@ -69,6 +69,7 @@ app.include_router(rutas.router, prefix=settings.API_V1_STR)
 app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 app.include_router(configuracion.router, prefix=settings.API_V1_STR)
 app.include_router(whatsapp.router, prefix=settings.API_V1_STR)
+app.include_router(caja.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():

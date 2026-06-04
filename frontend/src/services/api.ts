@@ -156,3 +156,10 @@ export const configuracionAPI = {
   update: async (clave: string, valor: string) => (await api.put(`/configuracion/${clave}`, { valor })).data,
   getEmpresa: async () => (await api.get('/configuracion/empresa')).data,
 };
+
+export const cajaAPI = {
+  list: async (filters: Record<string, unknown> = {}) => (await api.get('/caja/', { params: filters })).data,
+  getSummary: async () => (await api.get('/caja/summary')).data,
+  create: async (data: Record<string, unknown>) => (await api.post('/caja/', data)).data,
+  delete: async (id: number) => (await api.delete(`/caja/${id}`)).data,
+};

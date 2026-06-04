@@ -16,7 +16,8 @@ import {
   X,
   User,
   MessageSquare,
-  Map
+  Map,
+  CreditCard
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -40,6 +41,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { name: 'Preparación', path: '/preparacion', icon: ClipboardList, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
     { name: 'Facturas / Remitos', path: '/comprobantes', icon: FileText, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
     { name: 'Cuentas Corrientes', path: '/cuentas', icon: Coins, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
+    { name: 'Caja', path: '/caja', icon: CreditCard, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
     { name: 'Repartos Hoja de Ruta', path: '/despacho', icon: Truck, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'REPARTIDOR'] },
     { name: 'Clientes', path: '/clientes', icon: Users, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
     { name: 'Catálogo Productos', path: '/productos', icon: Beef, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },

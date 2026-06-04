@@ -16,6 +16,7 @@ import { Productos } from './pages/admin/Productos';
 import { ListasPrecios } from './pages/admin/ListasPrecios';
 import { WhatsAppAdmin } from './pages/admin/WhatsApp';
 import { MapaVentas } from './pages/admin/MapaVentas';
+import { Caja } from './pages/admin/Caja';
 import { Configuracion } from './pages/configuracion/Configuracion';
 
 // Pages - Sales & Operations
@@ -157,6 +158,12 @@ const AppRoutes: React.FC = () => (
     <Route path="/cuentas" element={
       <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
         <CuentasCorrientes />
+      </AdminRoute>
+    } />
+
+    <Route path="/caja" element={
+      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
+        <Caja />
       </AdminRoute>
     } />
 
