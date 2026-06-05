@@ -29,6 +29,32 @@ try:
             print(f"Aviso migración: {migr_err}")
 
     seed_db()
+    
+    # Reset sequences to avoid IntegrityError (duplicate key)
+    # This happens if IDs were inserted manually without updating the sequence
+    try:
+        tables_to_fix = [
+            "listas_precios", "productos", "clientes", "pedidos", 
+            "ordenes_preparacion", "listas_precios_detalles", "comprobantes",
+            "movimientos_caja", "item_pedidos"
+        ]
+        with engine.connect() as connection:
+            for table in tables_to_fix:
+                try:
+                    # Use pg_get_serial_sequence to reliably find the sequence name
+                    connection.execute(text(f"""
+                        SELECT setval(
+                            pg_get_serial_sequence('{table}', 'id'),
+                            COALESCE((SELECT MAX(id) FROM {table}), 1),
+                            (SELECT MAX(id) FROM {table}) IS NOT NULL
+                        )
+                    """))
+                except Exception as seq_err:
+                    print(f"Aviso secuencia {table}: {seq_err}")
+            connection.commit()
+            print("Sincronización de secuencias DB completada.")
+    except Exception as general_seq_err:
+        print(f"Error general al resetear secuencias: {general_seq_err}")
 except Exception as e:
     print(f"Error al iniciar base de datos: {e}")
 
