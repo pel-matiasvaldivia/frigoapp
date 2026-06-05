@@ -292,16 +292,19 @@ const ModalNuevaLista: React.FC<{
   const [newProd, setNewProd] = useState({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editedItems, setEditedItems] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (show && listaToEdit) {
       setNombre(listaToEdit.nombre);
       setDescripcion(listaToEdit.descripcion || '');
+      setEditedItems(new Set());
       fetchExistingItems();
     } else if (show) {
       setNombre('');
       setDescripcion('');
       setItems([]);
+      setEditedItems(new Set());
     }
   }, [show, listaToEdit]);
 
@@ -314,9 +317,8 @@ const ModalNuevaLista: React.FC<{
     setLoadingItems(true);
     try {
       const res = await listasPreciosAPI.getDetalles(listaToEdit.id);
-      // Map to the same format as creation items
       setItems(res.detalles.map((d: any) => ({
-        id: d.id, // Keep detalle_id for deletion
+        id: d.id,
         producto_id: d.producto_id,
         descripcion: d.producto.descripcion,
         codigo: d.producto.codigo,
@@ -337,7 +339,6 @@ const ModalNuevaLista: React.FC<{
 
   const handleAddItem = async (prod: any) => {
     if (items.some(it => it.producto_id === prod.id)) return;
-    
     const newItem = { 
       producto_id: prod.id, 
       descripcion: prod.descripcion, 
@@ -360,7 +361,6 @@ const ModalNuevaLista: React.FC<{
 
   const handleAddNewProduct = async () => {
     if (!newProd.codigo || !newProd.descripcion) return;
-    
     const newItem = {
       new_producto: { ...newProd },
       descripcion: newProd.descripcion,
@@ -390,7 +390,9 @@ const ModalNuevaLista: React.FC<{
       if (!confirm("¿Eliminar este producto de la lista?")) return;
       try {
         await listasPreciosAPI.removeDetalle(listaToEdit.id, item.id);
-        setItems(items.filter((_, i) => i !== index));
+        const newItems = items.filter((_, i) => i !== index);
+        setItems(newItems);
+        // Optional: remove from editedItems if it was there
       } catch (err) { alert("Error al eliminar producto de la lista"); }
     } else {
       setItems(items.filter((_, i) => i !== index));
@@ -401,6 +403,9 @@ const ModalNuevaLista: React.FC<{
     const newItems = [...items];
     newItems[index][field] = value;
     setItems(newItems);
+    if (listaToEdit) {
+      setEditedItems(prev => new Set(prev).add(index));
+    }
   };
 
   const handleSubmit = async () => {
@@ -409,6 +414,16 @@ const ModalNuevaLista: React.FC<{
     try {
       if (listaToEdit) {
         await listasPreciosAPI.update(listaToEdit.id, { nombre, descripcion });
+        // Save modified items
+        const promises = Array.from(editedItems).map(idx => {
+          const it = items[idx];
+          return listasPreciosAPI.updateDetalle(listaToEdit.id, it.id, {
+            precio_costo: it.precio_costo,
+            precio_venta: it.precio_venta,
+            precio_mayoreo: it.precio_mayoreo
+          });
+        });
+        await Promise.all(promises);
       } else {
         await listasPreciosAPI.create({
           nombre,
@@ -426,7 +441,7 @@ const ModalNuevaLista: React.FC<{
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Error al guardar lista");
+      alert(err.response?.data?.detail || "Error al guardar cambios");
     } finally {
       setSubmitting(false);
     }
@@ -531,25 +546,28 @@ const ModalNuevaLista: React.FC<{
                                 {it.new_producto && <span className="text-[7px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter">NUEVO PRODUCTO</span>}
                              </td>
                              <td className="p-3 text-right">
-                               {listaToEdit ? (
-                                 <span className="font-black text-slate-400">$ {it.precio_costo}</span>
-                               ) : (
-                                 <input type="number" value={it.precio_costo} onChange={e => updateItemPrice(idx, 'precio_costo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" />
-                               )}
+                               <input 
+                                 type="number" 
+                                 value={it.precio_costo} 
+                                 onChange={e => updateItemPrice(idx, 'precio_costo', parseFloat(e.target.value) || 0)} 
+                                 className={`w-20 p-2 border rounded-xl text-right font-black ${editedItems.has(idx) ? 'border-brand-300 bg-brand-50' : 'border-slate-200'}`} 
+                               />
                              </td>
                              <td className="p-3 text-right">
-                               {listaToEdit ? (
-                                 <span className="font-black text-brand-600">$ {it.precio_venta}</span>
-                               ) : (
-                                 <input type="number" value={it.precio_venta} onChange={e => updateItemPrice(idx, 'precio_venta', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-brand-200 rounded-xl text-right font-black text-brand-600 focus:ring-1 focus:ring-brand-500 outline-none" />
-                               )}
+                               <input 
+                                 type="number" 
+                                 value={it.precio_venta} 
+                                 onChange={e => updateItemPrice(idx, 'precio_venta', parseFloat(e.target.value) || 0)} 
+                                 className={`w-20 p-2 border rounded-xl text-right font-black text-brand-600 focus:ring-1 focus:ring-brand-500 outline-none ${editedItems.has(idx) ? 'border-brand-400 bg-brand-50' : 'border-brand-200/50'}`} 
+                               />
                              </td>
                              <td className="p-3 text-right">
-                               {listaToEdit ? (
-                                 <span className="font-black text-slate-400">$ {it.precio_mayoreo}</span>
-                               ) : (
-                                 <input type="number" value={it.precio_mayoreo} onChange={e => updateItemPrice(idx, 'precio_mayoreo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" />
-                               )}
+                               <input 
+                                 type="number" 
+                                 value={it.precio_mayoreo} 
+                                 onChange={e => updateItemPrice(idx, 'precio_mayoreo', parseFloat(e.target.value) || 0)} 
+                                 className={`w-20 p-2 border rounded-xl text-right font-black ${editedItems.has(idx) ? 'border-brand-300 bg-brand-50' : 'border-slate-200'}`} 
+                               />
                              </td>
                              <td className="p-3 text-center"><button onClick={() => removeItem(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><X className="h-4 w-4" /></button></td>
                           </tr>
