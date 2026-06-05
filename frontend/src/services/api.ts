@@ -166,4 +166,14 @@ export const cajaAPI = {
   getSummary: async () => (await api.get('/caja/summary')).data,
   create: async (data: Record<string, unknown>) => (await api.post('/caja/', data)).data,
   delete: async (id: number) => (await api.delete(`/caja/${id}`)).data,
+  // Sessions
+  getSesionActiva: async () => (await api.get('/caja/sesion/activa')).data,
+  abrirSesion: async (data: Record<string, unknown>) => (await api.post('/caja/sesion/abrir', data)).data,
+  cerrarSesion: async (sesionId: number, data: Record<string, unknown>) => (await api.post(`/caja/sesion/${sesionId}/cerrar`, data)).data,
+  getMovimientosSesion: async (sesionId: number) => (await api.get(`/caja/sesion/${sesionId}/movimientos`)).data,
+  // Concepts
+  getConceptos: async () => (await api.get('/caja/conceptos')).data,
+  createConcepto: async (data: Record<string, unknown>) => (await api.post('/caja/conceptos', data)).data,
+  updateConcepto: async (id: number, data: Record<string, unknown>) => (await api.put(`/caja/conceptos/${id}`, data)).data,
+  deleteConcepto: async (id: number) => (await api.delete(`/caja/conceptos/${id}`)).data,
 };

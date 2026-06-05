@@ -9,7 +9,7 @@ from app.models.preparacion import OrdenPreparacion, OrdenPreparacionBulto
 from app.models.comprobante import Comprobante
 from app.models.cuenta_corriente import CuentaCorriente, MovimientoCC
 from app.models.configuracion import ConfiguracionSistema
-from app.models.caja import MovimientoCaja, TipoMovimiento
+from app.models.caja import MovimientoCaja, TipoMovimiento, SesionCaja, ConceptoCaja, EstadoSesion
 
 # This ensures they are registered when Base is imported
 __all__ = [
@@ -27,5 +27,7 @@ __all__ = [
     "Comprobante",
     "CuentaCorriente",
     "MovimientoCC",
-    "ConfiguracionSistema"
+    "ConfiguracionSistema",
+    "SesionCaja",
+    "ConceptoCaja"
 ]
