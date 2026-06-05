@@ -97,6 +97,10 @@ export const listasPreciosAPI = {
   exportarExcel: async (listaId: number) => (await api.get(`/listas-precios/${listaId}/exportar`)).data,
   actualizarMasivo: async (data: Record<string, unknown>) =>
     (await api.post('/listas-precios/actualizar-masivo', data)).data,
+  addDetalle: async (listaId: number, data: Record<string, unknown>) =>
+    (await api.post(`/listas-precios/${listaId}/detalle`, data)).data,
+  removeDetalle: async (listaId: number, detalleId: number) =>
+    (await api.delete(`/listas-precios/${listaId}/detalle/${detalleId}`)).data,
 };
 
 export const pedidosAPI = {

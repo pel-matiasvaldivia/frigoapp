@@ -285,18 +285,8 @@ const ModalNuevaLista: React.FC<{
 }> = ({ show, listaToEdit, onClose, onSuccess }) => {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [items, setItems] = useState<any[]>([]); // Only used for create
-  
-  useEffect(() => {
-    if (show && listaToEdit) {
-      setNombre(listaToEdit.nombre);
-      setDescripcion(listaToEdit.descripcion || '');
-    } else if (show) {
-      setNombre('');
-      setDescripcion('');
-      setItems([]);
-    }
-  }, [show, listaToEdit]);
+  const [items, setItems] = useState<any[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
   const [allProductos, setAllProductos] = useState<any[]>([]);
   const [addingNew, setAddingNew] = useState(false);
   const [newProd, setNewProd] = useState({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
@@ -304,8 +294,39 @@ const ModalNuevaLista: React.FC<{
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    if (show && listaToEdit) {
+      setNombre(listaToEdit.nombre);
+      setDescripcion(listaToEdit.descripcion || '');
+      fetchExistingItems();
+    } else if (show) {
+      setNombre('');
+      setDescripcion('');
+      setItems([]);
+    }
+  }, [show, listaToEdit]);
+
+  useEffect(() => {
     if (show) fetchProductos();
   }, [show]);
+
+  const fetchExistingItems = async () => {
+    if (!listaToEdit) return;
+    setLoadingItems(true);
+    try {
+      const res = await listasPreciosAPI.getDetalles(listaToEdit.id);
+      // Map to the same format as creation items
+      setItems(res.detalles.map((d: any) => ({
+        id: d.id, // Keep detalle_id for deletion
+        producto_id: d.producto_id,
+        descripcion: d.producto.descripcion,
+        codigo: d.producto.codigo,
+        precio_costo: d.precio_costo,
+        precio_venta: d.precio_venta,
+        precio_mayoreo: d.precio_mayoreo
+      })));
+    } catch (err) { console.error(err); }
+    finally { setLoadingItems(false); }
+  };
 
   const fetchProductos = async () => {
     try {
@@ -314,35 +335,66 @@ const ModalNuevaLista: React.FC<{
     } catch (err) { console.error(err); }
   };
 
-  const handleAddItem = (prod: any) => {
+  const handleAddItem = async (prod: any) => {
     if (items.some(it => it.producto_id === prod.id)) return;
-    setItems([...items, { 
+    
+    const newItem = { 
       producto_id: prod.id, 
       descripcion: prod.descripcion, 
       codigo: prod.codigo,
       precio_costo: 0, 
       precio_venta: 0, 
       precio_mayoreo: 0 
-    }]);
+    };
+
+    if (listaToEdit) {
+      try {
+        const added = await listasPreciosAPI.addDetalle(listaToEdit.id, newItem);
+        setItems([...items, { ...newItem, id: added.id }]);
+      } catch (err: any) { alert(err.response?.data?.detail || "Error al agregar producto"); }
+    } else {
+      setItems([...items, newItem]);
+    }
     setSearchTerm('');
   };
 
-  const handleAddNewProduct = () => {
+  const handleAddNewProduct = async () => {
     if (!newProd.codigo || !newProd.descripcion) return;
-    setItems([...items, {
+    
+    const newItem = {
       new_producto: { ...newProd },
       descripcion: newProd.descripcion,
       codigo: newProd.codigo,
       precio_costo: 0,
       precio_venta: 0,
       precio_mayoreo: 0
-    }]);
-    setNewProd({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
-    setAddingNew(false);
+    };
+
+    if (listaToEdit) {
+      try {
+        const added = await listasPreciosAPI.addDetalle(listaToEdit.id, newItem);
+        setItems([...items, { ...newItem, id: added.id, producto_id: added.producto_id }]);
+        setAddingNew(false);
+        setNewProd({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
+      } catch (err: any) { alert(err.response?.data?.detail || "Error al crear y agregar producto"); }
+    } else {
+      setItems([...items, newItem]);
+      setNewProd({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
+      setAddingNew(false);
+    }
   };
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+  const removeItem = async (index: number) => {
+    const item = items[index];
+    if (listaToEdit && item.id) {
+      if (!confirm("¿Eliminar este producto de la lista?")) return;
+      try {
+        await listasPreciosAPI.removeDetalle(listaToEdit.id, item.id);
+        setItems(items.filter((_, i) => i !== index));
+      } catch (err) { alert("Error al eliminar producto de la lista"); }
+    } else {
+      setItems(items.filter((_, i) => i !== index));
+    }
   };
 
   const updateItemPrice = (index: number, field: string, value: number) => {
@@ -374,7 +426,7 @@ const ModalNuevaLista: React.FC<{
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Error al crear lista");
+      alert(err.response?.data?.detail || "Error al guardar lista");
     } finally {
       setSubmitting(false);
     }
@@ -394,7 +446,7 @@ const ModalNuevaLista: React.FC<{
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-            {listaToEdit ? 'Editar Información General' : 'Crear Nueva Lista de Precios'}
+            {listaToEdit ? `Editar: ${listaToEdit.nombre}` : 'Crear Nueva Lista de Precios'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors"><X className="h-5 w-5 text-slate-500" /></button>
         </div>
@@ -411,7 +463,6 @@ const ModalNuevaLista: React.FC<{
             </div>
           </div>
 
-        {!listaToEdit && (
           <div className="border-t border-slate-100 pt-6">
             <div className="flex items-center justify-between mb-4">
                <h3 className="text-sm font-black text-slate-900 uppercase">Productos en la Lista</h3>
@@ -470,32 +521,51 @@ const ModalNuevaLista: React.FC<{
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                     {items.length === 0 && <tr><td colSpan={6} className="p-12 text-center text-slate-400 font-medium">No has agregado productos aún</td></tr>}
-                     {items.map((it, idx) => (
-                        <tr key={idx} className={`transition-colors ${it.new_producto ? 'bg-emerald-50/50' : 'hover:bg-slate-50/30'}`}>
-                           <td className="p-3 font-mono font-black text-brand-600">{it.codigo}</td>
-                           <td className="p-3">
-                              <div className="font-bold text-slate-900">{it.descripcion}</div>
-                              {it.new_producto && <span className="text-[7px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter">NUEVO PRODUCTO</span>}
-                           </td>
-                           <td className="p-3 text-right"><input type="number" value={it.precio_costo} onChange={e => updateItemPrice(idx, 'precio_costo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" /></td>
-                           <td className="p-3 text-right"><input type="number" value={it.precio_venta} onChange={e => updateItemPrice(idx, 'precio_venta', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-brand-200 rounded-xl text-right font-black text-brand-600 focus:ring-1 focus:ring-brand-500 outline-none" /></td>
-                           <td className="p-3 text-right"><input type="number" value={it.precio_mayoreo} onChange={e => updateItemPrice(idx, 'precio_mayoreo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" /></td>
-                           <td className="p-3 text-center"><button onClick={() => removeItem(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><X className="h-4 w-4" /></button></td>
-                        </tr>
-                     ))}
+                     {loadingItems ? <tr><td colSpan={6} className="p-12 text-center text-slate-400 font-medium">Cargando productos...</td></tr> : (
+                       items.length === 0 ? <tr><td colSpan={6} className="p-12 text-center text-slate-400 font-medium">No has agregado productos aún</td></tr> :
+                       items.map((it, idx) => (
+                          <tr key={idx} className={`transition-colors ${it.new_producto ? 'bg-emerald-50/50' : 'hover:bg-slate-50/30'}`}>
+                             <td className="p-3 font-mono font-black text-brand-600">{it.codigo}</td>
+                             <td className="p-3">
+                                <div className="font-bold text-slate-900">{it.descripcion}</div>
+                                {it.new_producto && <span className="text-[7px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter">NUEVO PRODUCTO</span>}
+                             </td>
+                             <td className="p-3 text-right">
+                               {listaToEdit ? (
+                                 <span className="font-black text-slate-400">$ {it.precio_costo}</span>
+                               ) : (
+                                 <input type="number" value={it.precio_costo} onChange={e => updateItemPrice(idx, 'precio_costo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" />
+                               )}
+                             </td>
+                             <td className="p-3 text-right">
+                               {listaToEdit ? (
+                                 <span className="font-black text-brand-600">$ {it.precio_venta}</span>
+                               ) : (
+                                 <input type="number" value={it.precio_venta} onChange={e => updateItemPrice(idx, 'precio_venta', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-brand-200 rounded-xl text-right font-black text-brand-600 focus:ring-1 focus:ring-brand-500 outline-none" />
+                               )}
+                             </td>
+                             <td className="p-3 text-right">
+                               {listaToEdit ? (
+                                 <span className="font-black text-slate-400">$ {it.precio_mayoreo}</span>
+                               ) : (
+                                 <input type="number" value={it.precio_mayoreo} onChange={e => updateItemPrice(idx, 'precio_mayoreo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" />
+                               )}
+                             </td>
+                             <td className="p-3 text-center"><button onClick={() => removeItem(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><X className="h-4 w-4" /></button></td>
+                          </tr>
+                       ))
+                     )}
                   </tbody>
                </table>
             </div>
           </div>
-        )}
         </div>
 
         <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-end gap-3">
            <button onClick={onClose} disabled={submitting} className="w-full sm:w-auto px-6 py-3 text-slate-500 font-bold hover:bg-slate-200 rounded-xl transition-all">Cancelar</button>
            <button onClick={handleSubmit} disabled={submitting || !nombre} className="w-full sm:w-auto px-10 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black shadow-lg shadow-brand-600/20 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
               {submitting ? <div className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2" /> : <Save className="h-5 w-5 mr-2" />}
-              {listaToEdit ? 'GUARDAR CAMBIOS' : 'CREAR LISTA DEFINITIVA'}
+              {listaToEdit ? 'GUARDAR INFORMACIÓN' : 'CREAR LISTA DEFINITIVA'}
            </button>
         </div>
       </div>

@@ -12,7 +12,7 @@ from app.models.usuario import Usuario
 from app.schemas.listas_precios import (
     ListaPreciosCreate, ListaPreciosUpdate, ListaPreciosResponse, 
     ListaPreciosDetalleUpdate, ListaPreciosDetalleResponse, 
-    ListaPreciosConDetalles, BulkPriceUpdate
+    ListaPreciosConDetalles, BulkPriceUpdate, BespokePriceItem
 )
 from app.utils.excel_manager import import_prices_from_excel, export_prices_to_excel
 from app.core.config import settings
@@ -138,6 +138,80 @@ def delete_lista_precios(
     db.delete(lista)
     db.commit()
     return {"detail": "Lista de precios eliminada exitosamente"}
+
+@router.post("/{lista_id}/detalle", response_model=ListaPreciosDetalleResponse)
+def add_detalle_precio(
+    lista_id: int,
+    item_in: BespokePriceItem,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(superadmin_only)
+):
+    """
+    Add a single product to a price list.
+    """
+    lista = db.query(ListaPrecios).filter(ListaPrecios.id == lista_id).first()
+    if not lista:
+        raise HTTPException(status_code=404, detail="Lista de precios no encontrada")
+        
+    prod_id = item_in.producto_id
+    if item_in.new_producto:
+        # Create new product if needed
+        existing = db.query(Producto).filter(Producto.codigo == item_in.new_producto.codigo).first()
+        if existing:
+            prod_id = existing.id
+        else:
+            db_prod = Producto(**item_in.new_producto.model_dump())
+            db.add(db_prod)
+            db.flush()
+            prod_id = db_prod.id
+            
+    if not prod_id:
+        raise HTTPException(status_code=400, detail="Se requiere producto_id o new_producto")
+        
+    # Check if already in list
+    existing_det = db.query(ListaPreciosDetalle).filter(
+        ListaPreciosDetalle.lista_precios_id == lista_id,
+        ListaPreciosDetalle.producto_id == prod_id
+    ).first()
+    
+    if existing_det:
+        raise HTTPException(status_code=400, detail="El producto ya se encuentra en esta lista")
+        
+    det = ListaPreciosDetalle(
+        lista_precios_id=lista_id,
+        producto_id=prod_id,
+        precio_costo=item_in.precio_costo,
+        precio_venta=item_in.precio_venta,
+        precio_mayoreo=item_in.precio_mayoreo,
+        stock=0.0,
+        stock_minimo=0.0
+    )
+    db.add(det)
+    db.commit()
+    db.refresh(det)
+    return det
+
+@router.delete("/{lista_id}/detalle/{detalle_id}")
+def remove_detalle_precio(
+    lista_id: int,
+    detalle_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(superadmin_only)
+):
+    """
+    Remove a product from a price list.
+    """
+    det = db.query(ListaPreciosDetalle).filter(
+        ListaPreciosDetalle.id == detalle_id,
+        ListaPreciosDetalle.lista_precios_id == lista_id
+    ).first()
+    
+    if not det:
+        raise HTTPException(status_code=404, detail="Registro de detalle no encontrado")
+        
+    db.delete(det)
+    db.commit()
+    return {"detail": "Producto eliminado de la lista exitosamente"}
 
 @router.put("/{lista_id}/detalle/{detalle_id}", response_model=ListaPreciosDetalleResponse)
 def update_detalle_precio(
