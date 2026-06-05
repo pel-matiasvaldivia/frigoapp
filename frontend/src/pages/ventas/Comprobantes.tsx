@@ -29,7 +29,7 @@ export const Comprobantes: React.FC = () => {
       setComprobantes(compRes);
       
       // Get orders that are prepared and ready for billing
-      const pedRes = await pedidosAPI.list({ estado: 'Preparado/Listo para despacho' });
+      const pedRes = await pedidosAPI.list({ estado: 'Listo para despacho' });
       setPedidosPendientes(pedRes);
     } catch (err) {
       console.error("Error loading billing documents:", err);

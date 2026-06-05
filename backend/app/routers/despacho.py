@@ -41,10 +41,20 @@ def get_hoja_ruta(
         return []
         
     # 2. Get active delivery orders (Only those still pending delivery)
-    orders = db.query(Pedido).join(Cliente).filter(
-        Cliente.ruta_id.in_(route_ids),
-        Pedido.estado.in_(["Listo para despacho", "En reparto"])
-    ).order_by(Pedido.fecha.desc()).all()
+    query_orders = db.query(Pedido).join(Cliente)
+    
+    if current_user.rol == "REPARTIDOR":
+        query_orders = query_orders.filter(
+            Cliente.ruta_id.in_(route_ids),
+            Pedido.estado.in_(["Listo para despacho", "En reparto"])
+        )
+    else:
+        # Admins see everything ready for dispatch, including those without route
+        query_orders = query_orders.filter(
+            Pedido.estado.in_(["Listo para despacho", "En reparto"])
+        )
+        
+    orders = query_orders.order_by(Pedido.fecha.desc()).all()
     
     result = []
     for order in orders:

@@ -293,7 +293,7 @@ export const Pedidos: React.FC = () => {
             <option value="">Todos los Estados</option>
             <option value="Pendiente de preparación">Pendiente</option>
             <option value="En preparación">En preparación</option>
-            <option value="Preparado/Listo para despacho">Listo para Despacho</option>
+            <option value="Listo para despacho">Listo para Despacho</option>
             <option value="En reparto">En reparto</option>
             <option value="Entregado">Entregado</option>
             <option value="Entrega parcial">Entrega parcial</option>
