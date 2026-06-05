@@ -67,24 +67,54 @@ def create_lista_precios(
         activa=lista_in.activa
     )
     db.add(new_lista)
-    db.commit()
-    db.refresh(new_lista)
+    db.flush()
     
-    # Auto-populate details for all existing products with $0.00
+    # Process custom items
+    processed_prod_ids = set()
+    if lista_in.items:
+        for it in lista_in.items:
+            prod_id = it.producto_id
+            if it.new_producto:
+                # Check if code exists to avoid duplicate
+                existing_prod = db.query(Producto).filter(Producto.codigo == it.new_producto.codigo).first()
+                if existing_prod:
+                    prod_id = existing_prod.id
+                else:
+                    db_prod = Producto(**it.new_producto.model_dump())
+                    db.add(db_prod)
+                    db.flush()
+                    prod_id = db_prod.id
+            
+            if prod_id:
+                processed_prod_ids.add(prod_id)
+                det = ListaPreciosDetalle(
+                    lista_precios_id=new_lista.id,
+                    producto_id=prod_id,
+                    precio_costo=it.precio_costo,
+                    precio_venta=it.precio_venta,
+                    precio_mayoreo=it.precio_mayoreo,
+                    stock=0.0,
+                    stock_minimo=0.0
+                )
+                db.add(det)
+
+    # 3. Auto-populate remaining products with $0
     all_products = db.query(Producto).all()
     for prod in all_products:
-        det = ListaPreciosDetalle(
-            lista_precios_id=new_lista.id,
-            producto_id=prod.id,
-            precio_costo=0.0,
-            precio_venta=0.0,
-            precio_mayoreo=0.0,
-            stock=0.0,
-            stock_minimo=0.0
-        )
-        db.add(det)
+        if prod.id not in processed_prod_ids:
+            det = ListaPreciosDetalle(
+                lista_precios_id=new_lista.id,
+                producto_id=prod.id,
+                precio_costo=0.0,
+                precio_venta=0.0,
+                precio_mayoreo=0.0,
+                stock=0.0,
+                stock_minimo=0.0
+            )
+            db.add(det)
+            
     db.commit()
-    
+    db.refresh(new_lista)
     return new_lista
 
 @router.put("/{lista_id}", response_model=ListaPreciosResponse)

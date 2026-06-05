@@ -8,8 +8,17 @@ class ListaPreciosBase(BaseModel):
     descripcion: Optional[str] = None
     activa: Optional[bool] = True
 
+from app.schemas.producto import ProductoResponse, ProductoCreate
+
+class BespokePriceItem(BaseModel):
+    producto_id: Optional[int] = None
+    new_producto: Optional[ProductoCreate] = None
+    precio_costo: float = 0.0
+    precio_venta: float = 0.0
+    precio_mayoreo: float = 0.0
+
 class ListaPreciosCreate(ListaPreciosBase):
-    pass
+    items: Optional[List[BespokePriceItem]] = None
 
 class ListaPreciosUpdate(BaseModel):
     nombre: Optional[str] = None

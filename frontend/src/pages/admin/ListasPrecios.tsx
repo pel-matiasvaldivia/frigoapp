@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { listasPreciosAPI } from '../../services/api';
+import { listasPreciosAPI, productosAPI } from '../../services/api';
 import { 
   ClipboardList, Search, Edit2, Download, Upload, 
-  ChevronDown, ChevronUp, Save, X, TrendingUp 
+  ChevronDown, ChevronUp, Save, X, TrendingUp, Plus
 } from 'lucide-react';
 
 export const ListasPrecios: React.FC = () => {
@@ -12,6 +12,7 @@ export const ListasPrecios: React.FC = () => {
   const [detalles, setDetalles] = useState<any[]>([]);
   const [loadingDetalles, setLoadingDetalles] = useState(false);
   const [search, setSearch] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Inline edit state: detalleId -> { precio_venta, precio_costo, precio_mayoreo }
   const [editedRows, setEditedRows] = useState<Record<number, any>>({});
@@ -76,9 +77,18 @@ export const ListasPrecios: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-extrabold text-slate-900">Listas de Precios</h1>
-        <p className="text-slate-500 text-sm mt-1 font-medium">Edición de precios por unidad/kg para cada categoría de cliente. Expansión inline con edición directa.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900">Listas de Precios</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Edición de precios para cada categoría de cliente. Expansión inline con edición directa.</p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center justify-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-brand-600/20 active:scale-95"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Nueva Lista
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -214,6 +224,222 @@ export const ListasPrecios: React.FC = () => {
             </div>
           ))
         )}
+      </div>
+
+      <ModalNuevaLista
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchListas}
+      />
+    </div>
+  );
+};
+
+const ModalNuevaLista: React.FC<{ 
+  show: boolean; 
+  onClose: () => void; 
+  onSuccess: () => void 
+}> = ({ show, onClose, onSuccess }) => {
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [items, setItems] = useState<any[]>([]); // { producto_id?, new_producto?, precio_costo, precio_venta, precio_mayoreo }
+  const [allProductos, setAllProductos] = useState<any[]>([]);
+  const [addingNew, setAddingNew] = useState(false);
+  const [newProd, setNewProd] = useState({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
+  const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (show) fetchProductos();
+  }, [show]);
+
+  const fetchProductos = async () => {
+    try {
+      const res = await productosAPI.list();
+      setAllProductos(res);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAddItem = (prod: any) => {
+    if (items.some(it => it.producto_id === prod.id)) return;
+    setItems([...items, { 
+      producto_id: prod.id, 
+      descripcion: prod.descripcion, 
+      codigo: prod.codigo,
+      precio_costo: 0, 
+      precio_venta: 0, 
+      precio_mayoreo: 0 
+    }]);
+    setSearchTerm('');
+  };
+
+  const handleAddNewProduct = () => {
+    if (!newProd.codigo || !newProd.descripcion) return;
+    setItems([...items, {
+      new_producto: { ...newProd },
+      descripcion: newProd.descripcion,
+      codigo: newProd.codigo,
+      precio_costo: 0,
+      precio_venta: 0,
+      precio_mayoreo: 0
+    }]);
+    setNewProd({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
+    setAddingNew(false);
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateItemPrice = (index: number, field: string, value: number) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
+  };
+
+  const handleSubmit = async () => {
+    if (!nombre) return alert("El nombre es obligatorio");
+    setSubmitting(true);
+    try {
+      await listasPreciosAPI.create({
+        nombre,
+        descripcion,
+        activa: true,
+        items: items.map(it => ({
+          producto_id: it.producto_id,
+          new_producto: it.new_producto,
+          precio_costo: it.precio_costo,
+          precio_venta: it.precio_venta,
+          precio_mayoreo: it.precio_mayoreo
+        }))
+      });
+      onSuccess();
+      onClose();
+      // Reset state
+      setNombre('');
+      setDescripcion('');
+      setItems([]);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Error al crear lista");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!show) return null;
+
+  const filteredSearch = searchTerm.length > 1 
+    ? allProductos.filter(p => 
+        p.codigo.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Crear Nueva Lista de Precios</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors"><X className="h-5 w-5 text-slate-500" /></button>
+        </div>
+
+        <div className="p-6 flex-1 overflow-y-auto space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nombre de la Lista</label>
+              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Especial Verano" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-900 placeholder:font-normal" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Descripción</label>
+              <input type="text" value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Opcional..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none font-medium text-slate-600" />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-6">
+            <div className="flex items-center justify-between mb-4">
+               <h3 className="text-sm font-black text-slate-900 uppercase">Productos en la Lista</h3>
+               <button onClick={() => setAddingNew(!addingNew)} className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center">
+                  {addingNew ? <X className="h-4 w-4 mr-1"/> : <Plus className="h-4 w-4 mr-1"/>}
+                  {addingNew ? 'Cancelar' : 'Crear Producto Nuevo'}
+               </button>
+            </div>
+
+            {addingNew && (
+              <div className="p-4 bg-brand-50 border border-brand-100 rounded-2xl mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+                 <input type="text" placeholder="Código" value={newProd.codigo} onChange={e => setNewProd({...newProd, codigo: e.target.value})} className="px-3 py-2 border rounded-xl text-xs font-bold" />
+                 <input type="text" placeholder="Descripción" value={newProd.descripcion} onChange={e => setNewProd({...newProd, descripcion: e.target.value})} className="px-3 py-2 border rounded-xl text-xs font-bold md:col-span-2" />
+                 <button onClick={handleAddNewProduct} className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold px-4 py-2 transition-colors">Agregar</button>
+              </div>
+            )}
+
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input 
+                 type="text" 
+                 placeholder="Agregar producto existente (buscar por código o nombre)..." 
+                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {filteredSearch.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white border rounded-2xl shadow-xl max-h-48 overflow-y-auto divide-y divide-slate-100">
+                  {filteredSearch.map(p => (
+                    <div 
+                      key={p.id} 
+                      onClick={() => handleAddItem(p)}
+                      className="p-3 hover:bg-brand-50 cursor-pointer transition-colors flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-mono font-black text-brand-600 mr-2">{p.codigo}</span>
+                        <span className="font-bold text-slate-700">{p.descripcion}</span>
+                      </div>
+                      <Plus className="h-4 w-4 text-slate-300" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+               <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                     <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        <th className="p-3">Código</th>
+                        <th className="p-3">Producto</th>
+                        <th className="p-3 text-right">Costo</th>
+                        <th className="p-3 text-right">Venta</th>
+                        <th className="p-3 text-right">Mayoreo</th>
+                        <th className="p-3"></th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                     {items.length === 0 && <tr><td colSpan={6} className="p-12 text-center text-slate-400 font-medium">No has agregado productos aún</td></tr>}
+                     {items.map((it, idx) => (
+                        <tr key={idx} className={`transition-colors ${it.new_producto ? 'bg-emerald-50/50' : 'hover:bg-slate-50/30'}`}>
+                           <td className="p-3 font-mono font-black text-brand-600">{it.codigo}</td>
+                           <td className="p-3">
+                              <div className="font-bold text-slate-900">{it.descripcion}</div>
+                              {it.new_producto && <span className="text-[7px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter">NUEVO PRODUCTO</span>}
+                           </td>
+                           <td className="p-3 text-right"><input type="number" value={it.precio_costo} onChange={e => updateItemPrice(idx, 'precio_costo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" /></td>
+                           <td className="p-3 text-right"><input type="number" value={it.precio_venta} onChange={e => updateItemPrice(idx, 'precio_venta', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-brand-200 rounded-xl text-right font-black text-brand-600 focus:ring-1 focus:ring-brand-500 outline-none" /></td>
+                           <td className="p-3 text-right"><input type="number" value={it.precio_mayoreo} onChange={e => updateItemPrice(idx, 'precio_mayoreo', parseFloat(e.target.value) || 0)} className="w-20 p-2 border border-slate-200 rounded-xl text-right font-black" /></td>
+                           <td className="p-3 text-center"><button onClick={() => removeItem(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><X className="h-4 w-4" /></button></td>
+                        </tr>
+                     ))}
+                  </tbody>
+               </table>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-end gap-3">
+           <button onClick={onClose} disabled={submitting} className="w-full sm:w-auto px-6 py-3 text-slate-500 font-bold hover:bg-slate-200 rounded-xl transition-all">Cancelar</button>
+           <button onClick={handleSubmit} disabled={submitting || !nombre} className="w-full sm:w-auto px-10 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black shadow-lg shadow-brand-600/20 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
+              {submitting ? <div className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2" /> : <Save className="h-5 w-5 mr-2" />}
+              CREAR LISTA DEFINITIVA
+           </button>
+        </div>
       </div>
     </div>
   );
