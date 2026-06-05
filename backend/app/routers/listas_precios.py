@@ -98,21 +98,6 @@ def create_lista_precios(
                 )
                 db.add(det)
 
-    # 3. Auto-populate remaining products with $0
-    all_products = db.query(Producto).all()
-    for prod in all_products:
-        if prod.id not in processed_prod_ids:
-            det = ListaPreciosDetalle(
-                lista_precios_id=new_lista.id,
-                producto_id=prod.id,
-                precio_costo=0.0,
-                precio_venta=0.0,
-                precio_mayoreo=0.0,
-                stock=0.0,
-                stock_minimo=0.0
-            )
-            db.add(det)
-            
     db.commit()
     db.refresh(new_lista)
     return new_lista

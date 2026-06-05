@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { listasPreciosAPI, productosAPI } from '../../services/api';
 import { 
   ClipboardList, Search, Edit2, Download, Upload, 
-  ChevronDown, ChevronUp, Save, X, TrendingUp, Plus
+  ChevronDown, ChevronUp, Save, X, TrendingUp, Plus, Trash2, Power
 } from 'lucide-react';
 
 export const ListasPrecios: React.FC = () => {
@@ -13,6 +13,7 @@ export const ListasPrecios: React.FC = () => {
   const [loadingDetalles, setLoadingDetalles] = useState(false);
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [listaToEdit, setListaToEdit] = useState<any>(null);
 
   // Inline edit state: detalleId -> { precio_venta, precio_costo, precio_mayoreo }
   const [editedRows, setEditedRows] = useState<Record<number, any>>({});
@@ -41,6 +42,30 @@ export const ListasPrecios: React.FC = () => {
       const res = await listasPreciosAPI.getDetalles(listaId);
       setDetalles(res.detalles || []);
     } catch (err) { console.error(err); } finally { setLoadingDetalles(false); }
+  };
+
+  const handleToggleActiva = async (e: React.MouseEvent, lista: any) => {
+    e.stopPropagation();
+    try {
+      await listasPreciosAPI.update(lista.id, { activa: !lista.activa });
+      setListas(prev => prev.map(l => l.id === lista.id ? { ...l, activa: !l.activa } : l));
+    } catch (err) { alert("Error al cambiar estado"); }
+  };
+
+  const handleDeleteLista = async (e: React.MouseEvent, listaId: number) => {
+    e.stopPropagation();
+    if (!confirm("¿Estás seguro de eliminar esta lista de precios? Esta acción no se puede deshacer.")) return;
+    try {
+      await listasPreciosAPI.delete(listaId);
+      setListas(prev => prev.filter(l => l.id !== listaId));
+      if (expandedLista === listaId) setExpandedLista(null);
+    } catch (err) { alert("Error al eliminar lista"); }
+  };
+
+  const handleOpenEdit = (e: React.MouseEvent, lista: any) => {
+    e.stopPropagation();
+    setListaToEdit(lista);
+    setShowCreateModal(true);
   };
 
   const handleEditField = (detalleId: number, field: string, value: number) => {
@@ -123,13 +148,29 @@ export const ListasPrecios: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleExport(lista.id); }}
-                    className="hidden sm:flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all"
+                    className="hidden lg:flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all"
                   >
-                    <Download className="h-4 w-4 mr-2" /> Exportar .xlsx
+                    <Download className="h-4 w-4 mr-2" /> Exportar
                   </button>
-                  <span className={`px-2.5 py-1 rounded text-[10px] font-black border uppercase tracking-widest ${lista.activa ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                    {lista.activa ? 'Activa' : 'Inactiva'}
-                  </span>
+                  <button
+                    onClick={(e) => handleOpenEdit(e, lista)}
+                    className="p-2 hover:bg-slate-100 text-slate-500 rounded-xl transition-colors"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={(e) => handleToggleActiva(e, lista)}
+                    className={`p-2 rounded-xl transition-colors ${lista.activa ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    title={lista.activa ? 'Desactivar' : 'Activar'}
+                  >
+                    <Power className={`h-4 w-4 ${lista.activa ? 'fill-emerald-600' : ''}`} />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteLista(e, lista.id)}
+                    className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                   {expandedLista === lista.id ? <ChevronUp className="h-6 w-6 text-slate-400" /> : <ChevronDown className="h-6 w-6 text-slate-400" />}
                 </div>
               </div>
@@ -228,7 +269,8 @@ export const ListasPrecios: React.FC = () => {
 
       <ModalNuevaLista
         show={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        listaToEdit={listaToEdit}
+        onClose={() => { setShowCreateModal(false); setListaToEdit(null); }}
         onSuccess={fetchListas}
       />
     </div>
@@ -237,12 +279,24 @@ export const ListasPrecios: React.FC = () => {
 
 const ModalNuevaLista: React.FC<{ 
   show: boolean; 
+  listaToEdit?: any;
   onClose: () => void; 
   onSuccess: () => void 
-}> = ({ show, onClose, onSuccess }) => {
+}> = ({ show, listaToEdit, onClose, onSuccess }) => {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [items, setItems] = useState<any[]>([]); // { producto_id?, new_producto?, precio_costo, precio_venta, precio_mayoreo }
+  const [items, setItems] = useState<any[]>([]); // Only used for create
+  
+  useEffect(() => {
+    if (show && listaToEdit) {
+      setNombre(listaToEdit.nombre);
+      setDescripcion(listaToEdit.descripcion || '');
+    } else if (show) {
+      setNombre('');
+      setDescripcion('');
+      setItems([]);
+    }
+  }, [show, listaToEdit]);
   const [allProductos, setAllProductos] = useState<any[]>([]);
   const [addingNew, setAddingNew] = useState(false);
   const [newProd, setNewProd] = useState({ codigo: '', descripcion: '', departamento: 'Cortes frescos' });
@@ -301,24 +355,24 @@ const ModalNuevaLista: React.FC<{
     if (!nombre) return alert("El nombre es obligatorio");
     setSubmitting(true);
     try {
-      await listasPreciosAPI.create({
-        nombre,
-        descripcion,
-        activa: true,
-        items: items.map(it => ({
-          producto_id: it.producto_id,
-          new_producto: it.new_producto,
-          precio_costo: it.precio_costo,
-          precio_venta: it.precio_venta,
-          precio_mayoreo: it.precio_mayoreo
-        }))
-      });
+      if (listaToEdit) {
+        await listasPreciosAPI.update(listaToEdit.id, { nombre, descripcion });
+      } else {
+        await listasPreciosAPI.create({
+          nombre,
+          descripcion,
+          activa: true,
+          items: items.map(it => ({
+            producto_id: it.producto_id,
+            new_producto: it.new_producto,
+            precio_costo: it.precio_costo,
+            precio_venta: it.precio_venta,
+            precio_mayoreo: it.precio_mayoreo
+          }))
+        });
+      }
       onSuccess();
       onClose();
-      // Reset state
-      setNombre('');
-      setDescripcion('');
-      setItems([]);
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al crear lista");
     } finally {
@@ -339,7 +393,9 @@ const ModalNuevaLista: React.FC<{
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Crear Nueva Lista de Precios</h2>
+          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+            {listaToEdit ? 'Editar Información General' : 'Crear Nueva Lista de Precios'}
+          </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors"><X className="h-5 w-5 text-slate-500" /></button>
         </div>
 
@@ -355,6 +411,7 @@ const ModalNuevaLista: React.FC<{
             </div>
           </div>
 
+        {!listaToEdit && (
           <div className="border-t border-slate-100 pt-6">
             <div className="flex items-center justify-between mb-4">
                <h3 className="text-sm font-black text-slate-900 uppercase">Productos en la Lista</h3>
@@ -431,13 +488,14 @@ const ModalNuevaLista: React.FC<{
                </table>
             </div>
           </div>
+        )}
         </div>
 
         <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-end gap-3">
            <button onClick={onClose} disabled={submitting} className="w-full sm:w-auto px-6 py-3 text-slate-500 font-bold hover:bg-slate-200 rounded-xl transition-all">Cancelar</button>
            <button onClick={handleSubmit} disabled={submitting || !nombre} className="w-full sm:w-auto px-10 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black shadow-lg shadow-brand-600/20 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
               {submitting ? <div className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2" /> : <Save className="h-5 w-5 mr-2" />}
-              CREAR LISTA DEFINITIVA
+              {listaToEdit ? 'GUARDAR CAMBIOS' : 'CREAR LISTA DEFINITIVA'}
            </button>
         </div>
       </div>
