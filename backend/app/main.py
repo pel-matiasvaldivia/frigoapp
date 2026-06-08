@@ -100,6 +100,7 @@ app.include_router(configuracion.router, prefix=settings.API_V1_STR)
 app.include_router(whatsapp.router, prefix=settings.API_V1_STR)
 app.include_router(caja.router, prefix=settings.API_V1_STR)
 app.include_router(permisos.router, prefix=settings.API_V1_STR)
+app.include_router(usuarios.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
