@@ -319,8 +319,9 @@ export const Configuracion: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {roles.map(rol => (
               <div key={rol} className="flex flex-col space-y-4">
-                <div className="px-4 py-2 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                  <h4 className="text-sm font-extrabold text-rose-400 uppercase tracking-widest">{rol}</h4>
+                <div className="px-4 py-2 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                  <h4 className="text-xs font-black text-indigo-700 uppercase tracking-[0.15em]">{rol}</h4>
                 </div>
                 
                 <div className="space-y-2">
@@ -707,105 +708,111 @@ export const Configuracion: React.FC = () => {
 
       {/* Modal: Nuevo Usuario */}
       {showUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative">
-            <h3 className="text-2xl font-black text-white flex items-center space-x-2">
-              <UserPlus className="h-6 w-6 text-indigo-500" />
-              <span>{editingUserId ? 'Editar Usuario' : 'Registrar Usuario'}</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-md p-8 space-y-6 shadow-2xl relative">
+            <h3 className="text-2xl font-black text-slate-900 flex items-center space-x-2">
+              <div className="p-2 bg-indigo-50 rounded-xl">
+                <UserPlus className="h-6 w-6 text-indigo-600" />
+              </div>
+              <span>{editingUserId ? 'Editar Usuario' : 'Registrar Nuevo Perfil'}</span>
             </h3>
             
-            <form onSubmit={handleSaveUser} className="space-y-4">
+            <form onSubmit={handleSaveUser} className="space-y-5">
               <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nombre Completo</label>
                 <input 
                   type="text" 
                   required
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold placeholder:text-slate-300"
                   placeholder="Ej: Juan Pérez"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Email de Acceso</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Email de Acceso</label>
                 <input 
                   type="email" 
                   required
                   value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold placeholder:text-slate-300"
                   placeholder="ejemplo@frigoapp.com"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                  {editingUserId ? 'Nueva Contraseña (dejar en blanco para no cambiar)' : 'Contraseña'}
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                  {editingUserId ? 'Nueva Contraseña (opcional)' : 'Contraseña Inicial'}
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input 
                     type="password" 
                     required={!editingUserId}
                     value={userPassword}
                     onChange={(e) => setUserPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-3.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold font-mono placeholder:text-slate-300"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol del Sistema</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Rol del Sistema</label>
                 <select 
                   value={userRol}
                   onChange={(e) => setUserRol(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm text-slate-900 font-bold focus:outline-none focus:border-indigo-500 appearance-none bg-no-repeat bg-[right_1.25rem_center] bg-[length:1rem]"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='orig-19 9l-7 7-7-7'/%3E%3C/svg%3E")` }}
                 >
                   {roles.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
 
               {userRol === 'EMPLEADO' && (
-                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                <div className="grid grid-cols-2 gap-4 animate-fade-in bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100/50">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">PIN de Asistencia</label>
+                    <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">PIN Reloj</label>
                     <input 
                       type="text" 
                       maxLength={6}
                       value={userPin}
                       onChange={(e) => setUserPin(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold tracking-widest"
-                      placeholder="Ej: 1234"
+                      className="w-full bg-white border border-indigo-100 rounded-xl px-4 py-2.5 text-sm text-indigo-700 focus:outline-none focus:border-indigo-500 transition-all font-black tracking-[0.2em]"
+                      placeholder="XXXX"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Valor Hora ($)</label>
-                    <input 
-                      type="number" 
-                      value={userValorHora}
-                      onChange={(e) => setUserValorHora(Number(e.target.value))}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
-                    />
+                    <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Valor Hora</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-300 font-bold">$</span>
+                      <input 
+                        type="number" 
+                        value={userValorHora}
+                        onChange={(e) => setUserValorHora(Number(e.target.value))}
+                        className="w-full bg-white border border-indigo-100 rounded-xl pl-7 pr-4 py-2.5 text-sm text-indigo-700 focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center space-x-3 pt-4">
+              <div className="flex items-center space-x-3 pt-2">
                 <button 
                   type="button"
                   onClick={() => setShowUserModal(false)}
-                  className="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-all"
+                  className="flex-1 py-4 px-4 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-2xl text-sm font-bold transition-all"
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
                   disabled={creatingUser}
-                  className="flex-[2] py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                  className="flex-[2] py-4 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-sm font-black transition-all shadow-xl shadow-indigo-200 disabled:opacity-50"
                 >
-                  {creatingUser ? 'Guardando...' : editingUserId ? 'Guardar Cambios' : 'Crear Usuario'}
+                  {creatingUser ? 'Guardando...' : editingUserId ? 'Actualizar Usuario' : 'Crear Usuario'}
                 </button>
               </div>
             </form>
