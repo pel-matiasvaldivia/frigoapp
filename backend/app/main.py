@@ -30,6 +30,8 @@ try:
             # Migrations for Attendance
             connection.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pin VARCHAR"))
             connection.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS valor_hora FLOAT DEFAULT 0"))
+            connection.execute(text("ALTER TABLE asistencias ADD COLUMN IF NOT EXISTS tardanza INTEGER DEFAULT 0"))
+            connection.execute(text("ALTER TABLE asistencias ADD COLUMN IF NOT EXISTS horas_extra FLOAT DEFAULT 0"))
             connection.commit()
             print("Migraciones manuales completadas.")
         except Exception as migr_err:
