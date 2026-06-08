@@ -15,7 +15,8 @@ import {
   Users,
   UserPlus,
   Trash2,
-  Lock
+  Lock,
+  AlertTriangle
 } from 'lucide-react';
 
 export const Configuracion: React.FC = () => {
@@ -57,6 +58,11 @@ export const Configuracion: React.FC = () => {
   // General Settings Serial Updates
   const [nextFC, setNextFC] = useState('');
   const [nextRM, setNextRM] = useState('');
+
+  // Data Reset State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resettingData, setResettingData] = useState(false);
 
   useEffect(() => {
     fetchConfigData();
@@ -225,6 +231,28 @@ export const Configuracion: React.FC = () => {
       fetchConfigData();
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al eliminar usuario");
+    }
+  };
+
+  const handleResetData = async () => {
+    if (resetConfirmText !== 'BORRAR TODO') {
+      alert("Para continuar, debe escribir exactamente 'BORRAR TODO'");
+      return;
+    }
+
+    setResettingData(true);
+    try {
+      await configuracionAPI.resetData();
+      alert("El sistema ha sido reiniciado exitosamente. Se cerrará la sesión.");
+      // Force logout as data is gone
+      authAPI.logout(); 
+      window.location.href = '/login';
+    } catch (err: any) {
+      console.error("Error resetting system:", err);
+      alert(err.response?.data?.detail || "Error fatal durante el reinicio del sistema.");
+    } finally {
+      setResettingData(false);
+      setShowResetModal(false);
     }
   };
 
@@ -612,6 +640,29 @@ export const Configuracion: React.FC = () => {
           </div>
         </div>
 
+        {/* Zona de Peligro */}
+        <div className="mt-12 pt-8 border-t border-slate-800">
+          <div className="bg-rose-950/20 border border-rose-900/50 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-rose-600/50" />
+            <div className="space-y-2 text-center md:text-left">
+              <h3 className="text-xl font-black text-rose-500 flex items-center justify-center md:justify-start space-x-2">
+                <AlertTriangle className="h-6 w-6" />
+                <span>Zona de Peligro</span>
+              </h3>
+              <p className="text-rose-300/70 text-sm font-bold max-w-xl">
+                Reiniciar el sistema borrará permanentemente todos los pedidos, clientes, productos, caja y movimientos. 
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-rose-900/20 transition-all flex items-center space-x-2 whitespace-nowrap"
+            >
+              <RefreshCw className={`h-4 w-4 ${resettingData ? 'animate-spin' : ''}`} />
+              <span>Puesta a Cero (Reset)</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Modal: Nuevo Usuario */}
@@ -695,6 +746,116 @@ export const Configuracion: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Reset Data */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
+          <div className="bg-slate-900 border border-rose-900/50 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-rose-600" />
+            
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-rose-600/20 rounded-full flex items-center justify-center text-rose-500">
+                <AlertTriangle className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-black">¿Reiniciar Sistema?</h3>
+              <p className="text-slate-400 text-sm font-bold">
+                Esta acción es <span className="text-rose-500 underline">totalmente destructiva</span>. 
+                Se eliminarán todos los registros operativos y no se podrán recuperar.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                <label className="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">
+                  Escriba <span className="text-white bg-rose-600 px-1 rounded">BORRAR TODO</span> para confirmar
+                </label>
+                <input 
+                  type="text" 
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  className="w-full bg-transparent text-white text-center font-black tracking-widest focus:outline-none placeholder:text-slate-700"
+                  placeholder="---"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-3">
+                <button 
+                  onClick={handleResetData}
+                  disabled={resetConfirmText !== 'BORRAR TODO' || resettingData}
+                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-rose-900/20"
+                >
+                  {resettingData ? 'Borrando Sistema...' : 'Confirmar Puesta a Cero'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetConfirmText('');
+                  }}
+                  disabled={resettingData}
+                  className="w-full py-4 text-slate-400 hover:text-white text-sm font-bold transition-all"
+                >
+                  Cancelar y Volver
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Reset Data */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
+          <div className="bg-slate-900 border border-rose-900/50 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-rose-600" />
+            
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-rose-600/20 rounded-full flex items-center justify-center text-rose-500">
+                <AlertTriangle className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-black">¿Reiniciar Sistema?</h3>
+              <p className="text-slate-400 text-sm font-bold">
+                Esta acción es <span className="text-rose-500 underline">totalmente destructiva</span>. 
+                Se eliminarán todos los registros operativos y no se podrán recuperar.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                <label className="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">
+                  Escriba <span className="text-white bg-rose-600 px-1 rounded">BORRAR TODO</span> para confirmar
+                </label>
+                <input 
+                  type="text" 
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  className="w-full bg-transparent text-white text-center font-black tracking-widest focus:outline-none placeholder:text-slate-700"
+                  placeholder="---"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-3">
+                <button 
+                  onClick={handleResetData}
+                  disabled={resetConfirmText !== 'BORRAR TODO' || resettingData}
+                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-rose-900/20"
+                >
+                  {resettingData ? 'Borrando Sistema...' : 'Confirmar Puesta a Cero'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetConfirmText('');
+                  }}
+                  disabled={resettingData}
+                  className="w-full py-4 text-slate-400 hover:text-white text-sm font-bold transition-all"
+                >
+                  Cancelar y Volver
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

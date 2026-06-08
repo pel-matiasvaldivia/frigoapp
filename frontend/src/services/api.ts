@@ -43,6 +43,10 @@ export const authAPI = {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
+  logout: () => {
+    localStorage.removeItem('token');
+    delete api.defaults.headers.common['Authorization'];
+  }
 };
 
 export const clientesAPI = {
@@ -159,6 +163,7 @@ export const configuracionAPI = {
   list: async () => (await api.get('/configuracion/')).data,
   update: async (clave: string, valor: string) => (await api.put(`/configuracion/${clave}`, { valor })).data,
   getEmpresa: async () => (await api.get('/configuracion/empresa')).data,
+  resetData: async () => (await api.post('/configuracion/reset-data')).data,
 };
 
 export const cajaAPI = {

@@ -39,6 +39,9 @@ def list_configuraciones(
     """
     return db.query(ConfiguracionSistema).all()
 
+from app.db.seed import seed_db
+from sqlalchemy import text
+
 @router.put("/{clave}", response_model=ConfiguracionSistemaResponse)
 def update_configuracion(
     clave: str,
@@ -57,3 +60,36 @@ def update_configuracion(
     db.commit()
     db.refresh(config)
     return config
+
+@router.post("/reset-data")
+def reset_system_data(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(superadmin_only)
+):
+    """
+    DESTRUCTIVE: Clear all operational data (Orders, Invoices, Cash Movements, Clients, Products).
+    Superadmin only.
+    """
+    try:
+        tables_to_truncate = [
+            "movimientos_caja", "sesiones_caja", "conceptos_caja",
+            "comprobantes", "pedido_items", "pedidos",
+            "movimientos_cc", "cuentas_corrientes",
+            "orden_preparacion_bultos", "ordenes_preparacion",
+            "rutas", "lista_precios_detalle", "listas_precios",
+            "clientes", "productos"
+        ]
+        
+        # Execute TRUNCATE with CASCADE for all operational tables
+        # We use raw SQL to handle CASCADE efficiently in Postgres
+        truncate_sql = f"TRUNCATE {', '.join(tables_to_truncate)} RESTART IDENTITY CASCADE;"
+        db.execute(text(truncate_sql))
+        db.commit()
+        
+        # Re-apply seeds to ensure core system data (like default box concepts) exists
+        seed_db()
+        
+        return {"status": "success", "message": "Sistema reiniciado exitosamente. Todos los datos operativos han sido eliminados."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error durante el reinicio: {str(e)}")
