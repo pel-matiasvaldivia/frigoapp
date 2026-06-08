@@ -67,29 +67,77 @@ def reset_system_data(
     current_user: Usuario = Depends(superadmin_only)
 ):
     """
-    DESTRUCTIVE: Clear all operational data (Orders, Invoices, Cash Movements, Clients, Products).
+    DESTRUCTIVE: Clear all operational data (Orders, Invoices, Cash Movements, Clients, Products, Attendance).
     Superadmin only.
     """
     try:
-        tables_to_truncate = [
-            "movimientos_caja", "sesiones_caja", "conceptos_caja",
-            "comprobantes", "pedido_items", "pedidos",
-            "movimientos_cc", "cuentas_corrientes",
-            "orden_preparacion_bultos", "ordenes_preparacion",
-            "rutas", "lista_precios_detalle", "listas_precios",
-            "clientes", "productos"
+        # Delete in FK-dependency order (children before parents)
+        # Each table is wrapped in its own try/except so missing tables don't abort the whole reset
+        ordered_deletes = [
+            # Attendance
+            "DELETE FROM asistencias",
+            # Cash
+            "DELETE FROM movimientos_caja",
+            "DELETE FROM sesiones_caja",
+            "DELETE FROM conceptos_caja",
+            # Invoices / remitos
+            "DELETE FROM comprobantes",
+            # Order items and preparation
+            "DELETE FROM orden_preparacion_bultos",
+            "DELETE FROM ordenes_preparacion",
+            "DELETE FROM pedido_items",
+            "DELETE FROM pedidos",
+            # Accounts receivable
+            "DELETE FROM movimientos_cc",
+            "DELETE FROM cuentas_corrientes",
+            # Routes
+            "DELETE FROM rutas",
+            # Price lists
+            "DELETE FROM lista_precios_detalle",
+            "DELETE FROM listas_precios",
+            # Core catalog
+            "DELETE FROM clientes",
+            "DELETE FROM productos",
         ]
-        
-        # Execute TRUNCATE with CASCADE for all operational tables
-        # We use raw SQL to handle CASCADE efficiently in Postgres
-        truncate_sql = f"TRUNCATE {', '.join(tables_to_truncate)} RESTART IDENTITY CASCADE;"
-        db.execute(text(truncate_sql))
+
+        errors = []
+        for stmt in ordered_deletes:
+            try:
+                db.execute(text(stmt))
+            except Exception as tbl_err:
+                errors.append(f"{stmt}: {str(tbl_err)}")
+                db.rollback()
+
+        # Reset all sequences so IDs start at 1 again
+        sequence_tables = [
+            "asistencias", "movimientos_caja", "sesiones_caja", "conceptos_caja",
+            "comprobantes", "orden_preparacion_bultos", "ordenes_preparacion",
+            "pedido_items", "pedidos", "movimientos_cc", "cuentas_corrientes",
+            "rutas", "lista_precios_detalle", "listas_precios", "clientes", "productos"
+        ]
+        for table in sequence_tables:
+            try:
+                db.execute(text(f"""
+                    SELECT setval(
+                        pg_get_serial_sequence('{table}', 'id'), 1, false
+                    )
+                """))
+            except Exception:
+                pass
+
         db.commit()
-        
-        # Re-apply seeds to ensure core system data (like default box concepts) exists
-        seed_db()
-        
-        return {"status": "success", "message": "Sistema reiniciado exitosamente. Todos los datos operativos han sido eliminados."}
+
+        # Re-seed core system data
+        try:
+            seed_db()
+        except Exception as seed_err:
+            print(f"Aviso seed post-reset: {seed_err}")
+
+        msg = "Sistema reiniciado exitosamente. Todos los datos operativos han sido eliminados."
+        if errors:
+            msg += f" Advertencias: {'; '.join(errors)}"
+
+        return {"status": "success", "message": msg}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error durante el reinicio: {str(e)}")
