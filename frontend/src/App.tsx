@@ -96,6 +96,12 @@ const AdminRoute: React.FC<{ children: React.ReactNode; modulo: string }> = ({
 
 // ─── Client Portal Wrapper ─────────────────────────────────────────────────────
 
+const RequireRole: React.FC<{ roles: string[]; children: React.ReactNode }> = ({ roles, children }) => {
+  const { user } = useAuth();
+  if (!user || !roles.includes(user.rol)) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 const ClienteRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <RequireAuth>
     <RequireRole roles={['CLIENTE']}>

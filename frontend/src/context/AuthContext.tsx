@@ -5,9 +5,22 @@ interface User {
   id: number;
   nombre: string;
   email: string;
-  rol: 'SUPERADMIN' | 'ADMINISTRATIVO' | 'VENDEDOR' | 'REPARTIDOR' | 'CLIENTE';
+  rol: 'SUPERADMIN' | 'ADMINISTRATIVO' | 'VENDEDOR' | 'REPARTIDOR' | 'EMPLEADO' | 'CLIENTE';
   activo: boolean;
 }
+
+interface AuthContextType {
+  user: User | null;
+  permissions: string[];
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  hasRole: (roles: string[]) => boolean;
+  hasPermission: (modulo: string) => boolean;
+}
+
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
