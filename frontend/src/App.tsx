@@ -18,6 +18,7 @@ import { WhatsAppAdmin } from './pages/admin/WhatsApp';
 import { MapaVentas } from './pages/admin/MapaVentas';
 import { Caja } from './pages/admin/Caja';
 import { Configuracion } from './pages/configuracion/Configuracion';
+import { GestionUsuarios } from './pages/admin/GestionUsuarios';
 
 // Pages - Sales & Operations
 import { Pedidos } from './pages/ventas/Pedidos';
@@ -150,6 +151,7 @@ const AppRoutes: React.FC = () => (
     <Route path="/admin/mapa-ventas" element={<AdminRoute modulo="MAPA_VENTAS"><MapaVentas /></AdminRoute>} />
     <Route path="/whatsapp" element={<AdminRoute modulo="WHATSAPP"><WhatsAppAdmin /></AdminRoute>} />
     <Route path="/configuracion" element={<AdminRoute modulo="CONFIGURACION"><Configuracion /></AdminRoute>} />
+    <Route path="/usuarios" element={<AdminRoute modulo="USUARIOS"><GestionUsuarios /></AdminRoute>} />
 
     {/* Cliente Portal Routes (PWA) */}
     <Route path="/mis-pedidos" element={
