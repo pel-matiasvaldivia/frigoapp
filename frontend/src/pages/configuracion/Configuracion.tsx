@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listasPreciosAPI, rutasAPI, authAPI, configuracionAPI, permisosAPI } from '../../services/api';
+import { listasPreciosAPI, rutasAPI, authAPI, configuracionAPI, permisosAPI, usuariosAPI } from '../../services/api';
 import { 
   Settings, 
   Upload, 
@@ -11,7 +11,11 @@ import {
   RefreshCw,
   ShieldCheck,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Users,
+  UserPlus,
+  Trash2,
+  Lock
 } from 'lucide-react';
 
 export const Configuracion: React.FC = () => {
@@ -21,6 +25,15 @@ export const Configuracion: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [permisos, setPermisos] = useState<any[]>([]);
   const [updatingPermisoId, setUpdatingPermisoId] = useState<number | null>(null);
+
+  // User Management State
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [userRol, setUserRol] = useState('EMPLEADO');
+  const [creatingUser, setCreatingUser] = useState(false);
 
   // Excel Upload State
   const [selectedListId, setSelectedListId] = useState<number | ''>('');
@@ -75,6 +88,9 @@ export const Configuracion: React.FC = () => {
         { id: 4, nombre: "Juan Repartidor" },
         { id: 5, nombre: "Carlos Repartidor" }
       ]);
+
+      const usersRes = await usuariosAPI.list();
+      setSystemUsers(usersRes);
     } catch (err) {
       console.error("Error loading config metrics:", err);
     } finally {
@@ -178,6 +194,40 @@ export const Configuracion: React.FC = () => {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingUser(true);
+    try {
+      await usuariosAPI.create({
+        nombre: userName,
+        email: userEmail,
+        password: userPassword,
+        rol: userRol,
+        activo: true
+      });
+      alert("Usuario creado exitosamente");
+      setShowUserModal(false);
+      setUserName('');
+      setUserEmail('');
+      setUserPassword('');
+      fetchConfigData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Error al crear usuario");
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (!confirm("¿Está seguro de eliminar este usuario?")) return;
+    try {
+      await usuariosAPI.delete(id);
+      fetchConfigData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Error al eliminar usuario");
+    }
+  };
+
   if (loading) {
 // ...
   }
@@ -187,7 +237,7 @@ export const Configuracion: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold text-white">Configuración del Sistema</h1>
-        <p className="text-slate-400 text-sm mt-1">Opciones exclusivas de Superadmin para gestionar módulos, precios y logística.</p>
+        <p className="text-slate-400 text-sm mt-1">Opciones exclusivas de Superadmin para gestionar módulos, usuarios, precios y logística.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -249,8 +299,82 @@ export const Configuracion: React.FC = () => {
           </div>
         </div>
 
+        {/* Tab: Gestión de Usuarios */}
+        <div className="lg:col-span-2 border border-slate-800 rounded-3xl bg-slate-900/40 p-8 space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-indigo-500/20 rounded-xl">
+                <Users className="h-6 w-6 text-indigo-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Gestión de Usuarios</h3>
+                <p className="text-slate-400 text-xs">Administre el acceso de empleados y personal del sistema.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowUserModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Nuevo Usuario</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/20">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-800/40 text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">
+                  <th className="px-6 py-4">Nombre</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4 text-center">Rol</th>
+                  <th className="px-6 py-4 text-center">Estado</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {systemUsers.length === 0 && (
+                  <tr><td colSpan={5} className="px-6 py-8 text-center text-xs text-slate-500">No hay usuarios registrados.</td></tr>
+                )}
+                {systemUsers.map(u => (
+                  <tr key={u.id} className="text-xs text-slate-300 hover:bg-slate-800/20 transition-colors">
+                    <td className="px-6 py-4 font-bold text-white">{u.nombre}</td>
+                    <td className="px-6 py-4 text-slate-400">{u.email}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
+                        u.rol === 'SUPERADMIN' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                        u.rol === 'ADMINISTRATIVO' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
+                        u.rol === 'EMPLEADO' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                        'bg-slate-500/10 border-slate-500/20 text-slate-400'
+                      }`}>
+                        {u.rol}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center space-x-1 font-bold text-[10px] ${
+                        u.activo ? 'text-emerald-400' : 'text-rose-400'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          u.activo ? 'bg-emerald-400' : 'bg-rose-400'
+                        }`} />
+                        <span>{u.activo ? 'ACTIVO' : 'INACTIVO'}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleDeleteUser(u.id)}
+                        className="p-2 text-slate-500 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-500/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Tab 1: Excel Pricing Importer */}
-// ...
         <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
           <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
             <Upload className="h-5 w-5 text-rose-500" />
@@ -489,6 +613,91 @@ export const Configuracion: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Modal: Nuevo Usuario */}
+      {showUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative">
+            <h3 className="text-2xl font-black text-white flex items-center space-x-2">
+              <UserPlus className="h-6 w-6 text-indigo-500" />
+              <span>Registrar Usuario</span>
+            </h3>
+            
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo</label>
+                <input 
+                  type="text" 
+                  required
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                  placeholder="Ej: Juan Pérez"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Email de Acceso</label>
+                <input 
+                  type="email" 
+                  required
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                  placeholder="ejemplo@frigoapp.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Contraseña</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <input 
+                    type="password" 
+                    required
+                    value={userPassword}
+                    onChange={(e) => setUserPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold font-mono"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Rol asignado</label>
+                <select 
+                  value={userRol}
+                  onChange={(e) => setUserRol(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none"
+                >
+                  <option value="EMPLEADO">Empleado (Solo Reloj Control)</option>
+                  <option value="REPARTIDOR">Repartidor / Logística</option>
+                  <option value="VENDEDOR">Vendedor / Comercial</option>
+                  <option value="ADMINISTRATIVO">Administración</option>
+                  <option value="SUPERADMIN">Super Administrador</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowUserModal(false)}
+                  className="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={creatingUser}
+                  className="flex-[2] py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                >
+                  {creatingUser ? 'Guardando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

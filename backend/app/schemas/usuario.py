@@ -11,7 +11,7 @@ class TokenData(BaseModel):
 class UsuarioBase(BaseModel):
     nombre: str
     email: EmailStr
-    rol: str # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, REPARTIDOR, CLIENTE
+    rol: str # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, REPARTIDOR, CLIENTE, EMPLEADO
     activo: Optional[bool] = True
 
 class UsuarioCreate(UsuarioBase):

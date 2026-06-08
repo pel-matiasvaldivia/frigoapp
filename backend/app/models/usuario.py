@@ -10,7 +10,7 @@ class Usuario(Base):
     nombre = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    rol = Column(String, nullable=False)  # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, CLIENTE
+    rol = Column(String, nullable=False)  # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, REPARTIDOR, CLIENTE, EMPLEADO
     activo = Column(Boolean, default=True)
 
     # Relationships

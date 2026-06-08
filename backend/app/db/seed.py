@@ -258,6 +258,9 @@ def seed_db():
             ],
             "VENDEDOR": [
                 "PREPARACION", "DESPACHO", "CLIENTES", "PRODUCTOS", "LISTAS_PRECIOS", "PEDIDOS"
+            ],
+            "EMPLEADO": [
+                "DASHBOARD" # Initially very limited
             ]
         }
         

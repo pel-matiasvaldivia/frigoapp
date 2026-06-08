@@ -183,3 +183,9 @@ export const permisosAPI = {
   update: async (id: number, habilitado: boolean) => (await api.put(`/permisos/${id}`, { habilitado })).data,
   getMyPermissions: async () => (await api.get('/permisos/me')).data,
 };
+export const usuariosAPI = {
+  list: async () => (await api.get('/usuarios/')).data,
+  create: async (data: Record<string, unknown>) => (await api.post('/usuarios/', data)).data,
+  update: async (id: number, data: Record<string, unknown>) => (await api.put(`/usuarios/${id}`, data)).data,
+  delete: async (id: number) => (await api.delete(`/usuarios/${id}`)).data,
+};
