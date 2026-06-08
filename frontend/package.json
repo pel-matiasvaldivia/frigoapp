@@ -15,6 +15,7 @@
     "react-router-dom": "^6.22.0",
     "lucide-react": "^0.331.0",
     "axios": "^1.6.7",
+    "date-fns": "^3.3.1",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1"

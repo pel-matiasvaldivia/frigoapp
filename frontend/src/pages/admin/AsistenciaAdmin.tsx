@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { assistanceAPI, asistenciaAPI } from '../services/api';
+import { asistenciaAPI } from '../../services/api';
 import { 
   Calendar, 
   Users, 
