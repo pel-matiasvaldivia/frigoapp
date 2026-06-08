@@ -15,7 +15,14 @@ export const GestionUsuarios: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ nombre: '', email: '', password: '', rol: 'EMPLEADO' });
+  const [form, setForm] = useState({ 
+    nombre: '', 
+    email: '', 
+    password: '', 
+    rol: 'EMPLEADO',
+    pin: '',
+    valor_hora: 0
+  });
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -34,9 +41,14 @@ export const GestionUsuarios: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await usuariosAPI.create({ ...form, activo: true });
+      await usuariosAPI.create({ 
+        ...form, 
+        pin: form.rol === 'EMPLEADO' ? form.pin : null,
+        valor_hora: form.rol === 'EMPLEADO' ? form.valor_hora : 0,
+        activo: true 
+      });
       setShowModal(false);
-      setForm({ nombre: '', email: '', password: '', rol: 'EMPLEADO' });
+      setForm({ nombre: '', email: '', password: '', rol: 'EMPLEADO', pin: '', valor_hora: 0 });
       fetchUsers();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Error al crear usuario');

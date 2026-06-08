@@ -731,6 +731,31 @@ export const Configuracion: React.FC = () => {
                 </select>
               </div>
 
+              {userRol === 'EMPLEADO' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">PIN de Asistencia</label>
+                    <input 
+                      type="text" 
+                      maxLength={6}
+                      value={userPin}
+                      onChange={(e) => setUserPin(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold tracking-widest"
+                      placeholder="Ej: 1234"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Valor Hora ($)</label>
+                    <input 
+                      type="number" 
+                      value={userValorHora}
+                      onChange={(e) => setUserValorHora(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center space-x-3 pt-4">
                 <button 
                   type="button"
