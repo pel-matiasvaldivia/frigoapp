@@ -157,50 +157,9 @@ def update_orden_preparacion(
                     new_bulto.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
                 db.add(new_bulto)
             
-    # 3. Finalize and Auto-generate Remito
+    # 3. Finalize
     if prep.estado == "Completado":
         pedido.total = round(sum(it.subtotal for it in pedido.items), 2)
-        
-        # Check if remito already exists (any active remito)
-        existing_comp = db.query(Comprobante).filter(
-            Comprobante.pedido_id == pedido.id,
-            Comprobante.tipo == "REMITO",
-            Comprobante.estado != "Anulado"
-        ).first()
-        
-        if not existing_comp:
-            print(f"[Auto-Remito] Iniciando generación automática para Pedido #{pedido.id}")
-            # Generate numbering
-            config_num = db.query(ConfiguracionSistema).filter(ConfiguracionSistema.clave == "NUM_REMITO_SIGUIENTE").first()
-            next_num = 1
-            if config_num:
-                next_num = int(config_num.valor)
-                config_num.valor = str(next_num + 1)
-            
-            serial_str = f"RM-0001-{next_num:08d}"
-            
-            # Create Comprobante
-            new_comp = Comprobante(
-                pedido_id=pedido.id,
-                tipo="REMITO",
-                numero=serial_str,
-                fecha=datetime.datetime.utcnow(),
-                total=pedido.total,
-                estado="Emitido"
-            )
-            db.add(new_comp)
-            db.flush() # To get ID
-            
-            # Trigger tasks
-            try:
-                generar_pdf_comprobante_task.delay(new_comp.id)
-                print(f"[Auto-Remito] Tarea de PDF encolada para Comprobante #{new_comp.id}")
-                if pedido.cliente.telefono_whatsapp:
-                    enviar_notificacion_factura_task.delay(pedido.cliente_id, new_comp.id)
-            except Exception as e:
-                print(f"[Auto-Remito] Error triggering tasks: {e}")
-        else:
-            print(f"[Auto-Remito] El pedido #{pedido.id} ya tiene un remito activo (N° {existing_comp.numero})")
 
     db.commit()
     db.refresh(prep)
