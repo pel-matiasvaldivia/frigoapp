@@ -15,6 +15,7 @@ export const GestionUsuarios: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [form, setForm] = useState({ 
     nombre: '', 
     email: '', 
@@ -37,21 +38,46 @@ export const GestionUsuarios: React.FC = () => {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingUserId(null);
+    setForm({ nombre: '', email: '', password: '', rol: 'EMPLEADO', pin: '', valor_hora: 0 });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (u: any) => {
+    setEditingUserId(u.id);
+    setForm({ 
+      nombre: u.nombre, 
+      email: u.email, 
+      password: '', // Mantener vacío para no cambiar
+      rol: u.rol,
+      pin: u.pin || '',
+      valor_hora: u.valor_hora || 0
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await usuariosAPI.create({ 
+      const payload: any = { 
         ...form, 
         pin: form.rol === 'EMPLEADO' ? form.pin : null,
         valor_hora: form.rol === 'EMPLEADO' ? form.valor_hora : 0,
-        activo: true 
-      });
+      };
+
+      if (editingUserId) {
+        if (!payload.password) delete payload.password;
+        await usuariosAPI.update(editingUserId, payload);
+      } else {
+        await usuariosAPI.create({ ...payload, activo: true });
+      }
+
       setShowModal(false);
-      setForm({ nombre: '', email: '', password: '', rol: 'EMPLEADO', pin: '', valor_hora: 0 });
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Error al crear usuario');
+      alert(err.response?.data?.detail || 'Error al guardar usuario');
     } finally {
       setSaving(false);
     }
@@ -76,7 +102,7 @@ export const GestionUsuarios: React.FC = () => {
           <p className="text-slate-500 text-sm mt-0.5">Administre empleados y personal del sistema.</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={handleOpenCreate}
           className="flex items-center space-x-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
         >
           <UserPlus className="h-4 w-4" />
@@ -111,9 +137,9 @@ export const GestionUsuarios: React.FC = () => {
                 </tr>
               )}
               {users.map(u => (
-                <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-900 text-sm">{u.nombre}</td>
-                  <td className="px-6 py-4 text-slate-500 text-sm">{u.email}</td>
+                <tr key={u.id} className="hover:bg-slate-50/60 transition-colors text-sm">
+                  <td className="px-6 py-4 font-bold text-slate-900">{u.nombre}</td>
+                  <td className="px-6 py-4 text-slate-500">{u.email}</td>
                   <td className="px-6 py-4 text-center">
                     <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-extrabold border ${ROL_STYLES[u.rol] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                       {u.rol}
@@ -126,12 +152,20 @@ export const GestionUsuarios: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleDelete(u.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center justify-end space-x-1">
+                      <button
+                        onClick={() => handleOpenEdit(u)}
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(u.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -156,12 +190,12 @@ export const GestionUsuarios: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl space-y-5">
-            <h2 className="text-xl font-black text-slate-900 flex items-center space-x-2">
+            <h2 className="text-xl font-black text-slate-900 flex items-center space-x-2 text-sm">
               <UserPlus className="h-5 w-5 text-brand-600" />
-              <span>Registrar Usuario</span>
+              <span>{editingUserId ? 'Editar Usuario' : 'Registrar Nuevo Usuario'}</span>
             </h2>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nombre Completo</label>
                 <input
@@ -185,11 +219,14 @@ export const GestionUsuarios: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Contraseña</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {editingUserId ? 'Nueva Contraseña (dejar en blanco para no cambiar)' : 'Contraseña'}
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
-                    required type="password"
+                    required={!editingUserId}
+                    type="password"
                     value={form.password}
                     onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                     className="w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono"
@@ -213,6 +250,31 @@ export const GestionUsuarios: React.FC = () => {
                 </select>
               </div>
 
+              {form.rol === 'EMPLEADO' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">PIN de Asistencia</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={form.pin}
+                      onChange={e => setForm(f => ({ ...f, pin: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold tracking-widest text-sm"
+                      placeholder="Ej: 1234"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Valor Hora ($)</label>
+                    <input
+                      type="number"
+                      value={form.valor_hora}
+                      onChange={e => setForm(f => ({ ...f, valor_hora: Number(e.target.value) }))}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -226,7 +288,7 @@ export const GestionUsuarios: React.FC = () => {
                   disabled={saving}
                   className="flex-[2] py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition shadow-sm disabled:opacity-50"
                 >
-                  {saving ? 'Guardando...' : 'Crear Usuario'}
+                  {saving ? 'Guardando...' : editingUserId ? 'Guardar Cambios' : 'Crear Usuario'}
                 </button>
               </div>
             </form>

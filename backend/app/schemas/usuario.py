@@ -12,6 +12,8 @@ class UsuarioBase(BaseModel):
     nombre: str
     email: EmailStr
     rol: str # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, REPARTIDOR, CLIENTE, EMPLEADO
+    pin: Optional[str] = None
+    valor_hora: Optional[int] = 0
     activo: Optional[bool] = True
 
 class UsuarioCreate(UsuarioBase):
@@ -22,6 +24,8 @@ class UsuarioUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     rol: Optional[str] = None
+    pin: Optional[str] = None
+    valor_hora: Optional[int] = None
     activo: Optional[bool] = None
 
 class UsuarioResponse(UsuarioBase):

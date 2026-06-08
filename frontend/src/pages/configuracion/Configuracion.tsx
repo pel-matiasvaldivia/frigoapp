@@ -37,6 +37,8 @@ export const Configuracion: React.FC = () => {
   const [userPin, setUserPin] = useState('');
   const [userValorHora, setUserValorHora] = useState(0);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+
 
   // Excel Upload State
   const [selectedListId, setSelectedListId] = useState<number | ''>('');
@@ -202,29 +204,53 @@ export const Configuracion: React.FC = () => {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingUser(true);
-    try {
-      await usuariosAPI.create({
-        nombre: userName,
-        email: userEmail,
-        password: userPassword,
-        rol: userRol,
-        pin: userRol === 'EMPLEADO' ? userPin : null,
-        valor_hora: userRol === 'EMPLEADO' ? userValorHora : 0,
-        activo: true
-      });
-      alert("Usuario creado exitosamente");
-      setShowUserModal(false);
+  const handleOpenUserModal = (user?: any) => {
+    if (user) {
+      setEditingUserId(user.id);
+      setUserName(user.nombre);
+      setUserEmail(user.email);
+      setUserPassword('');
+      setUserRol(user.rol);
+      setUserPin(user.pin || '');
+      setUserValorHora(user.valor_hora || 0);
+    } else {
+      setEditingUserId(null);
       setUserName('');
       setUserEmail('');
       setUserPassword('');
+      setUserRol('EMPLEADO');
       setUserPin('');
       setUserValorHora(0);
-      fetchConfigData();
+    }
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingUser(true);
+    try {
+      const payload: any = {
+        nombre: userName,
+        email: userEmail,
+        rol: userRol,
+        pin: userRol === 'EMPLEADO' ? userPin : null,
+        valor_hora: userRol === 'EMPLEADO' ? userValorHora : 0,
+      };
+
+      if (editingUserId) {
+        if (userPassword) payload.password = userPassword;
+        await usuariosAPI.update(editingUserId, payload);
+      } else {
+        payload.password = userPassword;
+        payload.activo = true;
+        await usuariosAPI.create(payload);
+      }
+      
+      setShowUserModal(false);
+      const usersRes = await usuariosAPI.list();
+      setSystemUsers(usersRes);
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Error al crear usuario");
+      alert(err.response?.data?.detail || 'Error al guardar usuario');
     } finally {
       setCreatingUser(false);
     }
@@ -346,7 +372,7 @@ export const Configuracion: React.FC = () => {
               </div>
             </div>
             <button 
-              onClick={() => setShowUserModal(true)}
+              onClick={() => handleOpenUserModal()}
               className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
             >
               <UserPlus className="h-4 w-4" />
@@ -394,12 +420,20 @@ export const Configuracion: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleDeleteUser(u.id)}
-                        className="p-2 text-slate-500 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-500/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-end space-x-1">
+                        <button 
+                          onClick={() => handleOpenUserModal(u)}
+                          className="p-2 text-slate-500 hover:text-indigo-500 transition-colors rounded-lg hover:bg-indigo-500/10"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="p-2 text-slate-500 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -677,10 +711,10 @@ export const Configuracion: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative">
             <h3 className="text-2xl font-black text-white flex items-center space-x-2">
               <UserPlus className="h-6 w-6 text-indigo-500" />
-              <span>Registrar Usuario</span>
+              <span>{editingUserId ? 'Editar Usuario' : 'Registrar Usuario'}</span>
             </h3>
             
-            <form onSubmit={handleCreateUser} className="space-y-4">
+            <form onSubmit={handleSaveUser} className="space-y-4">
               <div>
                 <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo</label>
                 <input 
@@ -706,12 +740,14 @@ export const Configuracion: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Contraseña</label>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                  {editingUserId ? 'Nueva Contraseña (dejar en blanco para no cambiar)' : 'Contraseña'}
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                   <input 
                     type="password" 
-                    required
+                    required={!editingUserId}
                     value={userPassword}
                     onChange={(e) => setUserPassword(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold font-mono"
@@ -769,7 +805,7 @@ export const Configuracion: React.FC = () => {
                   disabled={creatingUser}
                   className="flex-[2] py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
                 >
-                  {creatingUser ? 'Guardando...' : 'Crear Usuario'}
+                  {creatingUser ? 'Guardando...' : editingUserId ? 'Guardar Cambios' : 'Crear Usuario'}
                 </button>
               </div>
             </form>

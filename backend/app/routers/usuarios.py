@@ -70,6 +70,8 @@ def update_user(
 
     if user_in.nombre: user.nombre = user_in.nombre
     if user_in.rol: user.rol = user_in.rol
+    if user_in.pin is not None: user.pin = user_in.pin
+    if user_in.valor_hora is not None: user.valor_hora = user_in.valor_hora
     if user_in.activo is not None: user.activo = user_in.activo
     if user_in.password:
         user.password_hash = get_password_hash(user_in.password)
