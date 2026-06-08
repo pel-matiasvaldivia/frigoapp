@@ -29,6 +29,9 @@ const AsistenciaReloj: React.FC = () => {
     if (pin.length < 4) return;
 
     setLoading(true);
+    // Sensory feedback: subtle vibration on press
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
+    
     const ts = currentTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
     try {
       const res = await asistenciaAPI.fichar(pin, tipo);
@@ -37,8 +40,10 @@ const AsistenciaReloj: React.FC = () => {
         type: 'success',
         message: `✓ ${tipo} — ${res.usuario_nombre} — ${ts}`,
       });
+      if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
       setPin('');
     } catch (error: any) {
+      if (window.navigator.vibrate) window.navigator.vibrate(300);
       setStatus({
         type: 'error',
         message: error.response?.data?.detail || 'PIN incorrecto o error al registrar',
@@ -60,12 +65,12 @@ const AsistenciaReloj: React.FC = () => {
         <div className="text-center space-y-1">
           <div className="flex items-center justify-center space-x-2 text-slate-400">
             <Clock className="h-5 w-5" />
-            <span className="text-xs font-black tracking-widest uppercase">Reloj Control</span>
+            <span className="text-xs font-black tracking-widest uppercase text-indigo-400">Reloj Control de Personal</span>
           </div>
-          <div className="text-7xl font-black text-white tabular-nums tracking-tighter">
+          <div className="text-7xl font-black text-white tabular-nums tracking-tighter drop-shadow-2xl">
             {currentTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
           </div>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest capitalize">
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
             {currentTime.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
@@ -73,83 +78,95 @@ const AsistenciaReloj: React.FC = () => {
         {/* Status Banner */}
         <div className={`transition-all duration-300 ${status.type === 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
           {status.type === 'success' && (
-            <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-2xl flex items-center space-x-2">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <span className="font-bold text-sm">{status.message}</span>
+            <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-4 rounded-3xl flex items-center space-x-3 shadow-lg shadow-emerald-900/20">
+              <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-400" />
+              <span className="font-bold text-base leading-tight">{status.message}</span>
             </div>
           )}
           {status.type === 'error' && (
-            <div className="bg-rose-500/20 border border-rose-500/40 text-rose-300 px-4 py-3 rounded-2xl flex items-center space-x-2 animate-shake">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              <span className="font-bold text-sm">{status.message}</span>
+            <div className="bg-rose-500/20 border border-rose-500/40 text-rose-300 px-4 py-4 rounded-3xl flex items-center space-x-3 shadow-lg shadow-rose-900/20 animate-shake">
+              <AlertCircle className="h-6 w-6 shrink-0 text-rose-400" />
+              <span className="font-bold text-base leading-tight">{status.message}</span>
             </div>
           )}
         </div>
 
         {/* Last action */}
         {lastAction && status.type === 'idle' && (
-          <p className="text-center text-slate-500 text-xs font-bold">{lastAction}</p>
+          <div className="text-center py-1">
+             <p className="text-slate-500 text-xs font-bold bg-slate-800/40 inline-block px-3 py-1 rounded-full border border-slate-700/50">
+              Último movimiento: {lastAction}
+             </p>
+          </div>
         )}
 
         {/* Card */}
-        <div className="bg-slate-800/60 backdrop-blur border border-slate-700 rounded-3xl p-6 space-y-5">
+        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 space-y-6 shadow-2xl shadow-black/50">
 
           {/* PIN dots */}
-          <div className="flex justify-center space-x-3">
+          <div className="flex justify-center space-x-4 mb-2">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
+                className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
                   i < pin.length
-                    ? 'bg-indigo-400 border-indigo-400 scale-110'
-                    : 'bg-transparent border-slate-600'
+                    ? 'bg-indigo-500 border-indigo-400 scale-125 shadow-[0_0_15px_rgba(99,102,241,0.5)]'
+                    : 'bg-transparent border-slate-700'
                 }`}
               />
             ))}
           </div>
 
           {/* Numpad */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
               <button
                 key={n}
-                onClick={() => handleNumberClick(n.toString())}
+                onClick={() => {
+                  handleNumberClick(n.toString());
+                  if (window.navigator.vibrate) window.navigator.vibrate(20);
+                }}
                 disabled={loading}
-                className="h-16 bg-slate-700/60 hover:bg-slate-600/80 active:scale-95 text-2xl font-black text-white rounded-2xl transition-all border border-slate-600/50"
+                className="h-20 bg-slate-700/50 hover:bg-slate-600/70 active:scale-95 active:bg-indigo-600/30 text-3xl font-black text-white rounded-3xl transition-all border border-slate-600/30 flex items-center justify-center"
               >
                 {n}
               </button>
             ))}
             <button
-              onClick={handleDelete}
+              onClick={() => {
+                handleDelete();
+                if (window.navigator.vibrate) window.navigator.vibrate(20);
+              }}
               disabled={loading}
-              className="h-16 bg-slate-700/40 hover:bg-rose-900/40 hover:text-rose-400 text-slate-500 rounded-2xl flex items-center justify-center transition-all border border-slate-600/30"
+              className="h-20 bg-slate-700/30 hover:bg-rose-900/30 hover:text-rose-400 text-slate-500 rounded-3xl flex items-center justify-center transition-all border border-slate-600/20"
             >
-              <Delete className="h-6 w-6" />
+              <Delete className="h-8 w-8" />
             </button>
             <button
-              onClick={() => handleNumberClick('0')}
+              onClick={() => {
+                handleNumberClick('0');
+                if (window.navigator.vibrate) window.navigator.vibrate(20);
+              }}
               disabled={loading}
-              className="h-16 bg-slate-700/60 hover:bg-slate-600/80 active:scale-95 text-2xl font-black text-white rounded-2xl transition-all border border-slate-600/50"
+              className="h-20 bg-slate-700/50 hover:bg-slate-600/70 active:scale-95 active:bg-indigo-600/30 text-3xl font-black text-white rounded-3xl transition-all border border-slate-600/30 flex items-center justify-center"
             >
               0
             </button>
-            {/* Empty cell */}
             <div />
           </div>
 
           {/* ENTRADA / SALIDA Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-2 gap-4 pt-2">
             <button
               onClick={() => handleSubmit('ENTRADA')}
               disabled={!pinReady}
-              className="py-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm tracking-wider transition-all shadow-lg shadow-emerald-900/50 flex items-center justify-center space-x-2"
+              className="py-5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700/50 disabled:text-slate-600 disabled:border-slate-800 disabled:cursor-not-allowed text-white rounded-[1.5rem] font-black text-base tracking-widest transition-all shadow-xl shadow-emerald-900/30 flex items-center justify-center space-x-3 border border-emerald-500/50 active:scale-95"
             >
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 <>
-                  <LogIn className="h-5 w-5" />
+                  <LogIn className="h-6 w-6" />
                   <span>ENTRADA</span>
                 </>
               )}
@@ -157,13 +174,13 @@ const AsistenciaReloj: React.FC = () => {
             <button
               onClick={() => handleSubmit('SALIDA')}
               disabled={!pinReady}
-              className="py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm tracking-wider transition-all shadow-lg shadow-rose-900/50 flex items-center justify-center space-x-2"
+              className="py-5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-700/50 disabled:text-slate-600 disabled:border-slate-800 disabled:cursor-not-allowed text-white rounded-[1.5rem] font-black text-base tracking-widest transition-all shadow-xl shadow-rose-900/30 flex items-center justify-center space-x-3 border border-rose-500/50 active:scale-95"
             >
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 <>
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-6 w-6" />
                   <span>SALIDA</span>
                 </>
               )}

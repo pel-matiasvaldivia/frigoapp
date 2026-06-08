@@ -71,60 +71,19 @@ def reset_system_data(
     Superadmin only.
     """
     try:
-        # Delete in FK-dependency order (children before parents)
-        # Each table is wrapped in its own try/except so missing tables don't abort the whole reset
-        ordered_deletes = [
-            # Attendance
-            "DELETE FROM asistencias",
-            # Cash
-            "DELETE FROM movimientos_caja",
-            "DELETE FROM sesiones_caja",
-            "DELETE FROM conceptos_caja",
-            # Invoices / remitos
-            "DELETE FROM comprobantes",
-            # Order items and preparation
-            "DELETE FROM orden_preparacion_bultos",
-            "DELETE FROM ordenes_preparacion",
-            "DELETE FROM pedido_items",
-            "DELETE FROM pedidos",
-            # Accounts receivable
-            "DELETE FROM movimientos_cc",
-            "DELETE FROM cuentas_corrientes",
-            # Routes
-            "DELETE FROM rutas",
-            # Price lists
-            "DELETE FROM lista_precios_detalle",
-            "DELETE FROM listas_precios",
-            # Core catalog
-            "DELETE FROM clientes",
-            "DELETE FROM productos",
-        ]
-
-        errors = []
-        for stmt in ordered_deletes:
-            try:
-                db.execute(text(stmt))
-            except Exception as tbl_err:
-                errors.append(f"{stmt}: {str(tbl_err)}")
-                db.rollback()
-
-        # Reset all sequences so IDs start at 1 again
-        sequence_tables = [
+        # Tables to truncate in one go (more efficient and handles FKs better)
+        tables = [
             "asistencias", "movimientos_caja", "sesiones_caja", "conceptos_caja",
             "comprobantes", "orden_preparacion_bultos", "ordenes_preparacion",
             "pedido_items", "pedidos", "movimientos_cc", "cuentas_corrientes",
             "rutas", "lista_precios_detalle", "listas_precios", "clientes", "productos"
         ]
-        for table in sequence_tables:
-            try:
-                db.execute(text(f"""
-                    SELECT setval(
-                        pg_get_serial_sequence('{table}', 'id'), 1, false
-                    )
-                """))
-            except Exception:
-                pass
-
+        
+        # We use TRUNCATE with RESTART IDENTITY CASCADE to clear everything and reset IDs
+        # CASCADE ensures that depending records are also cleared if we missed any table
+        truncate_stmt = f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;"
+        
+        db.execute(text(truncate_stmt))
         db.commit()
 
         # Re-seed core system data
@@ -133,11 +92,10 @@ def reset_system_data(
         except Exception as seed_err:
             print(f"Aviso seed post-reset: {seed_err}")
 
-        msg = "Sistema reiniciado exitosamente. Todos los datos operativos han sido eliminados."
-        if errors:
-            msg += f" Advertencias: {'; '.join(errors)}"
-
-        return {"status": "success", "message": msg}
+        return {
+            "status": "success", 
+            "message": "Sistema reiniciado exitosamente. Todos los datos operativos han sido eliminados y la configuración inicial ha sido restaurada."
+        }
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error durante el reinicio: {str(e)}")
