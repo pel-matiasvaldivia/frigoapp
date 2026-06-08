@@ -39,6 +39,7 @@ export const Clientes: React.FC = () => {
   const [crearUsuario, setCrearUsuario] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [codigo, setCodigo] = useState('');
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,6 +107,7 @@ export const Clientes: React.FC = () => {
     setLimiteCredito(c.limite_credito || 0);
     setWhatsappId(c.whatsapp_id || '');
     setActivo(c.activo);
+    setCodigo(c.codigo || '');
     setCrearUsuario(false); setEmail(''); setPassword('');
     setIsModalOpen(true);
   };
@@ -120,6 +122,7 @@ export const Clientes: React.FC = () => {
       lista_precios_id: listaId || null,
       limite_credito: limiteCredito,
       whatsapp_id: whatsappId || null,
+      codigo: codigo || null,
       activo,
       crear_usuario: crearUsuario,
       email: crearUsuario ? email : undefined,
@@ -152,7 +155,8 @@ export const Clientes: React.FC = () => {
 
   const filtered = clientes.filter(c =>
     c.razon_social.toLowerCase().includes(search.toLowerCase()) ||
-    (c.cuit && c.cuit.includes(search))
+    (c.cuit && c.cuit.includes(search)) ||
+    (c.codigo && c.codigo.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -200,6 +204,7 @@ export const Clientes: React.FC = () => {
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-500 text-xs font-semibold uppercase">
+                <th className="py-4 px-6">Cod</th>
                 <th className="py-4 px-6">Razón Social</th>
                 <th className="py-4 px-6">CUIT</th>
                 <th className="py-4 px-6">Ruta</th>
@@ -217,6 +222,7 @@ export const Clientes: React.FC = () => {
               ) : (
                 filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3.5 px-6 font-mono text-brand-600 font-bold text-xs">{c.codigo || '—'}</td>
                     <td className="py-3.5 px-4 font-medium text-slate-900">{c.razon_social}</td>
                     <td className="py-3.5 px-4 text-slate-600">{c.cuit || '—'}</td>
                     <td className="py-3.5 px-4 text-slate-600">{c.ruta?.nombre || '—'}</td>
@@ -255,6 +261,11 @@ export const Clientes: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Razón Social *</label>
                 <input type="text" required value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-medium" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Código Interno</label>
+                <input type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: C001"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-bold" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">CUIT</label>

@@ -50,6 +50,8 @@ export const Pedidos: React.FC = () => {
   const [addWeight, setAddWeight] = useState<number>(10); // default weight estimate
   const [productFilter, setProductFilter] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   // Warning Modal
   const [warningModalOpen, setWarningModalOpen] = useState(false);
@@ -244,7 +246,10 @@ export const Pedidos: React.FC = () => {
     setAddProductId('');
     setAddUnits(1);
     setAddWeight(10);
+    setAddWeight(10);
     setProductFilter('');
+    setClientSearch('');
+    setShowClientDropdown(false);
   };
 
   return (
@@ -421,19 +426,65 @@ export const Pedidos: React.FC = () => {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   Cliente Solicitante *
                 </label>
-                <select
-                  required
-                  value={selectedClienteId}
-                  onChange={(e) => handleClientChange(Number(e.target.value))}
-                  className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
-                >
-                  <option value="">Seleccione un cliente de la cartera...</option>
-                  {clientes.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.razon_social} ({c.lista_precios?.nombre || 'General'})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Escriba código o nombre del cliente..."
+                    value={clientSearch}
+                    onFocus={() => setShowClientDropdown(true)}
+                    onChange={(e) => {
+                      setClientSearch(e.target.value);
+                      setShowClientDropdown(true);
+                      if (selectedClienteId) {
+                        setSelectedClienteId('');
+                        setClientPriceList(null);
+                        setItems([]);
+                      }
+                    }}
+                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-text"
+                  />
+                  {showClientDropdown && clientSearch && (
+                    <div className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                      {clientes
+                        .filter(c => 
+                          c.razon_social.toLowerCase().includes(clientSearch.toLowerCase()) || 
+                          c.codigo?.toLowerCase().includes(clientSearch.toLowerCase())
+                        )
+                        .slice(0, 10)
+                        .map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              handleClientChange(c.id);
+                              setClientSearch(c.razon_social);
+                              setShowClientDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
+                          >
+                            <div className="flex items-center space-x-3">
+                              {c.codigo && (
+                                <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded leading-none">{c.codigo}</span>
+                              )}
+                              <span className="text-sm font-bold text-slate-800">{c.razon_social}</span>
+                              <span className="text-[10px] text-slate-400 font-medium ml-auto uppercase">{c.lista_precios?.nombre || 'General'}</span>
+                            </div>
+                          </button>
+                        ))
+                      }
+                      {clientes.filter(c => 
+                        c.razon_social.toLowerCase().includes(clientSearch.toLowerCase()) || 
+                        c.codigo?.toLowerCase().includes(clientSearch.toLowerCase())
+                      ).length === 0 && (
+                        <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron clientes</div>
+                      )}
+                    </div>
+                  )}
+                  {showClientDropdown && clientSearch && (
+                    <div className="fixed inset-0 z-0" onClick={() => setShowClientDropdown(false)} />
+                  )}
+                </div>
               </div>
 
               {selectedClienteId && (
