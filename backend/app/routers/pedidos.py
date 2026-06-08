@@ -247,63 +247,70 @@ def update_pedido(
     update_data = pedido_in.model_dump(exclude_unset=True)
     if "items" in update_data:
         items_in = update_data.pop("items")
-        # Sync items
-        # Delete old items
-        db.query(PedidoItem).filter(PedidoItem.pedido_id == pedido.id).delete()
-        
-        # Add new items
-        new_total = 0.0
         cliente = pedido.cliente
         
+        # Proper Sync logic for PedidoItems
+        current_items = {it.producto_id: it for it in pedido.items}
+        new_prod_ids = [it["producto_id"] for it in items_in]
+        
+        # Delete items not in new list
+        for prod_id, it in list(current_items.items()):
+            if prod_id not in new_prod_ids:
+                db.delete(it)
+        
+        # Update existing or add new
+        new_total = 0.0
         for item_in in items_in:
-            # Lookup price
+            prod_id = item_in["producto_id"]
             precio_unit = item_in.get("precio_unitario")
             
             if precio_unit is None:
                 det = db.query(ListaPreciosDetalle).filter(
                     ListaPreciosDetalle.lista_precios_id == cliente.lista_precios_id,
-                    ListaPreciosDetalle.producto_id == item_in["producto_id"]
+                    ListaPreciosDetalle.producto_id == prod_id
                 ).first()
-                
-                if not det:
-                    if cliente.lista_precios_id:
-                         raise HTTPException(
-                            status_code=400,
-                            detail=f"El producto con ID {item_in['producto_id']} no tiene precio en la lista {cliente.lista_precios_id}"
-                        )
-                    else:
-                        precio_unit = 0.0
-                else:
-                    precio_unit = det.precio_venta
+                precio_unit = det.precio_venta if det else 0.0
             
             weight_est = item_in.get("peso_estimado_kg") or (item_in["cantidad_unidades"] * 10.0)
             sub = round(precio_unit * weight_est, 2)
             
-            db_item = PedidoItem(
-                pedido_id=pedido.id,
-                producto_id=item_in["producto_id"],
-                cantidad_unidades=item_in["cantidad_unidades"],
-                peso_estimado_kg=weight_est,
-                precio_unitario=precio_unit,
-                subtotal=sub
-            )
-            db.add(db_item)
+            if prod_id in current_items:
+                # Update
+                it = current_items[prod_id]
+                it.cantidad_unidades = item_in["cantidad_unidades"]
+                it.peso_estimado_kg = weight_est
+                it.precio_unitario = precio_unit
+                it.subtotal = sub
+            else:
+                # Add
+                new_it = PedidoItem(
+                    pedido_id=pedido.id,
+                    producto_id=prod_id,
+                    cantidad_unidades=item_in["cantidad_unidades"],
+                    peso_estimado_kg=weight_est,
+                    precio_unitario=precio_unit,
+                    subtotal=sub
+                )
+                db.add(new_it)
+            
             new_total += sub
         
         pedido.total = new_total
+        db.flush() # Ensure PedidoItems are in DB
         
         # 3. Sync associated OrdenPreparacionBultos if they exist
         if pedido.orden_preparacion:
             prep = pedido.orden_preparacion
             existing_bultos = {b.producto_id: b for b in prep.bultos}
-            new_item_prod_ids = [it.producto_id for it in pedido.items]
             
             # Delete bultos whose product is no longer in the order
             for prod_id, bulto in list(existing_bultos.items()):
-                if prod_id not in new_item_prod_ids:
+                if prod_id not in new_prod_ids:
                     db.delete(bulto)
             
             # Add or update bultos
+            # We refresh the relationship specifically to ensure we have the new items
+            db.refresh(pedido)
             for item in pedido.items:
                 if item.producto_id in existing_bultos:
                     bulto = existing_bultos[item.producto_id]
