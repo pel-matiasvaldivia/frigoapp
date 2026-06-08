@@ -177,3 +177,9 @@ export const cajaAPI = {
   updateConcepto: async (id: number, data: Record<string, unknown>) => (await api.put(`/caja/conceptos/${id}`, data)).data,
   deleteConcepto: async (id: number) => (await api.delete(`/caja/conceptos/${id}`)).data,
 };
+
+export const permisosAPI = {
+  list: async () => (await api.get('/permisos/')).data,
+  update: async (id: number, habilitado: boolean) => (await api.put(`/permisos/${id}`, { habilitado })).data,
+  getMyPermissions: async () => (await api.get('/permisos/me')).data,
+};

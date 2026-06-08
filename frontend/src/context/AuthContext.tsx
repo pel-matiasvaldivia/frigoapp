@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, permisosAPI } from '../services/api';
 
 interface User {
   id: number;
@@ -9,20 +9,20 @@ interface User {
   activo: boolean;
 }
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  hasRole: (roles: string[]) => boolean;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchPermissions = async () => {
+    try {
+      const perms = await permisosAPI.getMyPermissions();
+      setPermissions(perms);
+    } catch (err) {
+      console.error("Error fetching permissions:", err);
+      setPermissions([]);
+    }
+  };
 
   useEffect(() => {
     const bootstrapAuth = async () => {
@@ -31,10 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const profile = await authAPI.getMe();
           setUser(profile);
+          await fetchPermissions();
         } catch (error) {
           console.error("Error booting authentication:", error);
           localStorage.removeItem('token');
           setUser(null);
+          setPermissions([]);
         }
       }
       setLoading(false);
@@ -51,8 +53,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profile = await authAPI.getMe();
       setUser(profile);
       localStorage.setItem('user', JSON.stringify(profile));
+      
+      // Load permissions right after login
+      await fetchPermissions();
     } catch (error) {
       setUser(null);
+      setPermissions([]);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       throw error;
@@ -63,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
+    setPermissions([]);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
@@ -73,10 +80,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return roles.includes(user.rol);
   };
 
+  const hasPermission = (modulo: string): boolean => {
+    if (!user) return false;
+    if (user.rol === 'SUPERADMIN') return true;
+    return permissions.includes(modulo);
+  };
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, permissions, loading, login, logout, hasRole, hasPermission, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

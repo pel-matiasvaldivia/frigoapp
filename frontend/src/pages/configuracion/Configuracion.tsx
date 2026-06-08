@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listasPreciosAPI, rutasAPI, authAPI, configuracionAPI } from '../../services/api';
+import { listasPreciosAPI, rutasAPI, authAPI, configuracionAPI, permisosAPI } from '../../services/api';
 import { 
   Settings, 
   Upload, 
@@ -8,7 +8,10 @@ import {
   FileSpreadsheet, 
   UserCheck, 
   Wrench, 
-  RefreshCw 
+  RefreshCw,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 
 export const Configuracion: React.FC = () => {
@@ -16,6 +19,8 @@ export const Configuracion: React.FC = () => {
   const [rutas, setRutas] = useState<any[]>([]);
   const [configs, setConfigs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [permisos, setPermisos] = useState<any[]>([]);
+  const [updatingPermisoId, setUpdatingPermisoId] = useState<number | null>(null);
 
   // Excel Upload State
   const [selectedListId, setSelectedListId] = useState<number | ''>('');
@@ -55,16 +60,17 @@ export const Configuracion: React.FC = () => {
       
       const confs = await configuracionAPI.list();
       setConfigs(confs);
+
+      const permsRes = await permisosAPI.list();
+      setPermisos(permsRes);
       
       // Filter next numbers
-      const fc = confs.find(c => c.clave === 'NUM_FACTURA_SIGUIENTE');
-      const rm = confs.find(c => c.clave === 'NUM_REMITO_SIGUIENTE');
+      const fc = confs.find((c: any) => c.clave === 'NUM_FACTURA_SIGUIENTE');
+      const rm = confs.find((c: any) => c.clave === 'NUM_REMITO_SIGUIENTE');
       if (fc) setNextFC(fc.valor);
       if (rm) setNextRM(rm.valor);
       
-      // Load repartidores from database seed
-      // For this prototype, we'll hardcode or mock the drivers listing as we didn't write a full Users endpoint.
-      // We can mock some driver accounts.
+      // Load repartidores
       setRepartidores([
         { id: 4, nombre: "Juan Repartidor" },
         { id: 5, nombre: "Carlos Repartidor" }
@@ -75,6 +81,21 @@ export const Configuracion: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleTogglePermiso = async (id: number, habilitado: boolean) => {
+    setUpdatingPermisoId(id);
+    try {
+      await permisosAPI.update(id, habilitado);
+      // Update local state
+      setPermisos(prev => prev.map(p => p.id === id ? { ...p, habilitado } : p));
+    } catch (err) {
+      alert("Error al actualizar permiso");
+    } finally {
+      setUpdatingPermisoId(null);
+    }
+  };
+
+  const roles = ['ADMINISTRATIVO', 'VENDEDOR', 'REPARTIDOR'];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -158,11 +179,7 @@ export const Configuracion: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-500"></div>
-      </div>
-    );
+// ...
   }
 
   return (
@@ -170,12 +187,70 @@ export const Configuracion: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold text-white">Configuración del Sistema</h1>
-        <p className="text-slate-400 text-sm mt-1">Opciones exclusivas de Superadmin para actualizar catálogos, importar costos y coordinar rutas.</p>
+        <p className="text-slate-400 text-sm mt-1">Opciones exclusivas de Superadmin para gestionar módulos, precios y logística.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
+        {/* Tab: Control de Accesos Dinámico */}
+        <div className="lg:col-span-2 border border-slate-800 rounded-3xl bg-slate-900/40 p-8 space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-rose-500/20 rounded-xl">
+                <ShieldCheck className="h-6 w-6 text-rose-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Control de Accesos por Módulo</h3>
+                <p className="text-slate-400 text-xs">Habilite o deshabilite módulos completos para cada perfil del sistema.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {roles.map(rol => (
+              <div key={rol} className="flex flex-col space-y-4">
+                <div className="px-4 py-2 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                  <h4 className="text-sm font-extrabold text-rose-400 uppercase tracking-widest">{rol}</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  {permisos.filter(p => p.rol === rol).sort((a,b) => a.modulo.localeCompare(b.modulo)).map(p => (
+                    <div 
+                      key={p.id} 
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all duration-200 ${
+                        p.habilitado 
+                          ? 'bg-emerald-500/10 border-emerald-500/20' 
+                          : 'bg-slate-950/40 border-slate-800/60 opacity-60'
+                      }`}
+                    >
+                      <span className="text-xs font-bold text-slate-200 uppercase tracking-tight">{p.modulo.replace('_', ' ')}</span>
+                      <button
+                        onClick={() => handleTogglePermiso(p.id, !p.habilitado)}
+                        disabled={updatingPermisoId === p.id}
+                        className={`p-1.5 rounded-lg transition-all ${
+                          p.habilitado 
+                            ? 'text-emerald-500 hover:bg-emerald-500/20' 
+                            : 'text-slate-500 hover:bg-slate-800'
+                        }`}
+                      >
+                        {updatingPermisoId === p.id ? (
+                          <RefreshCw className="h-5 w-5 animate-spin" />
+                        ) : p.habilitado ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <XCircle className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Tab 1: Excel Pricing Importer */}
+// ...
         <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
           <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
             <Upload className="h-5 w-5 text-rose-500" />

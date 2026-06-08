@@ -235,6 +235,47 @@ def seed_db():
                 db.add(ConfiguracionSistema(**conf))
         db.commit()
 
+        # 7. Seed Permissions (PermisoRol)
+        from app.models.permiso_rol import PermisoRol
+        
+        modulos = [
+            "DASHBOARD", "PEDIDOS", "PREPARACION", "COMPROBANTES", 
+            "DESPACHO", "CUENTAS_CORRIENTES", "CAJA", "CLIENTES", 
+            "PRODUCTOS", "LISTAS_PRECIOS", "CONFIGURACION", 
+            "MAPA_VENTAS", "WHATSAPP"
+        ]
+        
+        # Initial rules requested by user
+        default_perms = {
+            "SUPERADMIN": modulos, # All
+            "ADMINISTRATIVO": [
+                "DASHBOARD", "PEDIDOS", "CAJA", "COMPROBANTES", 
+                "CUENTAS_CORRIENTES", "CLIENTES", "PRODUCTOS", 
+                "LISTAS_PRECIOS", "MAPA_VENTAS"
+            ],
+            "REPARTIDOR": [
+                "PREPARACION", "DESPACHO", "CLIENTES", "PRODUCTOS", "LISTAS_PRECIOS"
+            ],
+            "VENDEDOR": [
+                "PREPARACION", "DESPACHO", "CLIENTES", "PRODUCTOS", "LISTAS_PRECIOS", "PEDIDOS"
+            ]
+        }
+        
+        for rol, habilitados in default_perms.items():
+            for modulo in modulos:
+                exists = db.query(PermisoRol).filter(
+                    PermisoRol.rol == rol,
+                    PermisoRol.modulo == modulo
+                ).first()
+                if not exists:
+                    perm = PermisoRol(
+                        rol=rol,
+                        modulo=modulo,
+                        habilitado=(modulo in habilitados)
+                    )
+                    db.add(perm)
+        db.commit()
+
         print("Base de datos J&E inicializada exitosamente.")
     except Exception as e:
         db.rollback()

@@ -63,3 +63,26 @@ class RoleChecker:
                 detail=f"El rol '{current_user.rol}' no tiene permisos para esta acción"
             )
         return current_user
+
+class PermissionChecker:
+    def __init__(self, modulo: str):
+        self.modulo = modulo
+
+    def __call__(self, current_user: Usuario = Depends(get_current_user), db: Session = Depends(get_db)) -> Usuario:
+        # SUPERADMIN always has access
+        if current_user.rol == "SUPERADMIN":
+            return current_user
+            
+        from app.models.permiso_rol import PermisoRol
+        perm = db.query(PermisoRol).filter(
+            PermisoRol.rol == current_user.rol,
+            PermisoRol.modulo == self.modulo,
+            PermisoRol.habilitado == True
+        ).first()
+        
+        if not perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"No tiene permisos para acceder al módulo '{self.modulo}'"
+            )
+        return current_user

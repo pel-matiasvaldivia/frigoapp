@@ -20,23 +20,29 @@ graph TD
 ### Paso 1: Alta de Cliente (Módulo Clientes)
 El proceso comienza registrando al cliente en el sistema.
 - **Acción:** Ir a `Admin > Clientes`.
-- **Datos Clave:** Razón Social, CUIT (para facturación), Dirección de entrega y **Ruta Logística** asignada.
+- **Datos Clave:** Razón Social, CUIT, Dirección, **Código Interno** y **Ruta Logística**.
+- **Identificación:** Los clientes ahora pueden buscarse por su CUIT, Razón Social o el **Código Numérico** asignado para agilizar la carga manual.
 - **Carga Masiva (Recomendado):** 
-    - Use el botón **"Plantilla"** para descargar el formato CSV.
-    - El sistema permite **"Actualización Inteligente (Upsert)"**: si sube un cliente con un CUIT o Razón Social existente, sus datos se actualizarán (útil para asociar IDs de WhatsApp masivamente).
+     - Use el botón **"Plantilla"** para descargar el formato CSV.
+     - El sistema permite **"Actualización Inteligente (Upsert)"**: si sube un cliente con un CUIT o Razón Social existente, sus datos se actualizarán.
 - **Importante:** La ruta determina qué transportista verá el pedido en su hoja de ruta.
 
 ### Paso 2: Carga del Pedido (Módulo Pedidos)
 Se registran los productos y cantidades estimadas que el cliente solicita.
 - **Acción:** Ir a `Ventas > Pedidos`.
+- **Búsqueda Ágil:** Al crear un pedido manual, puede buscar al cliente escribiendo su nombre o su **Código Numérico**.
 - **Proceso:** Seleccionar cliente, agregar productos (unidades/piezas) y definir fecha de entrega.
 - **Nota:** El precio se toma automáticamente de la *Lista de Precios* asociada al cliente.
 
 ### Paso 3: Preparación y Balanza (Módulo Preparación)
 En el frigorífico, se preparan los cortes físicos y se pesan.
-- **Acción:** El operario de balanza entra a `Ventas > Preparación`.
-- **Proceso:** Selecciona la orden, inicia la preparación y carga los **Kilos Reales** de cada bulto. 
-- **Cierre:** Una vez pesados todos los ítems, se marca como "Finalizar Preparación".
+- **Acción:** El operario entra a `Ventas > Preparación`.
+- **Iniciar:** Selecciona la orden en "Nuevos" y presiona **"Iniciar Preparación"**. El pedido pasará a la pestaña "En Progreso".
+- **Pesaje:** Carga los **Kilos Reales** de cada bulto. 
+- **Flexibilidad:** 
+    - Se pueden cargar pesos parciales y presionar **"Guardar Pesajes Parciales"** para no perder el progreso.
+    - Si el cliente solicita algo adicional a último momento, se pueden **añadir o quitar productos directamente** desde esta pantalla sin volver a "Pedidos".
+- **Cierre:** Al completar todos los kilos, presione **"Finalizar Preparación"**. Esto generará automáticamente el **Remito**.
 
 ### Paso 4: Facturación (Módulo Comprobantes)
 Con los pesos reales confirmados, se genera el documento legal.
@@ -52,7 +58,21 @@ El transportista gestiona la logística final.
 
 ---
 
-## 3. Identificación Persistente de WhatsApp
+## 3. Gestión de Caja (Módulo Caja)
+Control de ingresos y egresos de dinero por sesión.
+
+### A. Apertura y Cierre
+- El sistema funciona por **Sesiones de Caja**. Debe haber una sesión abierta para registrar movimientos.
+- Al iniciar el día, presione **"Abrir Caja"** e ingrese el monto inicial.
+- Al finalizar, presione **"Cerrar Caja"** para ver el resumen del día y el arqueo.
+
+### B. Registro Rápido
+- **Conceptos Configurables:** En la pestaña `Conceptos`, puede crear categorías con **códigos numéricos** (ej: 1010 para Combustible).
+- **Carga por Código:** En el formulario de movimientos, simplemente ingrese el código numérico para seleccionar instantáneamente el concepto, agilizando la operación.
+
+---
+
+## 4. Identificación Persistente de WhatsApp
 Para que el sistema asocie automáticamente los mensajes al cliente correcto, se utiliza un **ID de WhatsApp (LID/JID)**.
 
 ### A. Vinculación Automática (Self-Healing)
@@ -69,7 +89,7 @@ Si un pedido aparece como **"DESCONOCIDO"**:
 
 ---
 
-## 4. Gestión del Bot de WhatsApp
+## 5. Gestión del Bot de WhatsApp
 El sistema integra WhatsApp sin necesidad de un navegador abierto.
 - **Estado del Servicio:** Verificable en `Admin > WhatsApp`.
 - **Vincular Sesión:** Si el servicio está desconectado, se mostrará un código QR. Escanéelo desde dispositivos vinculados en su teléfono.
@@ -79,7 +99,7 @@ El sistema integra WhatsApp sin necesidad de un navegador abierto.
 
 ---
 
-## 5. Estados del Pedido
+## 6. Estados del Pedido
 - **Pendiente de Validación:** Pedido recibido por WhatsApp, esperando revisión humana.
 - **Pendiente:** Creado, esperando ser preparado.
 - **En Preparación:** Siendo pesado en balanza.
@@ -88,4 +108,4 @@ El sistema integra WhatsApp sin necesidad de un navegador abierto.
 - **Entregado:** Proceso finalizado con firma del cliente.
 
 > [!TIP]
-> Use el **Dashboard** para ver el estado general de la operación en tiempo real y detectar cuellos de botella. La nueva **Búsqueda Avanzada** en clientes permite filtrar por CUIT o Razón Social instantáneamente.
+> Use el **Dashboard** para ver el estado general de la operación en tiempo real y detectar cuellos de botella. La nueva **Búsqueda Avanzada** en clientes permite filtrar por CUIT, Razón Social o el **Código Numérico** instantáneamente.

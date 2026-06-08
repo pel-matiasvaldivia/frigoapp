@@ -61,16 +61,17 @@ const RequireGuest: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return <>{children}</>;
 };
 
-/** Role-based access: show 403 page if role not allowed */
-const RequireRole: React.FC<{ roles: string[]; children: React.ReactNode }> = ({ roles, children }) => {
-  const { user, loading } = useAuth();
+/** Permission-based access: show 403 page if module not allowed */
+const RequirePermission: React.FC<{ modulo: string; children: React.ReactNode }> = ({ modulo, children }) => {
+  const { hasPermission, loading, user } = useAuth();
   if (loading) return <LoadingScreen />;
-  if (!user || !roles.includes(user.rol)) {
+  
+  if (!user || !hasPermission(modulo)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <div className="text-6xl">🚫</div>
         <h2 className="text-2xl font-extrabold text-white">Acceso Denegado</h2>
-        <p className="text-slate-400 text-sm">No tiene permisos para ver esta sección.</p>
+        <p className="text-slate-400 text-sm">No tiene permisos para ver el módulo {modulo}.</p>
         <a href="/" className="px-4 py-2 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-500 transition">
           Volver al inicio
         </a>
@@ -82,14 +83,14 @@ const RequireRole: React.FC<{ roles: string[]; children: React.ReactNode }> = ({
 
 // ─── Admin Wrapper ─────────────────────────────────────────────────────────────
 
-const AdminRoute: React.FC<{ children: React.ReactNode; roles?: string[] }> = ({
+const AdminRoute: React.FC<{ children: React.ReactNode; modulo: string }> = ({
   children,
-  roles = ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR', 'REPARTIDOR']
+  modulo
 }) => (
   <RequireAuth>
-    <RequireRole roles={roles}>
+    <RequirePermission modulo={modulo}>
       <AdminLayout>{children}</AdminLayout>
-    </RequireRole>
+    </RequirePermission>
   </RequireAuth>
 );
 
@@ -106,11 +107,16 @@ const ClienteRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 // ─── Smart Home Redirect ────────────────────────────────────────────────────────
 
 const HomeRedirect: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.rol === 'CLIENTE') return <Navigate to="/mis-pedidos" replace />;
-  if (user.rol === 'REPARTIDOR') return <Navigate to="/despacho" replace />;
+  
+  // Smart redirect to first available module
+  if (hasPermission('DASHBOARD')) return <Navigate to="/dashboard" replace />;
+  if (hasPermission('DESPACHO')) return <Navigate to="/despacho" replace />;
+  if (hasPermission('PEDIDOS')) return <Navigate to="/pedidos" replace />;
+  
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -122,85 +128,22 @@ const AppRoutes: React.FC = () => (
     <Route path="/login" element={<RequireGuest><Login /></RequireGuest>} />
 
     {/* Smart home redirect */}
-    <Route path="/" element={<RequireAuth><HomeRedirect /></RequireAuth>} />
+    <Route path="/" element={<HomeRedirect />} />
 
-    {/* Admin / Staff Routes */}
-    <Route path="/dashboard" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <Dashboard />
-      </AdminRoute>
-    } />
-
-    <Route path="/pedidos" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR']}>
-        <Pedidos />
-      </AdminRoute>
-    } />
-
-    <Route path="/preparacion" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <Preparacion />
-      </AdminRoute>
-    } />
-
-    <Route path="/comprobantes" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <Comprobantes />
-      </AdminRoute>
-    } />
-
-    <Route path="/despacho" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO', 'REPARTIDOR']}>
-        <Despacho />
-      </AdminRoute>
-    } />
-
-    <Route path="/cuentas" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <CuentasCorrientes />
-      </AdminRoute>
-    } />
-
-    <Route path="/caja" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <Caja />
-      </AdminRoute>
-    } />
-
-    <Route path="/clientes" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR']}>
-        <Clientes />
-      </AdminRoute>
-    } />
-
-    <Route path="/productos" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <Productos />
-      </AdminRoute>
-    } />
-
-    <Route path="/listas-precios" element={
-      <AdminRoute roles={['SUPERADMIN']}>
-        <ListasPrecios />
-      </AdminRoute>
-    } />
-
-    <Route path="/admin/mapa-ventas" element={
-      <AdminRoute roles={['SUPERADMIN', 'ADMINISTRATIVO']}>
-        <MapaVentas />
-      </AdminRoute>
-    } />
-    <Route path="/whatsapp" element={
-      <AdminRoute roles={['SUPERADMIN']}>
-        <WhatsAppAdmin />
-      </AdminRoute>
-    } />
-
-    <Route path="/configuracion" element={
-      <AdminRoute roles={['SUPERADMIN']}>
-        <Configuracion />
-      </AdminRoute>
-    } />
+    {/* Admin Routes */}
+    <Route path="/dashboard" element={<AdminRoute modulo="DASHBOARD"><Dashboard /></AdminRoute>} />
+    <Route path="/pedidos" element={<AdminRoute modulo="PEDIDOS"><Pedidos /></AdminRoute>} />
+    <Route path="/preparacion" element={<AdminRoute modulo="PREPARACION"><Preparacion /></AdminRoute>} />
+    <Route path="/comprobantes" element={<AdminRoute modulo="COMPROBANTES"><Comprobantes /></AdminRoute>} />
+    <Route path="/cuentas" element={<AdminRoute modulo="CUENTAS_CORRIENTES"><CuentasCorrientes /></AdminRoute>} />
+    <Route path="/caja" element={<AdminRoute modulo="CAJA"><Caja /></AdminRoute>} />
+    <Route path="/despacho" element={<AdminRoute modulo="DESPACHO"><Despacho /></AdminRoute>} />
+    <Route path="/clientes" element={<AdminRoute modulo="CLIENTES"><Clientes /></AdminRoute>} />
+    <Route path="/productos" element={<AdminRoute modulo="PRODUCTOS"><Productos /></AdminRoute>} />
+    <Route path="/listas-precios" element={<AdminRoute modulo="LISTAS_PRECIOS"><ListasPrecios /></AdminRoute>} />
+    <Route path="/admin/mapa-ventas" element={<AdminRoute modulo="MAPA_VENTAS"><MapaVentas /></AdminRoute>} />
+    <Route path="/whatsapp" element={<AdminRoute modulo="WHATSAPP"><WhatsAppAdmin /></AdminRoute>} />
+    <Route path="/configuracion" element={<AdminRoute modulo="CONFIGURACION"><Configuracion /></AdminRoute>} />
 
     {/* Cliente Portal Routes (PWA) */}
     <Route path="/mis-pedidos" element={

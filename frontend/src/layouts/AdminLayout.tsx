@@ -24,11 +24,11 @@ interface SidebarItem {
   name: string;
   path: string;
   icon: React.ComponentType<any>;
-  roles: string[];
+  modulo: string;
 }
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,22 +36,22 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   if (!user) return null;
 
   const sidebarItems: SidebarItem[] = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Pedidos', path: '/pedidos', icon: ShoppingCart, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
-    { name: 'Preparación', path: '/preparacion', icon: ClipboardList, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Facturas / Remitos', path: '/comprobantes', icon: FileText, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Cuentas Corrientes', path: '/cuentas', icon: Coins, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Caja', path: '/caja', icon: CreditCard, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Repartos Hoja de Ruta', path: '/despacho', icon: Truck, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'REPARTIDOR'] },
-    { name: 'Clientes', path: '/clientes', icon: Users, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
-    { name: 'Catálogo Productos', path: '/productos', icon: Beef, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'Listas de Precios', path: '/listas-precios', icon: ClipboardList, roles: ['SUPERADMIN'] },
-    { name: 'Mapa de Ventas', path: '/admin/mapa-ventas', icon: Map, roles: ['SUPERADMIN', 'ADMINISTRATIVO'] },
-    { name: 'WhatsApp', path: '/whatsapp', icon: MessageSquare, roles: ['SUPERADMIN', 'ADMINISTRATIVO', 'VENDEDOR'] },
-    { name: 'Configuración', path: '/configuracion', icon: Settings, roles: ['SUPERADMIN'] },
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard, modulo: 'DASHBOARD' },
+    { name: 'Pedidos', path: '/pedidos', icon: ShoppingCart, modulo: 'PEDIDOS' },
+    { name: 'Preparación', path: '/preparacion', icon: ClipboardList, modulo: 'PREPARACION' },
+    { name: 'Facturas / Remitos', path: '/comprobantes', icon: FileText, modulo: 'COMPROBANTES' },
+    { name: 'Cuentas Corrientes', path: '/cuentas', icon: Coins, modulo: 'CUENTAS_CORRIENTES' },
+    { name: 'Caja', path: '/caja', icon: CreditCard, modulo: 'CAJA' },
+    { name: 'Repartos Hoja de Ruta', path: '/despacho', icon: Truck, modulo: 'DESPACHO' },
+    { name: 'Clientes', path: '/clientes', icon: Users, modulo: 'CLIENTES' },
+    { name: 'Catálogo Productos', path: '/productos', icon: Beef, modulo: 'PRODUCTOS' },
+    { name: 'Listas de Precios', path: '/listas-precios', icon: ClipboardList, modulo: 'LISTAS_PRECIOS' },
+    { name: 'Mapa de Ventas', path: '/admin/mapa-ventas', icon: Map, modulo: 'MAPA_VENTAS' },
+    { name: 'WhatsApp', path: '/whatsapp', icon: MessageSquare, modulo: 'WHATSAPP' },
+    { name: 'Configuración', path: '/configuracion', icon: Settings, modulo: 'CONFIGURACION' },
   ];
 
-  const visibleItems = sidebarItems.filter(item => item.roles.includes(user.rol));
+  const visibleItems = sidebarItems.filter(item => hasPermission(item.modulo));
 
   const handleLogout = () => {
     logout();
