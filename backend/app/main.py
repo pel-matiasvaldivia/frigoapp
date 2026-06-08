@@ -26,6 +26,10 @@ try:
             connection.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS codigo VARCHAR UNIQUE"))
             connection.execute(text("ALTER TABLE movimientos_caja ADD COLUMN IF NOT EXISTS sesion_id INTEGER REFERENCES sesiones_caja(id)"))
             connection.execute(text("ALTER TABLE movimientos_caja ADD COLUMN IF NOT EXISTS concepto_id INTEGER REFERENCES conceptos_caja(id)"))
+            
+            # Migrations for Attendance
+            connection.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pin VARCHAR"))
+            connection.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS valor_hora FLOAT DEFAULT 0"))
             connection.commit()
             print("Migraciones manuales completadas.")
         except Exception as migr_err:
