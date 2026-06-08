@@ -180,8 +180,8 @@ def seed_db():
         db.commit()
 
         # 5. Seed a default Customer with Account
-        cliente_pepe = db.query(Cliente).filter(Cliente.cuit == "20-98765432-1").first()
-        if not cliente_pepe:
+        user_pepe = db.query(Usuario).filter(Usuario.email == "pepe@gmail.com").first()
+        if not user_pepe:
             # Create user for customer first
             user_pepe = Usuario(
                 nombre="Carnicería Pepe",
@@ -194,6 +194,8 @@ def seed_db():
             db.commit()
             db.refresh(user_pepe)
 
+        cliente_pepe = db.query(Cliente).filter(Cliente.cuit == "20-98765432-1").first()
+        if not cliente_pepe:
             cliente_pepe = Cliente(
                 razon_social="Carnicería Don Pepe S.H.",
                 cuit="20-98765432-1",

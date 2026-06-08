@@ -21,7 +21,7 @@ router = APIRouter(prefix="/listas-precios", tags=["Listas de Precios"])
 
 # Permissions
 superadmin_only = RoleChecker(["SUPERADMIN"])
-read_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR"])
+read_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR", "REPARTIDOR"])
 
 @router.get("/", response_model=List[ListaPreciosResponse])
 def list_listas_precios(

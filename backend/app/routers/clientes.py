@@ -17,7 +17,7 @@ from app.schemas.cliente import ClienteCreate, ClienteUpdate, ClienteResponse
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
 # Allowed roles: SUPERADMIN and ADMINISTRATIVO can do CRUD. VENDEDOR can read.
-admin_or_staff = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR"])
+admin_or_staff = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR", "REPARTIDOR"])
 write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
 
 @router.get("/", response_model=List[ClienteResponse])

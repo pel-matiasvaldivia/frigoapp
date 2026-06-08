@@ -10,7 +10,7 @@ from app.schemas.producto import ProductoCreate, ProductoUpdate, ProductoRespons
 
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
-admin_or_staff = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR"])
+admin_or_staff = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR", "REPARTIDOR"])
 write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
 
 @router.get("/", response_model=List[ProductoResponse])

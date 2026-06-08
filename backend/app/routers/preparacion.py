@@ -20,7 +20,7 @@ from app.schemas.preparacion import OrdenPreparacionResponse, OrdenPreparacionUp
 router = APIRouter(prefix="/preparacion", tags=["Preparación de Bultos"])
 
 prep_staff = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "REPARTIDOR"]) # Repartidores and staff can view, admins can write.
-write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
+write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "REPARTIDOR"])
 
 @router.get("/", response_model=List[OrdenPreparacionResponse])
 def list_ordenes_preparacion(
