@@ -19,39 +19,51 @@ def fichar(
     db: Session = Depends(get_db)
 ):
     """
-    Clock in or out using a PIN.
+    Clock in (ENTRADA) or out (SALIDA) using a PIN.
     """
     user = db.query(Usuario).filter(Usuario.pin == asistencia_in.pin, Usuario.activo == True).first()
     if not user:
         raise HTTPException(status_code=404, detail="PIN incorrecto o usuario inactivo")
     
-    # Check for open session (entry without exit)
-    open_session = db.query(Asistencia).filter(
-        Asistencia.usuario_id == user.id,
-        Asistencia.salida == None
-    ).first()
-    
     now = datetime.utcnow()
+    tipo = asistencia_in.tipo.upper()
     
-    if open_session:
-        # Close session
+    if tipo == "ENTRADA":
+        # Check if there's already an open session to avoid duplicates
+        open_session = db.query(Asistencia).filter(
+            Asistencia.usuario_id == user.id,
+            Asistencia.salida == None
+        ).first()
+        if open_session:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{user.nombre} ya tiene un ingreso registrado sin egreso. Registre SALIDA primero."
+            )
+        new_asistencia = Asistencia(usuario_id=user.id, entrada=now)
+        db.add(new_asistencia)
+        db.commit()
+        db.refresh(new_asistencia)
+        res = new_asistencia
+    elif tipo == "SALIDA":
+        open_session = db.query(Asistencia).filter(
+            Asistencia.usuario_id == user.id,
+            Asistencia.salida == None
+        ).first()
+        if not open_session:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{user.nombre} no tiene un ingreso activo. Registre ENTRADA primero."
+            )
         open_session.salida = now
-        # Calculate hours
         delta = open_session.salida - open_session.entrada
         open_session.horas = round(delta.total_seconds() / 3600, 2)
         db.commit()
         db.refresh(open_session)
         res = open_session
     else:
-        # Create new session
-        new_asistencia = Asistencia(usuario_id=user.id, entrada=now)
-        db.add(new_asistencia)
-        db.commit()
-        db.refresh(new_asistencia)
-        res = new_asistencia
+        raise HTTPException(status_code=400, detail="Tipo debe ser ENTRADA o SALIDA")
     
-    # Add user name to response manually (or could use a joined query)
-    res_dict = {
+    return {
         "id": res.id,
         "usuario_id": res.usuario_id,
         "entrada": res.entrada,
@@ -59,7 +71,6 @@ def fichar(
         "horas": res.horas,
         "usuario_nombre": user.nombre
     }
-    return res_dict
 
 @router.get("/reporte", response_model=List[AsistenciaReporte])
 def get_reporte(

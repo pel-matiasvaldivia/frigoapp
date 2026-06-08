@@ -196,7 +196,7 @@ export const usuariosAPI = {
 };
 
 export const asistenciaAPI = {
-  fichar: async (pin: string) => (await api.post('/asistencia/fichar', { pin })).data,
+  fichar: async (pin: string, tipo: 'ENTRADA' | 'SALIDA') => (await api.post('/asistencia/fichar', { pin, tipo })).data,
   getReporte: async (desde: string, hasta: string) => 
     (await api.get('/asistencia/reporte', { params: { desde, hasta } })).data,
 };

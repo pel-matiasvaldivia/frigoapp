@@ -10,6 +10,7 @@ class AsistenciaBase(BaseModel):
 
 class AsistenciaCreate(BaseModel):
     pin: str
+    tipo: str = "ENTRADA"  # ENTRADA or SALIDA
 
 class AsistenciaResponse(AsistenciaBase):
     id: int
