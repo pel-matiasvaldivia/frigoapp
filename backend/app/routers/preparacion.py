@@ -83,78 +83,79 @@ def update_orden_preparacion(
         prep.observaciones = payload.observaciones
         
     # 2. Sync Bultos & PedidoItems
-    payload_bulto_ids = [b.id for b in payload.bultos if b.id is not None]
-    
-    # Delete bultos not in payload
-    for bulto_db in prep.bultos[:]:
-        if bulto_db.id not in payload_bulto_ids:
-            # Delete corresponding PedidoItem
-            db.query(PedidoItem).filter(
-                PedidoItem.pedido_id == pedido.id,
-                PedidoItem.producto_id == bulto_db.producto_id
-            ).delete()
-            db.delete(bulto_db)
-            
-    # Update or add bultos
-    for bulto_in in payload.bultos:
-        if bulto_in.id:
-            # Update existing
-            bulto_db = db.query(OrdenPreparacionBulto).filter(
-                OrdenPreparacionBulto.id == bulto_in.id,
-                OrdenPreparacionBulto.orden_id == orden_id
-            ).first()
-            if bulto_db:
-                bulto_db.unidades = bulto_in.unidades
-                bulto_db.peso_estimado_kg = bulto_in.peso_estimado_kg
-                bulto_db.peso_real_kg = bulto_in.peso_real_kg
-                bulto_db.confirmado = bulto_in.confirmado
+    if payload.bultos is not None:
+        payload_bulto_ids = [b.id for b in payload.bultos if b.id is not None]
+        
+        # Delete bultos not in payload
+        for bulto_db in prep.bultos[:]:
+            if bulto_db.id not in payload_bulto_ids:
+                # Delete corresponding PedidoItem
+                db.query(PedidoItem).filter(
+                    PedidoItem.pedido_id == pedido.id,
+                    PedidoItem.producto_id == bulto_db.producto_id
+                ).delete()
+                db.delete(bulto_db)
                 
-                if bulto_in.confirmado and not bulto_db.tracking_uuid:
-                    bulto_db.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
+        # Update or add bultos
+        for bulto_in in payload.bultos:
+            if bulto_in.id:
+                # Update existing
+                bulto_db = db.query(OrdenPreparacionBulto).filter(
+                    OrdenPreparacionBulto.id == bulto_in.id,
+                    OrdenPreparacionBulto.orden_id == orden_id
+                ).first()
+                if bulto_db:
+                    bulto_db.unidades = bulto_in.unidades
+                    bulto_db.peso_estimado_kg = bulto_in.peso_estimado_kg
+                    bulto_db.peso_real_kg = bulto_in.peso_real_kg
+                    bulto_db.confirmado = bulto_in.confirmado
+                    
+                    if bulto_in.confirmado and not bulto_db.tracking_uuid:
+                        bulto_db.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
+                    
+                    # Sync with PedidoItem
+                    item_db = next((it for it in pedido.items if it.producto_id == bulto_db.producto_id), None)
+                    if item_db:
+                        item_db.cantidad_unidades = bulto_in.unidades
+                        item_db.peso_estimado_kg = bulto_in.peso_estimado_kg
+                        item_db.peso_real_kg = bulto_in.peso_real_kg
+                        # Update subtotal
+                        ref_weight = bulto_in.peso_real_kg if bulto_in.confirmado else bulto_in.peso_estimado_kg
+                        item_db.subtotal = round(item_db.precio_unitario * ref_weight, 2)
+            else:
+                # Add new item
+                # 1. Resolve price
+                det = db.query(ListaPreciosDetalle).filter(
+                    ListaPreciosDetalle.lista_precios_id == pedido.cliente.lista_precios_id,
+                    ListaPreciosDetalle.producto_id == bulto_in.producto_id
+                ).first()
+                precio_unit = det.precio_venta if det else 0.0
                 
-                # Sync with PedidoItem
-                item_db = next((it for it in pedido.items if it.producto_id == bulto_db.producto_id), None)
-                if item_db:
-                    item_db.cantidad_unidades = bulto_in.unidades
-                    item_db.peso_estimado_kg = bulto_in.peso_estimado_kg
-                    item_db.peso_real_kg = bulto_in.peso_real_kg
-                    # Update subtotal
-                    ref_weight = bulto_in.peso_real_kg if bulto_in.confirmado else bulto_in.peso_estimado_kg
-                    item_db.subtotal = round(item_db.precio_unitario * ref_weight, 2)
-        else:
-            # Add new item
-            # 1. Resolve price
-            det = db.query(ListaPreciosDetalle).filter(
-                ListaPreciosDetalle.lista_precios_id == pedido.cliente.lista_precios_id,
-                ListaPreciosDetalle.producto_id == bulto_in.producto_id
-            ).first()
-            precio_unit = det.precio_venta if det else 0.0
-            
-            # 2. Add PedidoItem
-            ref_weight = bulto_in.peso_real_kg if bulto_in.confirmado else bulto_in.peso_estimado_kg
-            new_item = PedidoItem(
-                pedido_id=pedido.id,
-                producto_id=bulto_in.producto_id,
-                cantidad_unidades=bulto_in.unidades,
-                peso_estimado_kg=bulto_in.peso_estimado_kg,
-                peso_real_kg=bulto_in.peso_real_kg,
-                precio_unitario=precio_unit,
-                subtotal=round(precio_unit * ref_weight, 2)
-            )
-            db.add(new_item)
-            
-            # 3. Add OrdenPreparacionBulto
-            new_bulto = OrdenPreparacionBulto(
-                orden_id=prep.id,
-                producto_id=bulto_in.producto_id,
-                unidades=bulto_in.unidades,
-                peso_estimado_kg=bulto_in.peso_estimado_kg,
-                peso_real_kg=bulto_in.peso_real_kg,
-                confirmado=bulto_in.confirmado
-            )
-            if bulto_in.confirmado:
-                new_bulto.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
-            db.add(new_bulto)
+                # 2. Add PedidoItem
+                ref_weight = bulto_in.peso_real_kg if bulto_in.confirmado else bulto_in.peso_estimado_kg
+                new_item = PedidoItem(
+                    pedido_id=pedido.id,
+                    producto_id=bulto_in.producto_id,
+                    cantidad_unidades=bulto_in.unidades,
+                    peso_estimado_kg=bulto_in.peso_estimado_kg,
+                    peso_real_kg=bulto_in.peso_real_kg,
+                    precio_unitario=precio_unit,
+                    subtotal=round(precio_unit * ref_weight, 2)
+                )
+                db.add(new_item)
+                
+                # 3. Add OrdenPreparacionBulto
+                new_bulto = OrdenPreparacionBulto(
+                    orden_id=prep.id,
+                    producto_id=bulto_in.producto_id,
+                    unidades=bulto_in.unidades,
+                    peso_estimado_kg=bulto_in.peso_estimado_kg,
+                    peso_real_kg=bulto_in.peso_real_kg,
+                    confirmado=bulto_in.confirmado
+                )
+                if bulto_in.confirmado:
+                    new_bulto.tracking_uuid = f"TRK-{uuid.uuid4().hex[:8].upper()}"
+                db.add(new_bulto)
             
     # 3. Finalize and Auto-generate Remito
     if prep.estado == "Completado":

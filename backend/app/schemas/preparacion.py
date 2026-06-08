@@ -15,7 +15,7 @@ class OrdenPreparacionBultoUpdate(BaseModel):
 class OrdenPreparacionUpdate(BaseModel):
     estado: Optional[str] = None # "Pendiente", "En preparación", "Completado"
     observaciones: Optional[str] = None
-    bultos: List[OrdenPreparacionBultoUpdate] = []
+    bultos: Optional[List[OrdenPreparacionBultoUpdate]] = None
 
 class OrdenPreparacionBultoResponse(BaseModel):
     id: int

@@ -133,8 +133,7 @@ export const Preparacion: React.FC = () => {
     if (!selectedOrden) return;
     try {
       const updated = await preparacionAPI.update(selectedOrden.id, {
-        estado: 'En preparación',
-        bultos: []
+        estado: 'En preparación'
       });
       setSelectedOrden(updated);
       fetchOrdenes();
