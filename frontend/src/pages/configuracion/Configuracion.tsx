@@ -264,22 +264,22 @@ export const Configuracion: React.FC = () => {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-white">Configuración del Sistema</h1>
-        <p className="text-slate-400 text-sm mt-1">Opciones exclusivas de Superadmin para gestionar módulos, usuarios, precios y logística.</p>
+        <h1 className="text-3xl font-extrabold text-slate-900">Configuración del Sistema</h1>
+        <p className="text-slate-500 text-sm mt-1">Opciones exclusivas de Superadmin para gestionar módulos, usuarios, precios y logística.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Tab: Control de Accesos Dinámico */}
-        <div className="lg:col-span-2 border border-slate-800 rounded-3xl bg-slate-900/40 p-8 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="lg:col-span-2 border border-slate-200 rounded-3xl bg-white p-8 space-y-6 shadow-sm">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-rose-500/20 rounded-xl">
+              <div className="p-2.5 bg-rose-50 rounded-xl">
                 <ShieldCheck className="h-6 w-6 text-rose-500" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Control de Accesos por Módulo</h3>
-                <p className="text-slate-400 text-xs">Habilite o deshabilite módulos completos para cada perfil del sistema.</p>
+                <h3 className="text-xl font-bold text-slate-900">Control de Accesos por Módulo</h3>
+                <p className="text-slate-500 text-xs">Habilite o deshabilite módulos completos para cada perfil del sistema.</p>
               </div>
             </div>
           </div>
@@ -297,11 +297,11 @@ export const Configuracion: React.FC = () => {
                       key={p.id} 
                       className={`flex items-center justify-between p-3 rounded-2xl border transition-all duration-200 ${
                         p.habilitado 
-                          ? 'bg-emerald-500/10 border-emerald-500/20' 
-                          : 'bg-slate-950/40 border-slate-800/60 opacity-60'
+                          ? 'bg-emerald-50 border-emerald-100' 
+                          : 'bg-slate-50 border-slate-200 opacity-60'
                       }`}
                     >
-                      <span className="text-xs font-bold text-slate-200 uppercase tracking-tight">{p.modulo.replace('_', ' ')}</span>
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{p.modulo.replace('_', ' ')}</span>
                       <button
                         onClick={() => handleTogglePermiso(p.id, !p.habilitado)}
                         disabled={updatingPermisoId === p.id}
@@ -328,15 +328,15 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Tab: Gestión de Usuarios */}
-        <div className="lg:col-span-2 border border-slate-800 rounded-3xl bg-slate-900/40 p-8 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="lg:col-span-2 border border-slate-200 rounded-3xl bg-white p-8 space-y-6 shadow-sm">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-indigo-500/20 rounded-xl">
+              <div className="p-2.5 bg-indigo-50 rounded-xl">
                 <Users className="h-6 w-6 text-indigo-500" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Gestión de Usuarios</h3>
-                <p className="text-slate-400 text-xs">Administre el acceso de empleados y personal del sistema.</p>
+                <h3 className="text-xl font-bold text-slate-900">Gestión de Usuarios</h3>
+                <p className="text-slate-500 text-xs">Administre el acceso de empleados y personal del sistema.</p>
               </div>
             </div>
             <button 
@@ -348,10 +348,10 @@ export const Configuracion: React.FC = () => {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/20">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/50">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-800/40 text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">
+                <tr className="bg-slate-100/50 text-[10px] uppercase tracking-widest text-slate-500 font-extrabold">
                   <th className="px-6 py-4">Nombre</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4 text-center">Rol</th>
@@ -359,18 +359,18 @@ export const Configuracion: React.FC = () => {
                   <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-slate-100">
                 {systemUsers.length === 0 && (
                   <tr><td colSpan={5} className="px-6 py-8 text-center text-xs text-slate-500">No hay usuarios registrados.</td></tr>
                 )}
                 {systemUsers.map(u => (
-                  <tr key={u.id} className="text-xs text-slate-300 hover:bg-slate-800/20 transition-colors">
-                    <td className="px-6 py-4 font-bold text-white">{u.nombre}</td>
-                    <td className="px-6 py-4 text-slate-400">{u.email}</td>
+                  <tr key={u.id} className="text-xs text-slate-600 hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-900">{u.nombre}</td>
+                    <td className="px-6 py-4 text-slate-500">{u.email}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
-                        u.rol === 'SUPERADMIN' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
-                        u.rol === 'ADMINISTRATIVO' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
+                        u.rol === 'SUPERADMIN' ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                        u.rol === 'ADMINISTRATIVO' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
                         u.rol === 'EMPLEADO' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
                         'bg-slate-500/10 border-slate-500/20 text-slate-400'
                       }`}>
@@ -403,10 +403,10 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Tab 1: Excel Pricing Importer */}
-        <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+          <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
             <Upload className="h-5 w-5 text-rose-500" />
-            <h3 className="text-lg font-bold text-white">Importador de Precios (Excel)</h3>
+            <h3 className="text-lg font-bold text-slate-900">Importador de Precios (Excel)</h3>
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed">
@@ -419,7 +419,7 @@ export const Configuracion: React.FC = () => {
               <select
                 value={selectedListId}
                 onChange={(e) => setSelectedListId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none"
               >
                 <option value="">Seleccione...</option>
                 {listas.map(l => (
@@ -429,12 +429,12 @@ export const Configuracion: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Archivo .xlsx</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Archivo .xlsx</label>
               <input
                 type="file"
                 accept=".xlsx"
                 onChange={handleFileChange}
-                className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-rose-450 hover:file:bg-slate-750"
+                className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-rose-600 hover:file:bg-slate-200"
               />
             </div>
 
@@ -450,10 +450,10 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Tab 2: Bulk Pricing Editor */}
-        <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+          <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
             <TrendingUp className="h-5 w-5 text-rose-500" />
-            <h3 className="text-lg font-bold text-white">Actualización Masiva de Precios</h3>
+            <h3 className="text-lg font-bold text-slate-900">Actualización Masiva de Precios</h3>
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed">
@@ -462,11 +462,11 @@ export const Configuracion: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Lista a Afectar</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Lista a Afectar</label>
               <select
                 value={bulkListId}
                 onChange={(e) => setBulkListId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none"
               >
                 <option value="">Seleccione...</option>
                 {listas.map(l => (
@@ -476,11 +476,11 @@ export const Configuracion: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Categoría (Opcional)</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Categoría (Opcional)</label>
               <select
                 value={bulkDept}
                 onChange={(e) => setBulkDept(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none"
               >
                 <option value="">Todas</option>
                 <option value="Cortes frescos">Cortes frescos</option>
@@ -491,11 +491,11 @@ export const Configuracion: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Tipo Ajuste</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tipo Ajuste</label>
               <select
                 value={bulkType}
                 onChange={(e) => setBulkType(e.target.value as any)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none"
               >
                 <option value="porcentaje">Porcentaje (%)</option>
                 <option value="fijo">Monto Fijo ($)</option>
@@ -503,12 +503,12 @@ export const Configuracion: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Valor de Ajuste (+/-)</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor de Ajuste (+/-)</label>
               <input
                 type="number"
                 value={bulkVal}
                 onChange={(e) => setBulkVal(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 font-bold"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-rose-500 font-bold"
               />
             </div>
           </div>
@@ -523,51 +523,51 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Tab 3: Delivery Routes CRUD */}
-        <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+          <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
             <Truck className="h-5 w-5 text-rose-500" />
-            <h3 className="text-lg font-bold text-white">Rutas y Logística de Reparto</h3>
+            <h3 className="text-lg font-bold text-slate-900">Rutas y Logística de Reparto</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Nombre de Ruta</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre de Ruta</label>
               <input
                 type="text"
                 placeholder="Ruta Sur, Córdoba Centro..."
                 value={rutaNombre}
                 onChange={(e) => setRutaNombre(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Zona Cobertura</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Zona Cobertura</label>
               <input
                 type="text"
                 placeholder="Zona Sur / CPC Villa Libertador"
                 value={rutaZona}
                 onChange={(e) => setRutaZona(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Días Reparto</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Días Reparto</label>
               <input
                 type="text"
                 value={rutaDias}
                 onChange={(e) => setRutaDias(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Chofer Asignado</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chofer Asignado</label>
               <select
                 value={rutaRepartidorId}
                 onChange={(e) => setRutaRepartidorId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-rose-500"
               >
                 <option value="">Sin Asignar</option>
                 {repartidores.map(r => (
@@ -586,13 +586,13 @@ export const Configuracion: React.FC = () => {
 
           {/* List of active routes */}
           <div className="pt-2">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Rutas Registradas</h4>
-            <div className="border border-slate-800 rounded-xl divide-y divide-slate-800 bg-slate-950/20 max-h-[200px] overflow-y-auto">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Rutas Registradas</h4>
+            <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 bg-slate-50/50 max-h-[200px] overflow-y-auto">
               {rutas.map(r => (
                 <div key={r.id} className="p-3 text-xs flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-white">{r.nombre}</span>
-                    <span className="text-slate-450 block text-[10px]">{r.zona} • Reparto: {r.dias_reparto}</span>
+                    <span className="font-bold text-slate-900">{r.nombre}</span>
+                    <span className="text-slate-500 block text-[10px]">{r.zona} • Reparto: {r.dias_reparto}</span>
                   </div>
                   <span className="text-slate-400 font-mono text-[10px]">
                     Chofer: {r.repartidor?.nombre || 'Ninguno'}
@@ -604,30 +604,30 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Tab 4: System Parameters & Serials */}
-        <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800">
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+          <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
             <Wrench className="h-5 w-5 text-rose-500" />
-            <h3 className="text-lg font-bold text-white">Parámetros del Sistema</h3>
+            <h3 className="text-lg font-bold text-slate-900">Parámetros del Sistema</h3>
           </div>
 
           <div className="space-y-4 pt-2">
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Próximo Nro. Correlativo Factura</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Próximo Nro. Correlativo Factura</label>
               <input
                 type="text"
                 value={nextFC}
                 onChange={(e) => setNextFC(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-mono text-white focus:outline-none"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-900 focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-405 uppercase tracking-wider mb-2">Próximo Nro. Correlativo Remito</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Próximo Nro. Correlativo Remito</label>
               <input
                 type="text"
                 value={nextRM}
                 onChange={(e) => setNextRM(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-mono text-white focus:outline-none"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-900 focus:outline-none focus:border-rose-500"
               />
             </div>
 
@@ -641,22 +641,22 @@ export const Configuracion: React.FC = () => {
         </div>
 
         {/* Zona de Peligro */}
-        <div className="mt-12 pt-8 border-t border-slate-800">
-          <div className="bg-rose-950/20 border border-rose-900/50 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-rose-600/50" />
+        <div className="mt-12 pt-8 border-t border-slate-200">
+          <div className="bg-rose-50 border border-rose-200 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative shadow-sm">
+            <div className="absolute top-0 left-0 w-1 h-full bg-rose-500/20" />
             <div className="space-y-2 text-center md:text-left">
-              <h3 className="text-xl font-black text-rose-500 flex items-center justify-center md:justify-start space-x-2">
+              <h3 className="text-xl font-black text-rose-600 flex items-center justify-center md:justify-start space-x-2">
                 <AlertTriangle className="h-6 w-6" />
                 <span>Zona de Peligro</span>
               </h3>
-              <p className="text-rose-300/70 text-sm font-bold max-w-xl">
+              <p className="text-rose-700/70 text-sm font-bold max-w-xl">
                 Reiniciar el sistema borrará permanentemente todos los pedidos, clientes, productos, caja y movimientos. 
                 Esta acción no se puede deshacer.
               </p>
             </div>
             <button
               onClick={() => setShowResetModal(true)}
-              className="px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-rose-900/20 transition-all flex items-center space-x-2 whitespace-nowrap"
+              className="px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-rose-200 transition-all flex items-center space-x-2 whitespace-nowrap"
             >
               <RefreshCw className={`h-4 w-4 ${resettingData ? 'animate-spin' : ''}`} />
               <span>Puesta a Cero (Reset)</span>
@@ -752,31 +752,31 @@ export const Configuracion: React.FC = () => {
 
       {/* Modal: Reset Data */}
       {showResetModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
-          <div className="bg-slate-900 border border-rose-900/50 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
+          <div className="bg-white border border-rose-200 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-rose-600" />
             
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-rose-600/20 rounded-full flex items-center justify-center text-rose-500">
+              <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500">
                 <AlertTriangle className="h-8 w-8" />
               </div>
-              <h3 className="text-2xl font-black">¿Reiniciar Sistema?</h3>
-              <p className="text-slate-400 text-sm font-bold">
-                Esta acción es <span className="text-rose-500 underline">totalmente destructiva</span>. 
+              <h3 className="text-2xl font-black text-slate-900">¿Reiniciar Sistema?</h3>
+              <p className="text-slate-500 text-sm font-bold">
+                Esta acción es <span className="text-rose-600 underline text-lg">TOTALMENTE DESTRUCTIVA</span>. 
                 Se eliminarán todos los registros operativos y no se podrán recuperar.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                <label className="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">
-                  Escriba <span className="text-white bg-rose-600 px-1 rounded">BORRAR TODO</span> para confirmar
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <label className="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 text-center">
+                  Escriba <span className="text-white bg-rose-600 px-2 py-0.5 rounded">BORRAR TODO</span> para confirmar
                 </label>
                 <input 
                   type="text" 
                   value={resetConfirmText}
                   onChange={(e) => setResetConfirmText(e.target.value)}
-                  className="w-full bg-transparent text-white text-center font-black tracking-widest focus:outline-none placeholder:text-slate-700"
+                  className="w-full bg-transparent text-slate-900 text-center font-black tracking-widest focus:outline-none placeholder:text-slate-300"
                   placeholder="---"
                 />
               </div>
@@ -785,7 +785,7 @@ export const Configuracion: React.FC = () => {
                 <button 
                   onClick={handleResetData}
                   disabled={resetConfirmText !== 'BORRAR TODO' || resettingData}
-                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-rose-900/20"
+                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-rose-200"
                 >
                   {resettingData ? 'Borrando Sistema...' : 'Confirmar Puesta a Cero'}
                 </button>
@@ -795,62 +795,7 @@ export const Configuracion: React.FC = () => {
                     setResetConfirmText('');
                   }}
                   disabled={resettingData}
-                  className="w-full py-4 text-slate-400 hover:text-white text-sm font-bold transition-all"
-                >
-                  Cancelar y Volver
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Reset Data */}
-      {showResetModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
-          <div className="bg-slate-900 border border-rose-900/50 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-rose-600" />
-            
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-rose-600/20 rounded-full flex items-center justify-center text-rose-500">
-                <AlertTriangle className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-black">¿Reiniciar Sistema?</h3>
-              <p className="text-slate-400 text-sm font-bold">
-                Esta acción es <span className="text-rose-500 underline">totalmente destructiva</span>. 
-                Se eliminarán todos los registros operativos y no se podrán recuperar.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                <label className="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">
-                  Escriba <span className="text-white bg-rose-600 px-1 rounded">BORRAR TODO</span> para confirmar
-                </label>
-                <input 
-                  type="text" 
-                  value={resetConfirmText}
-                  onChange={(e) => setResetConfirmText(e.target.value)}
-                  className="w-full bg-transparent text-white text-center font-black tracking-widest focus:outline-none placeholder:text-slate-700"
-                  placeholder="---"
-                />
-              </div>
-
-              <div className="flex flex-col space-y-3">
-                <button 
-                  onClick={handleResetData}
-                  disabled={resetConfirmText !== 'BORRAR TODO' || resettingData}
-                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-rose-900/20"
-                >
-                  {resettingData ? 'Borrando Sistema...' : 'Confirmar Puesta a Cero'}
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowResetModal(false);
-                    setResetConfirmText('');
-                  }}
-                  disabled={resettingData}
-                  className="w-full py-4 text-slate-400 hover:text-white text-sm font-bold transition-all"
+                  className="w-full py-4 text-slate-400 hover:text-slate-600 text-sm font-bold transition-all"
                 >
                   Cancelar y Volver
                 </button>
