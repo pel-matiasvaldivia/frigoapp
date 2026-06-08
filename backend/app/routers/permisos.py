@@ -12,21 +12,15 @@ router = APIRouter(prefix="/permisos", tags=["Permisos y Accesos"])
 
 admin_only = RoleChecker(["SUPERADMIN"])
 
-@router.get("/", response_model=Dict[str, List[PermisoRolResponse]])
+@router.get("/", response_model=List[PermisoRolResponse])
 def list_permisos(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only)
 ):
     """
-    List all permissions grouped by role.
+    List all permissions.
     """
-    all_perms = db.query(PermisoRol).all()
-    grouped = {}
-    for p in all_perms:
-        if p.rol not in grouped:
-            grouped[p.rol] = []
-        grouped[p.rol].append(p)
-    return grouped
+    return db.query(PermisoRol).all()
 
 @router.put("/{permiso_id}", response_model=PermisoRolResponse)
 def update_permiso(
