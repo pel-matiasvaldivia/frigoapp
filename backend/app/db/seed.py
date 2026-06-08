@@ -242,7 +242,7 @@ def seed_db():
             "DASHBOARD", "PEDIDOS", "PREPARACION", "COMPROBANTES", 
             "DESPACHO", "CUENTAS_CORRIENTES", "CAJA", "CLIENTES", 
             "PRODUCTOS", "LISTAS_PRECIOS", "CONFIGURACION", 
-            "MAPA_VENTAS", "WHATSAPP", "USUARIOS"
+            "MAPA_VENTAS", "WHATSAPP", "USUARIOS", "ASISTENCIA"
         ]
         
         # Initial rules requested by user

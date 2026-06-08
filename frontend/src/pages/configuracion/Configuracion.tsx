@@ -34,6 +34,8 @@ export const Configuracion: React.FC = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userRol, setUserRol] = useState('EMPLEADO');
+  const [userPin, setUserPin] = useState('');
+  const [userValorHora, setUserValorHora] = useState(0);
   const [creatingUser, setCreatingUser] = useState(false);
 
   // Excel Upload State
@@ -117,7 +119,7 @@ export const Configuracion: React.FC = () => {
     }
   };
 
-  const roles = ['ADMINISTRATIVO', 'VENDEDOR', 'REPARTIDOR'];
+  const roles = ['ADMINISTRATIVO', 'VENDEDOR', 'REPARTIDOR', 'EMPLEADO'];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -209,6 +211,8 @@ export const Configuracion: React.FC = () => {
         email: userEmail,
         password: userPassword,
         rol: userRol,
+        pin: userRol === 'EMPLEADO' ? userPin : null,
+        valor_hora: userRol === 'EMPLEADO' ? userValorHora : 0,
         activo: true
       });
       alert("Usuario creado exitosamente");
@@ -216,6 +220,8 @@ export const Configuracion: React.FC = () => {
       setUserName('');
       setUserEmail('');
       setUserPassword('');
+      setUserPin('');
+      setUserValorHora(0);
       fetchConfigData();
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al crear usuario");
@@ -715,17 +721,13 @@ export const Configuracion: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Rol asignado</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol del Sistema</label>
                 <select 
                   value={userRol}
                   onChange={(e) => setUserRol(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="EMPLEADO">Empleado (Solo Reloj Control)</option>
-                  <option value="REPARTIDOR">Repartidor / Logística</option>
-                  <option value="VENDEDOR">Vendedor / Comercial</option>
-                  <option value="ADMINISTRATIVO">Administración</option>
-                  <option value="SUPERADMIN">Super Administrador</option>
+                  {roles.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
 

@@ -194,3 +194,9 @@ export const usuariosAPI = {
   update: async (id: number, data: Record<string, unknown>) => (await api.put(`/usuarios/${id}`, data)).data,
   delete: async (id: number) => (await api.delete(`/usuarios/${id}`)).data,
 };
+
+export const asistenciaAPI = {
+  fichar: async (pin: string) => (await api.post('/asistencia/fichar', { pin })).data,
+  getReporte: async (desde: string, hasta: string) => 
+    (await api.get('/asistencia/reporte', { params: { desde, hasta } })).data,
+};

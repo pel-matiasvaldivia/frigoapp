@@ -8,7 +8,7 @@ from app.core.database import engine, Base
 from app.db.seed import seed_db
 
 # Import routers
-from app.routers import auth, clientes, productos, listas_precios, pedidos, despacho, comprobantes, cuentas_corrientes, configuracion, preparacion, rutas, dashboard, whatsapp, caja, permisos, usuarios
+from app.routers import auth, clientes, productos, listas_precios, pedidos, despacho, comprobantes, cuentas_corrientes, configuracion, preparacion, rutas, dashboard, whatsapp, caja, permisos, usuarios, asistencia
 
 # 1. Initialize DB and Seed Data
 try:
@@ -39,7 +39,7 @@ try:
         tables_to_fix = [
             "listas_precios", "productos", "clientes", "pedidos", 
             "ordenes_preparacion", "listas_precios_detalles", "comprobantes",
-            "movimientos_caja", "item_pedidos"
+            "movimientos_caja", "item_pedidos", "asistencias"
         ]
         with engine.connect() as connection:
             for table in tables_to_fix:

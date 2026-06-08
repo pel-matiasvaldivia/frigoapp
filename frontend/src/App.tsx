@@ -29,6 +29,10 @@ import { Despacho } from './pages/ventas/Despacho';
 // Pages - Cuentas
 import { CuentasCorrientes } from './pages/cuentas/CuentasCorrientes';
 
+// Pages - Asistencia
+import AsistenciaReloj from './pages/AsistenciaReloj';
+import AsistenciaAdmin from './pages/admin/AsistenciaAdmin';
+
 // Pages - Cliente Portal
 import { MisPedidos } from './pages/cliente/MisPedidos';
 import { MiCuenta } from './pages/cliente/MiCuenta';
@@ -152,6 +156,10 @@ const AppRoutes: React.FC = () => (
     <Route path="/whatsapp" element={<AdminRoute modulo="WHATSAPP"><WhatsAppAdmin /></AdminRoute>} />
     <Route path="/configuracion" element={<AdminRoute modulo="CONFIGURACION"><Configuracion /></AdminRoute>} />
     <Route path="/usuarios" element={<AdminRoute modulo="USUARIOS"><GestionUsuarios /></AdminRoute>} />
+    <Route path="/asistencia" element={<AdminRoute modulo="ASISTENCIA"><AsistenciaAdmin /></AdminRoute>} />
+    
+    {/* Standalone Kiosk */}
+    <Route path="/reloj-control" element={<AsistenciaReloj />} />
 
     {/* Cliente Portal Routes (PWA) */}
     <Route path="/mis-pedidos" element={

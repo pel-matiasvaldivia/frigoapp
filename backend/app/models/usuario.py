@@ -11,6 +11,8 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     rol = Column(String, nullable=False)  # SUPERADMIN, ADMINISTRATIVO, VENDEDOR, REPARTIDOR, CLIENTE, EMPLEADO
+    pin = Column(String, nullable=True)  # Numeric PIN for attendance clocking
+    valor_hora = Column(Integer, default=0)  # Hourly rate for payroll calculation
     activo = Column(Boolean, default=True)
 
     # Relationships

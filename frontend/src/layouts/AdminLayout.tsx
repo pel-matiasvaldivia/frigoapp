@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Map,
   CreditCard,
-  UserCheck
+  UserCheck,
+  Clock
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -50,6 +51,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { name: 'Mapa de Ventas', path: '/admin/mapa-ventas', icon: Map, modulo: 'MAPA_VENTAS' },
     { name: 'WhatsApp', path: '/whatsapp', icon: MessageSquare, modulo: 'WHATSAPP' },
     { name: 'Gestión de Usuarios', path: '/usuarios', icon: UserCheck, modulo: 'USUARIOS' },
+    { name: 'Asistencia y Sueldos', path: '/asistencia', icon: Clock, modulo: 'ASISTENCIA' },
     { name: 'Configuración', path: '/configuracion', icon: Settings, modulo: 'CONFIGURACION' },
   ];
 
