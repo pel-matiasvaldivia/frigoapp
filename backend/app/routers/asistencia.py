@@ -13,6 +13,8 @@ router = APIRouter(prefix="/asistencia", tags=["Asistencia y Sueldos"])
 
 admin_only = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
 
+from app.models.configuracion import ConfiguracionSistema
+
 @router.post("/fichar", response_model=AsistenciaResponse)
 def fichar(
     asistencia_in: AsistenciaCreate,
@@ -27,9 +29,15 @@ def fichar(
     
     now = datetime.utcnow()
     tipo = asistencia_in.tipo.upper()
+
+    # Get shift config
+    config_entrada = db.query(ConfiguracionSistema).filter(ConfiguracionSistema.clave == "HORARIO_ENTRADA").first()
+    config_salida = db.query(ConfiguracionSistema).filter(ConfiguracionSistema.clave == "HORARIO_SALIDA").first()
     
+    hora_entrada_limit = config_entrada.valor if config_entrada else "08:00"
+    hora_salida_limit = config_salida.valor if config_salida else "17:00"
+
     if tipo == "ENTRADA":
-        # Check if there's already an open session to avoid duplicates
         open_session = db.query(Asistencia).filter(
             Asistencia.usuario_id == user.id,
             Asistencia.salida == None
@@ -37,9 +45,24 @@ def fichar(
         if open_session:
             raise HTTPException(
                 status_code=400,
-                detail=f"{user.nombre} ya tiene un ingreso registrado sin egreso. Registre SALIDA primero."
+                detail=f"{user.nombre} ya tiene un ingreso registrado sin egreso."
             )
-        new_asistencia = Asistencia(usuario_id=user.id, entrada=now)
+        
+        # Calculate tardiness (minutes)
+        tardanza_mins = 0
+        try:
+            h_in, m_in = map(int, hora_entrada_limit.split(':'))
+            # Convert 'now' to local time if needed? Assuming UTC for now as per project convention
+            # But shift times are usually local. Let's compare time components only.
+            # Convert now to the same day's shift start
+            shift_start = now.replace(hour=h_in, minute=m_in, second=0, microsecond=0)
+            if now > shift_start:
+                tardanza_seconds = (now - shift_start).total_seconds()
+                tardanza_mins = int(tardanza_seconds / 60)
+        except:
+            pass
+
+        new_asistencia = Asistencia(usuario_id=user.id, entrada=now, tardanza=tardanza_mins)
         db.add(new_asistencia)
         db.commit()
         db.refresh(new_asistencia)
@@ -50,13 +73,29 @@ def fichar(
             Asistencia.salida == None
         ).first()
         if not open_session:
-            raise HTTPException(
-                status_code=400,
-                detail=f"{user.nombre} no tiene un ingreso activo. Registre ENTRADA primero."
-            )
+            raise HTTPException(status_code=400, detail=f"{user.nombre} no tiene un ingreso activo.")
+        
         open_session.salida = now
         delta = open_session.salida - open_session.entrada
-        open_session.horas = round(delta.total_seconds() / 3600, 2)
+        
+        # 15-minute rounding (0.25h steps)
+        total_seconds = delta.total_seconds()
+        # Round to nearest 900 seconds (15 mins)
+        rounded_seconds = round(total_seconds / 900) * 900
+        open_session.horas = round(rounded_seconds / 3600, 2)
+
+        # Calculate overtime
+        hs_extra = 0.0
+        try:
+            h_out, m_out = map(int, hora_salida_limit.split(':'))
+            shift_end = now.replace(hour=h_out, minute=m_out, second=0, microsecond=0)
+            if now > shift_end:
+                extra_seconds = (now - shift_end).total_seconds()
+                hs_extra = round(max(0, extra_seconds / 3600), 2)
+        except:
+            pass
+        
+        open_session.horas_extra = hs_extra
         db.commit()
         db.refresh(open_session)
         res = open_session
@@ -69,6 +108,8 @@ def fichar(
         "entrada": res.entrada,
         "salida": res.salida,
         "horas": res.horas,
+        "tardanza": res.tardanza,
+        "horas_extra": res.horas_extra,
         "usuario_nombre": user.nombre
     }
 
@@ -98,18 +139,24 @@ def get_reporte(
                 "usuario_id": uid,
                 "usuario_nombre": u.nombre,
                 "total_horas": 0.0,
+                "total_tardanza": 0,
+                "total_horas_extra": 0.0,
                 "valor_hora": u.valor_hora,
                 "total_a_pagar": 0.0,
                 "registros": []
             }
         
         reporte_map[uid]["total_horas"] += r.horas
+        reporte_map[uid]["total_tardanza"] += r.tardanza
+        reporte_map[uid]["total_horas_extra"] += r.horas_extra
         reporte_map[uid]["registros"].append({
             "id": r.id,
             "usuario_id": r.usuario_id,
             "entrada": r.entrada,
             "salida": r.salida,
             "horas": r.horas,
+            "tardanza": r.tardanza,
+            "horas_extra": r.horas_extra,
             "usuario_nombre": u.nombre
         })
     

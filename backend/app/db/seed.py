@@ -226,7 +226,9 @@ def seed_db():
             {"clave": "NUM_REMITO_SIGUIENTE", "valor": "1", "modulo": "General", "descripcion": "Siguiente número correlativo de remito"},
             {"clave": "NUM_PEDIDO_SIGUIENTE", "valor": "1", "modulo": "General", "descripcion": "Siguiente número correlativo de nota de pedido"},
             {"clave": "MODULO_CUENTAS_CORRIENTES", "valor": "true", "modulo": "Configuracion", "descripcion": "Habilitar/Deshabilitar módulo de cuentas corrientes"},
-            {"clave": "MODULO_DESPACHO", "valor": "true", "modulo": "Configuracion", "descripcion": "Habilitar/Deshabilitar módulo de despacho y rutas"}
+            {"clave": "MODULO_DESPACHO", "valor": "true", "modulo": "Configuracion", "descripcion": "Habilitar/Deshabilitar módulo de despacho y rutas"},
+            {"clave": "HORARIO_ENTRADA", "valor": "08:00", "modulo": "Asistencia", "descripcion": "Horario general de entrada (HH:mm)"},
+            {"clave": "HORARIO_SALIDA", "valor": "17:00", "modulo": "Asistencia", "descripcion": "Horario general de salida (HH:mm)"}
         ]
 
         for conf in configs:

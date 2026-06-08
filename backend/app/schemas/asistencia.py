@@ -7,6 +7,8 @@ class AsistenciaBase(BaseModel):
     entrada: datetime
     salida: Optional[datetime] = None
     horas: float = 0.0
+    tardanza: int = 0
+    horas_extra: float = 0.0
 
 class AsistenciaCreate(BaseModel):
     pin: str
@@ -23,6 +25,8 @@ class AsistenciaReporte(BaseModel):
     usuario_id: int
     usuario_nombre: str
     total_horas: float
+    total_tardanza: int = 0
+    total_horas_extra: float = 0.0
     valor_hora: float
     total_a_pagar: float
     registros: List[AsistenciaResponse]

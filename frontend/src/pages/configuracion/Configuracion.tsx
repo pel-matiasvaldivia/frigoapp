@@ -62,6 +62,8 @@ export const Configuracion: React.FC = () => {
   // General Settings Serial Updates
   const [nextFC, setNextFC] = useState('');
   const [nextRM, setNextRM] = useState('');
+  const [horarioEntrada, setHorarioEntrada] = useState('08:00');
+  const [horarioSalida, setHorarioSalida] = useState('17:00');
 
   // Data Reset State
   const [showResetModal, setShowResetModal] = useState(false);
@@ -92,6 +94,11 @@ export const Configuracion: React.FC = () => {
       const rm = confs.find((c: any) => c.clave === 'NUM_REMITO_SIGUIENTE');
       if (fc) setNextFC(fc.valor);
       if (rm) setNextRM(rm.valor);
+
+      const hEntrada = confs.find((c: any) => c.clave === 'HORARIO_ENTRADA');
+      const hSalida = confs.find((c: any) => c.clave === 'HORARIO_SALIDA');
+      if (hEntrada) setHorarioEntrada(hEntrada.valor);
+      if (hSalida) setHorarioSalida(hSalida.valor);
       
       // Load repartidores
       setRepartidores([
@@ -197,10 +204,12 @@ export const Configuracion: React.FC = () => {
     try {
       await configuracionAPI.update('NUM_FACTURA_SIGUIENTE', nextFC);
       await configuracionAPI.update('NUM_REMITO_SIGUIENTE', nextRM);
-      alert("¡Secuencias guardadas!");
+      await configuracionAPI.update('HORARIO_ENTRADA', horarioEntrada);
+      await configuracionAPI.update('HORARIO_SALIDA', horarioSalida);
+      alert("¡Parámetros del sistema guardados!");
       fetchConfigData();
     } catch (err) {
-      alert("Error al actualizar secuencias");
+      alert("Error al actualizar parámetros");
     }
   };
 
@@ -670,6 +679,27 @@ export const Configuracion: React.FC = () => {
                 onChange={(e) => setNextRM(e.target.value)}
                 className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-900 focus:outline-none focus:border-rose-500"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hora Entrada (General)</label>
+                <input
+                  type="time"
+                  value={horarioEntrada}
+                  onChange={(e) => setHorarioEntrada(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-indigo-50/30 border border-indigo-100 rounded-xl text-sm font-bold text-indigo-700 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hora Salida (General)</label>
+                <input
+                  type="time"
+                  value={horarioSalida}
+                  onChange={(e) => setHorarioSalida(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-indigo-50/30 border border-indigo-100 rounded-xl text-sm font-bold text-indigo-700 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
             </div>
 
             <button

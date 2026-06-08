@@ -12,6 +12,8 @@ class Asistencia(Base):
     entrada = Column(DateTime, default=datetime.utcnow, nullable=False)
     salida = Column(DateTime, nullable=True)
     horas = Column(Float, default=0.0)
+    tardanza = Column(Integer, default=0) # Tardiness in minutes relative to start of shift
+    horas_extra = Column(Float, default=0.0) # Extra hours beyond official shift end
 
     # Relationship
     usuario = relationship("Usuario")

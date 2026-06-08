@@ -140,6 +140,8 @@ const AsistenciaAdmin: React.FC = () => {
               <tr className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-400 font-black">
                 <th className="px-8 py-4">Empleado</th>
                 <th className="px-8 py-4 text-center">Horas</th>
+                <th className="px-8 py-4 text-center">Tardanza</th>
+                <th className="px-8 py-4 text-center">Hs. Extra</th>
                 <th className="px-8 py-4 text-center">Valor Hora</th>
                 <th className="px-8 py-4 text-right">Subtotal</th>
                 <th className="px-8 py-4 text-right">Acciones</th>
@@ -166,6 +168,16 @@ const AsistenciaAdmin: React.FC = () => {
                   <td className="px-8 py-5 text-center">
                     <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg font-black text-xs">
                       {row.total_horas.toFixed(2)}h
+                    </span>
+                  </td>
+                  <td className="px-8 py-5 text-center">
+                    <span className={`${row.total_tardanza > 0 ? 'text-rose-600 bg-rose-50' : 'text-slate-400 bg-slate-50'} px-3 py-1 rounded-lg font-black text-xs whitespace-nowrap`}>
+                      {row.total_tardanza} min
+                    </span>
+                  </td>
+                  <td className="px-8 py-5 text-center">
+                    <span className={`${row.total_horas_extra > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 bg-slate-50'} px-3 py-1 rounded-lg font-black text-xs whitespace-nowrap`}>
+                      +{row.total_horas_extra.toFixed(2)}h
                     </span>
                   </td>
                   <td className="px-8 py-5 text-center font-bold text-slate-500">
@@ -222,9 +234,16 @@ const AsistenciaAdmin: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right space-y-1">
                     <p className="font-black text-slate-900">{reg.horas.toFixed(2)}h</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">Trabajadas</p>
+                    <div className="flex items-center justify-end space-x-2">
+                       {reg.tardanza > 0 && (
+                         <span className="text-[10px] text-rose-500 font-black uppercase">-{reg.tardanza}m tardanza</span>
+                       )}
+                       {reg.horas_extra > 0 && (
+                         <span className="text-[10px] text-emerald-500 font-black uppercase">+{reg.horas_extra}h extra</span>
+                       )}
+                    </div>
                   </div>
                 </div>
               ))}
