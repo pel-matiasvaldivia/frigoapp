@@ -42,7 +42,7 @@ En el frigorífico, se preparan los cortes físicos y se pesan.
 - **Flexibilidad:** 
     - Se pueden cargar pesos parciales y presionar **"Guardar Pesajes Parciales"** para no perder el progreso.
     - Si el cliente solicita algo adicional a último momento, se pueden **añadir o quitar productos directamente** desde esta pantalla sin volver a "Pedidos".
-- **Cierre:** Al completar todos los kilos, presione **"Finalizar Preparación"**. Esto generará automáticamente el **Remito**.
+- **Cierre:** Al completar todos los kilos, presione **"Finalizar Preparación"**. El pedido pasará a estado "Preparado" para que el administrativo genere el comprobante final (Factura o Remito) de forma manual.
 
 ### Paso 4: Facturación (Módulo Comprobantes)
 Con los pesos reales confirmados, se genera el documento legal.
@@ -107,5 +107,32 @@ El sistema integra WhatsApp sin necesidad de un navegador abierto.
 - **Despachado:** Documento emitido, en viaje.
 - **Entregado:** Proceso finalizado con firma del cliente.
 
+---
+
+## 7. Control de Asistencia (Módulo Asistencia)
+Sistema de registro de jornada laboral para empleados.
+
+### A. Registro de Entrada/Salida (Kiosco)
+- **Acción:** El empleado ingresa su **PIN personal** (asignado en su perfil de usuario).
+- **Fracciones de 15 min:** El sistema redondea automáticamente las horas trabajadas a la fracción de 15 minutos más cercana (0.25h) para facilitar la liquidación.
+
+### B. Configuración de Turnos
+- En `Admin > Configuración`, se establecen el **Horario de Entrada** y **Horario de Salida** generales.
+- Estos horarios sirven de base para el cálculo automático de métricas de desempeño.
+
+### C. Reporte de Presentismo
+- El sistema detecta y calcula automáticamente:
+    - **Tardanza:** Minutos transcurridos entre el horario de entrada configurado y el fichado real.
+    - **Horas Extra:** Tiempo trabajado fuera del horario establecido o excedentes de jornada.
+- Los totales se agrupan por empleado y período en la vista de administración.
+
+---
+
+## 8. Roles y Permisos Especializados
+El sistema cuenta con perfiles de acceso adaptados a cada función operativa:
+- **REPARTIDOR:** Tiene acceso móvil optimizado para ver productos, clientes, listas de precios, realizar el despacho y gestionar la **Preparación de Bultos** (pesar y finalizar preparación).
+- **VENDEDOR:** Puede cargar pedidos con búsqueda por código, consultar cuentas corrientes y ver el mapa de ventas.
+- **ADMINISTRATIVO:** Control total sobre facturación, finanzas, configuración de asistencia y gestión de usuarios.
+
 > [!TIP]
-> Use el **Dashboard** para ver el estado general de la operación en tiempo real y detectar cuellos de botella. La nueva **Búsqueda Avanzada** en clientes permite filtrar por CUIT, Razón Social o el **Código Numérico** instantáneamente.
+> Use el **Dashboard** para ver el estado general de la operación en tiempo real. La nueva **Búsqueda Avanzada** en clientes permite filtrar por CUIT, Razón Social o el **Código Numérico** instantáneamente. Los horarios de asistencia se pueden ajustar en cualquier momento desde el panel de configuración global.
