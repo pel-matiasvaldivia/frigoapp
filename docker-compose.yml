@@ -23,6 +23,11 @@ services:
     restart: always
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     image: ghcr.io/pel-matiasvaldivia/frigo-backend:latest
@@ -31,14 +36,13 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
       - pdf_uploads:/app/uploads
-    ports:
-      - "8889:8000"
+    # Sin port mapping: el backend solo es accesible via Nginx (puerto 8890)
     env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
-      - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
+      - SECRET_KEY=${SECRET_KEY}
       - REDIS_URL=redis://redis:6379/0
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
       - EMPRESA_DIRECCION=${EMPRESA_DIRECCION:-Ruta Nacional 5, Km 200, Buenos Aires}
@@ -46,19 +50,19 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
   worker:
     image: ghcr.io/pel-matiasvaldivia/frigo-backend:latest
     container_name: frigo-worker
     restart: always
-    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-2}
     volumes:
       - pdf_uploads:/app/uploads
     env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-frigodb}
-      - SECRET_KEY=${SECRET_KEY:-super_secret_jwt_key_123456789_je}
+      - SECRET_KEY=${SECRET_KEY}
       - REDIS_URL=redis://redis:6379/0
       - EMPRESA_NOMBRE=${EMPRESA_NOMBRE:-FRIGORIFICO DE CERDO J&E}
       - EMPRESA_CUIT=${EMPRESA_CUIT:-30-12345678-9}
@@ -67,7 +71,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
   frontend:
     image: ghcr.io/pel-matiasvaldivia/frigo-frontend:latest

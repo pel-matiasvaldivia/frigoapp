@@ -1,15 +1,17 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+MONEY = Numeric(12, 2)
 
 class CuentaCorriente(Base):
     __tablename__ = "cuentas_corrientes"
 
     id = Column(Integer, primary_key=True, index=True)
     cliente_id = Column(Integer, ForeignKey("clientes.id", ondelete="CASCADE"), unique=True, nullable=False)
-    saldo_actual = Column(Float, default=0.0)
-    limite_credito = Column(Float, default=0.0)
+    saldo_actual = Column(MONEY, default=0)
+    limite_credito = Column(MONEY, default=0)
     fecha_actualizacion = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # Relationships
@@ -22,7 +24,7 @@ class MovimientoCC(Base):
     id = Column(Integer, primary_key=True, index=True)
     cuenta_id = Column(Integer, ForeignKey("cuentas_corrientes.id", ondelete="CASCADE"), nullable=False)
     tipo = Column(String, nullable=False)  # "DEBITO" (aumenta saldo/deuda), "CREDITO" (pago realizado, disminuye saldo/deuda)
-    monto = Column(Float, nullable=False)
+    monto = Column(MONEY, nullable=False)
     referencia = Column(String, nullable=True)  # e.g., "FC-0001-00000001", "RECIBO-0239"
     fecha = Column(DateTime, default=func.now(), index=True)
     descripcion = Column(String, nullable=True)

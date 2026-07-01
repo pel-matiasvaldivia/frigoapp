@@ -22,14 +22,15 @@ write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
 
 @router.get("/", response_model=List[ClienteResponse])
 def list_clientes(
-    db: Session = Depends(get_db), 
+    skip: int = 0,
+    limit: int = 500,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_or_staff)
 ):
     """
-    Get all clients. Admins and Salesmen can list clients.
+    Get clients with pagination. Admins and Salesmen can list clients.
     """
-    # If vendedor, we could filter by assigned clients, but for simplicity we list all.
-    return db.query(Cliente).all()
+    return db.query(Cliente).offset(skip).limit(limit).all()
 
 @router.get("/template")
 def get_clientes_template(current_user: Usuario = Depends(write_access)):
