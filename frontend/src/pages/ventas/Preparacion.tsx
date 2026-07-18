@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { preparacionAPI, productosAPI } from '../../services/api';
 import { 
-  ClipboardList, 
-  Check, 
-  Play, 
-  CheckSquare, 
-  Search, 
+  ClipboardList,
+  Check,
+  Play,
+  CheckSquare,
+  Search,
   AlertTriangle,
   Scale,
-  FileText,
   Printer,
   QrCode,
   Plus,
@@ -187,19 +186,63 @@ export const Preparacion: React.FC = () => {
     }
   };
 
+  const [printingRemito, setPrintingRemito] = useState(false);
+  const [printingLabels, setPrintingLabels] = useState(false);
+
+  const printPDF = (url: string, onReady?: () => void) => {
+    const iframe = document.createElement('iframe');
+    Object.assign(iframe.style, {
+      position: 'fixed',
+      right: '-9999px',
+      bottom: '0',
+      width: '1px',
+      height: '1px',
+      border: 'none',
+      visibility: 'hidden',
+    });
+    document.body.appendChild(iframe);
+    const cleanup = () => {
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    };
+    iframe.onload = () => {
+      onReady?.();
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        window.open(url, '_blank');
+        cleanup();
+        return;
+      }
+      setTimeout(cleanup, 60000);
+    };
+    iframe.src = url;
+  };
+
+  const handlePrintRemito = () => {
+    const remito = selectedOrden?.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO');
+    if (!remito) { alert("El remito aún no ha sido generado. Actualice la lista."); return; }
+    if (!remito.pdf_path) { alert("El PDF se está procesando. Espere unos segundos y reintente."); return; }
+    const url = `${window.location.origin}${remito.pdf_path}?t=${Date.now()}`;
+    setPrintingRemito(true);
+    printPDF(url, () => setPrintingRemito(false));
+  };
+
   const handlePrintLabels = async () => {
     if (!selectedOrden) return;
+    setPrintingLabels(true);
     try {
       const res = await preparacionAPI.getEtiquetas(selectedOrden.id);
       if (res.pdf_path) {
-        // Build absolute URL with cache-busting timestamp to bypass Service Worker interception
-        const absoluteUrl = `${window.location.origin}${res.pdf_path}?t=${new Date().getTime()}`;
-        window.open(absoluteUrl, '_blank');
+        const url = `${window.location.origin}${res.pdf_path}?t=${Date.now()}`;
+        printPDF(url);
       } else {
         alert("No se pudo generar el PDF de etiquetas.");
       }
     } catch {
       alert("Error al generar etiquetas. Verifique que la orden esté completada.");
+    } finally {
+      setPrintingLabels(false);
     }
   };
 
@@ -316,37 +359,25 @@ export const Preparacion: React.FC = () => {
 
                 {selectedOrden.estado === 'Completado' && (
                    <div className="flex space-x-3">
-                      <a
-                        href={selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO')?.pdf_path 
-                          ? `${window.location.origin}${selectedOrden.pedido.comprobantes.find((c: any) => c.tipo === 'REMITO').pdf_path}?t=${new Date().getTime()}` 
-                          : '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={handlePrintRemito}
+                        disabled={printingRemito}
                         className={`flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest ${
                           selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO' && c.pdf_path)
-                            ? 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 shadow-sm'
+                            ? 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 shadow-sm disabled:opacity-60'
                             : 'bg-slate-100 text-slate-400 border-2 border-transparent'
                         }`}
-                        onClick={(e) => {
-                          const remito = selectedOrden.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO');
-                          if (!remito) {
-                            e.preventDefault();
-                            alert("El remito aún no ha sido generado. Intente actualizar la lista.");
-                          } else if (!remito.pdf_path) {
-                            e.preventDefault();
-                            alert("El PDF se está procesando. Por favor, espere 5 segundos y vuelva a intentar.");
-                          }
-                        }}
                       >
-                        <FileText className="h-5 w-5 mr-3" />
-                        Ver Remito PDF
-                      </a>
+                        <Printer className="h-5 w-5 mr-3" />
+                        {printingRemito ? 'Enviando...' : 'Imprimir Remito'}
+                      </button>
                       <button
                         onClick={handlePrintLabels}
-                        className="flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm"
+                        disabled={printingLabels}
+                        className="flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm disabled:opacity-60"
                       >
                         <QrCode className="h-5 w-5 mr-3" />
-                        Etiquetas QR
+                        {printingLabels ? 'Generando...' : 'Imprimir Etiquetas QR'}
                       </button>
                    </div>
                 )}
