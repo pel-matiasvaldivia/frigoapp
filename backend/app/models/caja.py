@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean
+from sqlalchemy import Column, Integer, String, Float, Numeric, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import datetime
@@ -21,8 +21,8 @@ class SesionCaja(Base):
     id = Column(Integer, primary_key=True, index=True)
     fecha_apertura = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     fecha_cierre = Column(DateTime, nullable=True)
-    monto_apertura = Column(Float, nullable=False, default=0.0)
-    monto_cierre = Column(Float, nullable=True)
+    monto_apertura = Column(Numeric(12, 2), nullable=False, default=0)
+    monto_cierre = Column(Numeric(12, 2), nullable=True)
     estado = Column(Enum(EstadoSesion), default=EstadoSesion.ABIERTA, nullable=False)
     observaciones = Column(String, nullable=True)
 
@@ -48,7 +48,7 @@ class MovimientoCaja(Base):
     fecha = Column(DateTime, default=datetime.datetime.utcnow)
     tipo = Column(Enum(TipoMovimiento), nullable=False)
     concepto = Column(String, nullable=False)
-    monto = Column(Float, nullable=False)
+    monto = Column(Numeric(12, 2), nullable=False)
     categoria = Column(String, nullable=True)
 
     sesion_id = Column(Integer, ForeignKey("sesiones_caja.id"), nullable=True)

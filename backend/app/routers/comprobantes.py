@@ -21,22 +21,24 @@ read_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR"])
 
 @router.get("/", response_model=List[ComprobanteResponse])
 def list_comprobantes(
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(read_access)
 ):
     """
-    Get list of all commercial bills (Factura and Remitos).
-    If CLIENTE role, filters to show only their own bills.
+    Get commercial documents (Facturas/Remitos) with pagination.
+    If CLIENTE role, filters to show only their own documents.
     """
     query = db.query(Comprobante)
-    
+
     if current_user.rol == "CLIENTE":
         cliente = db.query(Cliente).filter(Cliente.usuario_id == current_user.id).first()
         if not cliente:
             return []
         query = query.join(Pedido).filter(Pedido.cliente_id == cliente.id)
-        
-    return query.order_by(Comprobante.fecha.desc()).all()
+
+    return query.order_by(Comprobante.fecha.desc()).offset(skip).limit(limit).all()
 
 @router.get("/{comprobante_id}", response_model=ComprobanteResponse)
 def get_comprobante(

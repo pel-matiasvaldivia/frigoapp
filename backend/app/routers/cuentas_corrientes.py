@@ -17,13 +17,15 @@ read_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "CLIENTE"])
 
 @router.get("/", response_model=List[dict])
 def list_cuentas_corrientes(
+    skip: int = 0,
+    limit: int = 500,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_staff)
 ):
     """
-    Get all clients' credit balances and credit limits.
+    Get clients' credit balances with pagination.
     """
-    cc_list = db.query(CuentaCorriente).all()
+    cc_list = db.query(CuentaCorriente).offset(skip).limit(limit).all()
     result = []
     for cc in cc_list:
         result.append({

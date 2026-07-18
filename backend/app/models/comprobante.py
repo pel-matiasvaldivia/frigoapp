@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -11,7 +11,7 @@ class Comprobante(Base):
     tipo = Column(String, nullable=False)  # "FACTURA", "REMITO"
     numero = Column(String, unique=True, index=True, nullable=False)
     fecha = Column(DateTime, default=func.now(), index=True)
-    total = Column(Float, default=0.0)
+    total = Column(Numeric(12, 2), default=0)
     pdf_path = Column(String, nullable=True)
     estado = Column(String, default="Emitido")  # "Emitido", "Cobrado", "Anulado"
     firma_repartidor_path = Column(String, nullable=True)

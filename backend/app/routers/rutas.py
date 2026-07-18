@@ -15,13 +15,15 @@ read_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO", "VENDEDOR", "REPARTID
 
 @router.get("/", response_model=List[RutaResponse])
 def list_rutas(
+    skip: int = 0,
+    limit: int = 200,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(read_access)
 ):
     """
-    Get all delivery routes.
+    Get delivery routes with pagination.
     """
-    return db.query(Ruta).all()
+    return db.query(Ruta).offset(skip).limit(limit).all()
 
 @router.get("/{ruta_id}", response_model=RutaResponse)
 def get_ruta(

@@ -25,43 +25,44 @@ def list_pedidos(
     cliente_id: Optional[int] = None,
     fecha_inicio: Optional[str] = None,
     fecha_fin: Optional[str] = None,
-    db: Session = Depends(get_db), 
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_staff_sales)
 ):
     """
-    Get list of sales orders with filtering capabilities.
+    Get sales orders with filtering and pagination.
     If role is CLIENTE, they can only view their own orders.
     """
     query = db.query(Pedido)
-    
+
     # Role isolation
     if current_user.rol == "CLIENTE":
-        # Find matching cliente record
         cliente = db.query(Cliente).filter(Cliente.usuario_id == current_user.id).first()
         if not cliente:
             return []
         query = query.filter(Pedido.cliente_id == cliente.id)
     elif cliente_id:
         query = query.filter(Pedido.cliente_id == cliente_id)
-        
+
     if estado:
         query = query.filter(Pedido.estado == estado)
-        
+
     if fecha_inicio:
         try:
             start_dt = datetime.datetime.strptime(fecha_inicio, "%Y-%m-%d")
             query = query.filter(Pedido.fecha >= start_dt)
         except ValueError:
             pass
-            
+
     if fecha_fin:
         try:
             end_dt = datetime.datetime.strptime(fecha_fin, "%Y-%m-%d") + datetime.timedelta(days=1)
             query = query.filter(Pedido.fecha < end_dt)
         except ValueError:
             pass
-            
-    return query.order_by(Pedido.fecha.desc()).all()
+
+    return query.order_by(Pedido.fecha.desc()).offset(skip).limit(limit).all()
 
 @router.get("/{pedido_id}", response_model=PedidoResponse)
 def get_pedido(

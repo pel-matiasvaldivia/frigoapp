@@ -22,8 +22,22 @@ migrations = [
     \"ALTER TABLE orden_preparacion_bultos ADD COLUMN IF NOT EXISTS fecha_carga TIMESTAMP\",
     \"ALTER TABLE orden_preparacion_bultos ADD COLUMN IF NOT EXISTS fecha_entrega TIMESTAMP\",
     \"CREATE INDEX IF NOT EXISTS ix_bultos_tracking_uuid ON orden_preparacion_bultos(tracking_uuid)\",
-    # Permisos de uploads
-    \"SELECT 1\", # placeholder
+    # Float → Numeric para campos monetarios (v1.2)
+    # Evita errores de precision binaria en calculos financieros
+    \"ALTER TABLE pedidos ALTER COLUMN total TYPE NUMERIC(12,2) USING total::NUMERIC(12,2)\",
+    \"ALTER TABLE pedido_items ALTER COLUMN precio_unitario TYPE NUMERIC(12,2) USING precio_unitario::NUMERIC(12,2)\",
+    \"ALTER TABLE pedido_items ALTER COLUMN subtotal TYPE NUMERIC(12,2) USING subtotal::NUMERIC(12,2)\",
+    \"ALTER TABLE comprobantes ALTER COLUMN total TYPE NUMERIC(12,2) USING total::NUMERIC(12,2)\",
+    \"ALTER TABLE cuentas_corrientes ALTER COLUMN saldo_actual TYPE NUMERIC(12,2) USING saldo_actual::NUMERIC(12,2)\",
+    \"ALTER TABLE cuentas_corrientes ALTER COLUMN limite_credito TYPE NUMERIC(12,2) USING limite_credito::NUMERIC(12,2)\",
+    \"ALTER TABLE movimientos_cc ALTER COLUMN monto TYPE NUMERIC(12,2) USING monto::NUMERIC(12,2)\",
+    \"ALTER TABLE lista_precios_detalle ALTER COLUMN precio_costo TYPE NUMERIC(12,2) USING precio_costo::NUMERIC(12,2)\",
+    \"ALTER TABLE lista_precios_detalle ALTER COLUMN precio_venta TYPE NUMERIC(12,2) USING precio_venta::NUMERIC(12,2)\",
+    \"ALTER TABLE lista_precios_detalle ALTER COLUMN precio_mayoreo TYPE NUMERIC(12,2) USING precio_mayoreo::NUMERIC(12,2)\",
+    \"ALTER TABLE clientes ALTER COLUMN limite_credito TYPE NUMERIC(12,2) USING limite_credito::NUMERIC(12,2)\",
+    \"ALTER TABLE sesiones_caja ALTER COLUMN monto_apertura TYPE NUMERIC(12,2) USING monto_apertura::NUMERIC(12,2)\",
+    \"ALTER TABLE sesiones_caja ALTER COLUMN monto_cierre TYPE NUMERIC(12,2) USING monto_cierre::NUMERIC(12,2)\",
+    \"ALTER TABLE movimientos_caja ALTER COLUMN monto TYPE NUMERIC(12,2) USING monto::NUMERIC(12,2)\",
 ]
 
 for sql in migrations:

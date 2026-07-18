@@ -13,13 +13,15 @@ admin_only = RoleChecker(["SUPERADMIN"])
 
 @router.get("/", response_model=List[UsuarioResponse])
 def list_users(
+    skip: int = 0,
+    limit: int = 200,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only)
 ):
     """
-    Lists all users. Restricted to Superadmins.
+    Lists users with pagination. Restricted to Superadmins.
     """
-    return db.query(Usuario).all()
+    return db.query(Usuario).offset(skip).limit(limit).all()
 
 @router.post("/", response_model=UsuarioResponse)
 def create_user(

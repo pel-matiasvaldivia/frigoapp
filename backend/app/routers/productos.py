@@ -15,13 +15,15 @@ write_access = RoleChecker(["SUPERADMIN", "ADMINISTRATIVO"])
 
 @router.get("/", response_model=List[ProductoResponse])
 def list_productos(
-    db: Session = Depends(get_db), 
+    skip: int = 0,
+    limit: int = 500,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_or_staff)
 ):
     """
-    Get all active products in catalog.
+    Get products with pagination.
     """
-    return db.query(Producto).all()
+    return db.query(Producto).offset(skip).limit(limit).all()
 
 @router.get("/{producto_id}", response_model=ProductoResponse)
 def get_producto(

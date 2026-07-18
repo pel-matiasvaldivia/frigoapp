@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, Float, Numeric, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+MONEY = Numeric(12, 2)
 
 class ListaPrecios(Base):
     __tablename__ = "listas_precios"
@@ -22,11 +24,11 @@ class ListaPreciosDetalle(Base):
     id = Column(Integer, primary_key=True, index=True)
     lista_precios_id = Column(Integer, ForeignKey("listas_precios.id", ondelete="CASCADE"), nullable=False)
     producto_id = Column(Integer, ForeignKey("productos.id", ondelete="CASCADE"), nullable=False)
-    precio_costo = Column(Float, default=0.0)
-    precio_venta = Column(Float, default=0.0)
-    precio_mayoreo = Column(Float, default=0.0)
-    stock = Column(Float, default=0.0)
-    stock_minimo = Column(Float, default=0.0)
+    precio_costo = Column(MONEY, default=0)
+    precio_venta = Column(MONEY, default=0)
+    precio_mayoreo = Column(MONEY, default=0)
+    stock = Column(Float, default=0.0)       # quantity, not money
+    stock_minimo = Column(Float, default=0.0) # quantity, not money
 
     # Relationships
     lista_precios = relationship("ListaPrecios", back_populates="detalles")

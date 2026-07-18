@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Numeric, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -15,9 +15,9 @@ class Cliente(Base):
     telefono_whatsapp = Column(String, nullable=True)
     ruta_id = Column(Integer, ForeignKey("rutas.id"), nullable=True)
     lista_precios_id = Column(Integer, ForeignKey("listas_precios.id"), nullable=True)
-    limite_credito = Column(Float, default=0.0)
-    latitud = Column(Float, nullable=True)
-    longitud = Column(Float, nullable=True)
+    limite_credito = Column(Numeric(12, 2), default=0)
+    latitud = Column(Float, nullable=True)   # geographical coordinate, not money
+    longitud = Column(Float, nullable=True)  # geographical coordinate, not money
     activo = Column(Boolean, default=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
 

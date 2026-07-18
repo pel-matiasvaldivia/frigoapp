@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, Float, Numeric, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+MONEY = Numeric(12, 2)
 
 class Pedido(Base):
     __tablename__ = "pedidos"
@@ -10,10 +12,10 @@ class Pedido(Base):
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False)
     administrativo_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     fecha = Column(DateTime, default=func.now(), index=True)
-    estado = Column(String, default="Pendiente de preparación", index=True) 
+    estado = Column(String, default="Pendiente de preparación", index=True)
     # Estados: "Pendiente de preparación", "En preparación", "Listo para despacho", "Facturado/Remitido", "En reparto", "Entregado", "Entrega parcial", "No entregado"
     observaciones = Column(String, nullable=True)
-    total = Column(Float, default=0.0)
+    total = Column(MONEY, default=0)
 
     # Relationships
     cliente = relationship("Cliente", back_populates="pedidos")
@@ -28,11 +30,11 @@ class PedidoItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     pedido_id = Column(Integer, ForeignKey("pedidos.id", ondelete="CASCADE"), nullable=False)
     producto_id = Column(Integer, ForeignKey("productos.id"), nullable=False)
-    cantidad_unidades = Column(Float, default=0.0)
-    peso_estimado_kg = Column(Float, default=0.0)
-    peso_real_kg = Column(Float, default=0.0)
-    precio_unitario = Column(Float, default=0.0) # Precio por kg fijado en la creación
-    subtotal = Column(Float, default=0.0)
+    cantidad_unidades = Column(Float, default=0.0)    # quantity, not money
+    peso_estimado_kg = Column(Float, default=0.0)     # weight, not money
+    peso_real_kg = Column(Float, default=0.0)         # weight, not money
+    precio_unitario = Column(MONEY, default=0)        # price per kg set at order creation
+    subtotal = Column(MONEY, default=0)
 
     # Relationships
     pedido = relationship("Pedido", back_populates="items")
