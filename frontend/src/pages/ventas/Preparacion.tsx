@@ -8,7 +8,6 @@ import {
   Search,
   AlertTriangle,
   Scale,
-  Printer,
   QrCode,
   Plus,
   Trash2,
@@ -186,7 +185,6 @@ export const Preparacion: React.FC = () => {
     }
   };
 
-  const [printingRemito, setPrintingRemito] = useState(false);
   const [printingLabels, setPrintingLabels] = useState(false);
 
   const printPDF = (url: string, onReady?: () => void) => {
@@ -217,15 +215,6 @@ export const Preparacion: React.FC = () => {
       setTimeout(cleanup, 60000);
     };
     iframe.src = url;
-  };
-
-  const handlePrintRemito = () => {
-    const remito = selectedOrden?.pedido?.comprobantes?.find((c: any) => c.tipo === 'REMITO');
-    if (!remito) { alert("El remito aún no ha sido generado. Actualice la lista."); return; }
-    if (!remito.pdf_path) { alert("El PDF se está procesando. Espere unos segundos y reintente."); return; }
-    const url = `${window.location.origin}${remito.pdf_path}?t=${Date.now()}`;
-    setPrintingRemito(true);
-    printPDF(url, () => setPrintingRemito(false));
   };
 
   const handlePrintLabels = async () => {
@@ -358,28 +347,14 @@ export const Preparacion: React.FC = () => {
                 )}
 
                 {selectedOrden.estado === 'Completado' && (
-                   <div className="flex space-x-3">
-                      <button
-                        onClick={handlePrintRemito}
-                        disabled={printingRemito}
-                        className={`flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest ${
-                          selectedOrden.pedido?.comprobantes?.some((c: any) => c.tipo === 'REMITO' && c.pdf_path)
-                            ? 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 shadow-sm disabled:opacity-60'
-                            : 'bg-slate-100 text-slate-400 border-2 border-transparent'
-                        }`}
-                      >
-                        <Printer className="h-5 w-5 mr-3" />
-                        {printingRemito ? 'Enviando...' : 'Imprimir Remito'}
-                      </button>
-                      <button
-                        onClick={handlePrintLabels}
-                        disabled={printingLabels}
-                        className="flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm disabled:opacity-60"
-                      >
-                        <QrCode className="h-5 w-5 mr-3" />
-                        {printingLabels ? 'Generando...' : 'Imprimir Etiquetas QR'}
-                      </button>
-                   </div>
+                  <button
+                    onClick={handlePrintLabels}
+                    disabled={printingLabels}
+                    className="flex items-center px-6 py-4 font-bold text-sm rounded-2xl transition-all uppercase tracking-widest bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm disabled:opacity-60"
+                  >
+                    <QrCode className="h-5 w-5 mr-3" />
+                    {printingLabels ? 'Generando...' : 'Imprimir Etiquetas QR'}
+                  </button>
                 )}
               </div>
 

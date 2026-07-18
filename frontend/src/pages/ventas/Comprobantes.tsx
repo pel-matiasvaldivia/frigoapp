@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { comprobantesAPI, pedidosAPI } from '../../services/api';
-import { 
-  FileText, 
-  Download, 
-  Plus, 
-  Check, 
-  RefreshCw, 
+import {
+  FileText,
+  Printer,
+  RefreshCw,
   AlertCircle,
-  FileCheck2
+  FileCheck2,
+  Loader2
 } from 'lucide-react';
 
 export const Comprobantes: React.FC = () => {
@@ -17,6 +16,7 @@ export const Comprobantes: React.FC = () => {
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState<any | null>(null);
   const [comprobanteTipo, setComprobanteTipo] = useState<'FACTURA' | 'REMITO'>('REMITO');
+  const [printingComp, setPrintingComp] = useState<{ id: number; numero: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -49,17 +49,47 @@ export const Comprobantes: React.FC = () => {
     setGenerateModalOpen(true);
   };
 
+  const printPDF = (url: string) => {
+    const iframe = document.createElement('iframe');
+    Object.assign(iframe.style, { position: 'fixed', right: '-9999px', bottom: '0', width: '1px', height: '1px', border: 'none', visibility: 'hidden' });
+    document.body.appendChild(iframe);
+    const cleanup = () => { if (document.body.contains(iframe)) document.body.removeChild(iframe); };
+    iframe.onload = () => {
+      try { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); }
+      catch { window.open(url, '_blank'); cleanup(); return; }
+      setTimeout(cleanup, 60000);
+    };
+    iframe.src = url;
+  };
+
+  const pollAndPrint = async (comprobanteId: number) => {
+    // Poll up to 12 times (×1.5 s = 18 s max) waiting for Celery to write the PDF
+    for (let i = 0; i < 12; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const comp = await comprobantesAPI.get(comprobanteId);
+        if (comp.pdf_path) {
+          printPDF(`${window.location.origin}${comp.pdf_path}?t=${Date.now()}`);
+          setPrintingComp(null);
+          return;
+        }
+      } catch {}
+    }
+    setPrintingComp(null); // PDF never arrived — user can print manually from historial
+  };
+
   const handleGenerateComprobante = async () => {
     if (!selectedPedido) return;
     try {
-      await comprobantesAPI.create({
+      const comp = await comprobantesAPI.create({
         pedido_id: selectedPedido.id,
         tipo: comprobanteTipo
       });
-      alert(`¡Documento ${comprobanteTipo} generado exitosamente!`);
       setGenerateModalOpen(false);
       setSelectedPedido(null);
-      fetchData();
+      fetchData(); // order leaves "Pendientes", appears in "Historial"
+      setPrintingComp({ id: comp.id, numero: comp.numero });
+      pollAndPrint(comp.id);
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al emitir el comprobante");
     }
@@ -67,6 +97,15 @@ export const Comprobantes: React.FC = () => {
 
   return (
     <div className="space-y-10 animate-fade-in">
+      {/* Print progress banner */}
+      {printingComp && (
+        <div className="flex items-center space-x-3 px-6 py-4 bg-brand-50 border border-brand-100 rounded-2xl text-brand-700 text-sm font-bold">
+          <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+          <span>Generando PDF del comprobante <span className="font-black">{printingComp.numero}</span> — el diálogo de impresión aparecerá en instantes...</span>
+          <button onClick={() => setPrintingComp(null)} className="ml-auto text-brand-400 hover:text-brand-700 text-xs uppercase tracking-widest">Cancelar</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
@@ -195,14 +234,13 @@ export const Comprobantes: React.FC = () => {
                       </td>
                       <td className="py-5 px-6 text-center">
                         {comp.pdf_path ? (
-                          <a
-                            href={comp.pdf_path}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => printPDF(`${window.location.origin}${comp.pdf_path}?t=${Date.now()}`)}
+                            title="Imprimir"
                             className="inline-flex p-2 bg-slate-50 text-slate-400 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-all border border-slate-100"
                           >
-                            <Download className="h-4 w-4" />
-                          </a>
+                            <Printer className="h-4 w-4" />
+                          </button>
                         ) : (
                           <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Generando</span>
                         )}
