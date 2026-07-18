@@ -1,38 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { cuentasCorrientesAPI } from '../../services/api';
-import { 
-  Coins, 
-  Plus, 
-  Search, 
-  Eye, 
-  AlertTriangle, 
+import { cuentasCorrientesAPI, pedidosAPI } from '../../services/api';
+import {
+  Coins,
+  Search,
+  Eye,
+  AlertTriangle,
   CheckCircle2,
   FileSpreadsheet,
   X,
-  ArrowDownRight,
-  ArrowUpRight
+  LayoutGrid,
+  List,
+  Clock,
+  Pencil,
+  Check,
 } from 'lucide-react';
 
 export const CuentasCorrientes: React.FC = () => {
   const [cuentas, setCuentas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+
+  // Top 10 del día
+  const [topClienteIds, setTopClienteIds] = useState<number[]>([]);
+  const [loadingTop, setLoadingTop] = useState(false);
+
+  // Inline credit limit edit (table view)
+  const [editingLimitId, setEditingLimitId] = useState<number | null>(null);
+  const [editingLimitValue, setEditingLimitValue] = useState<number>(0);
+
   // Register Payment Modal
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [selectedClientPay, setSelectedClientPay] = useState<any | null>(null);
   const [monto, setMonto] = useState<number>(0);
   const [tipoPago, setTipoPago] = useState('Transferencia');
   const [referencia, setReferencia] = useState('');
-  const [descripcion, setDescripcion] = useState('');
 
-  // View Statement Detail Modal
+  // View Statement Modal
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedAccountDetail, setSelectedAccountDetail] = useState<any | null>(null);
   const [movements, setMovements] = useState<any[]>([]);
 
   useEffect(() => {
     fetchCuentas();
+    fetchTodayTop();
   }, []);
 
   const fetchCuentas = async () => {
@@ -41,23 +52,47 @@ export const CuentasCorrientes: React.FC = () => {
       const res = await cuentasCorrientesAPI.list();
       setCuentas(res);
     } catch (err) {
-      console.error("Error loading account balances:", err);
+      console.error('Error loading account balances:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchTodayTop = async () => {
+    setLoadingTop(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const orders = await pedidosAPI.list({ fecha_inicio: today, fecha_fin: today, limit: 100 });
+      const seen = new Set<number>();
+      const top: number[] = [];
+      for (const o of (orders || [])) {
+        if (!seen.has(o.cliente_id) && top.length < 10) {
+          seen.add(o.cliente_id);
+          top.push(o.cliente_id);
+        }
+      }
+      setTopClienteIds(top);
+    } catch (e) {
+      console.error('Error fetching today top:', e);
+    } finally {
+      setLoadingTop(false);
+    }
+  };
+
+  const topCuentas = topClienteIds
+    .map(id => cuentas.find(c => c.cliente_id === id))
+    .filter(Boolean);
+
   const handleOpenPayModal = (cuenta: any) => {
     setSelectedClientPay(cuenta);
     setMonto(0);
     setReferencia('');
-    setDescripcion('');
     setPayModalOpen(true);
   };
 
   const handlePostPayment = async () => {
     if (!selectedClientPay || monto <= 0) {
-      alert("Por favor ingrese un monto válido mayor a 0");
+      alert('Por favor ingrese un monto válido mayor a 0');
       return;
     }
     try {
@@ -65,14 +100,13 @@ export const CuentasCorrientes: React.FC = () => {
         monto,
         tipo_pago: tipoPago,
         referencia,
-        descripcion
       });
-      alert("¡Pago registrado exitosamente!");
+      alert('¡Pago registrado exitosamente!');
       setPayModalOpen(false);
       setSelectedClientPay(null);
       fetchCuentas();
-    } catch (err) {
-      alert("Error al registrar pago");
+    } catch {
+      alert('Error al registrar pago');
     }
   };
 
@@ -82,42 +116,159 @@ export const CuentasCorrientes: React.FC = () => {
       setSelectedAccountDetail(cuenta);
       setMovements(details.movimientos || []);
       setDetailModalOpen(true);
-    } catch (err) {
-      alert("Error al cargar movimientos de la cuenta");
+    } catch {
+      alert('Error al cargar movimientos de la cuenta');
     }
   };
 
-  // Filter accounts by customer search query
-  const filteredCuentas = cuentas.filter(c => 
-    c.cliente_razon_social.toLowerCase().includes(search.toLowerCase()) ||
-    (c.cuit && c.cuit.includes(search))
+  const handleUpdateLimit = async (clienteId: number, value: number) => {
+    setCuentas(prev =>
+      prev.map(c =>
+        c.cliente_id === clienteId
+          ? { ...c, limite_credito: value, supera_limite: c.saldo_actual > value }
+          : c
+      )
+    );
+    try {
+      await cuentasCorrientesAPI.updateLimiteCredito(clienteId, value);
+    } catch {
+      alert('No se pudo actualizar el límite.');
+      fetchCuentas();
+    }
+  };
+
+  const filteredCuentas = cuentas.filter(
+    c =>
+      c.cliente_razon_social.toLowerCase().includes(search.toLowerCase()) ||
+      (c.cuit && c.cuit.includes(search))
   );
+
+  const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2 });
 
   return (
     <div className="space-y-6 animate-fade-in bg-slate-50/50 p-6 rounded-[2.5rem]">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Cuentas Corrientes</h1>
           <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">Gestión de Saldos y Límites de Crédito</p>
         </div>
-        
-        {/* Searchbar */}
-        <div className="relative min-w-[300px]">
-          <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-            <Search className="h-5 w-5" />
-          </span>
-          <input
-            type="text"
-            placeholder="BUSCAR CLIENTE O CUIT..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-sm transition-all"
-          />
+
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative min-w-[260px]">
+            <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+              <Search className="h-4 w-4" />
+            </span>
+            <input
+              type="text"
+              placeholder="BUSCAR CLIENTE O CUIT..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-5 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-sm transition-all"
+            />
+          </div>
+
+          {/* View toggle */}
+          <div className="flex bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <button
+              onClick={() => setViewMode('cards')}
+              title="Vista tarjetas"
+              className={`flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                viewMode === 'cards'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Tarjetas</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              title="Vista lista"
+              className={`flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-l border-slate-200 ${
+                viewMode === 'table'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Lista</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Balance sheets grid */}
+      {/* ── Top 10 del día ── */}
+      {!loadingTop && topCuentas.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="h-3.5 w-3.5 text-brand-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Últimos clientes atendidos hoy
+            </p>
+            <span className="ml-1 px-2 py-0.5 bg-brand-50 text-brand-600 border border-brand-100 rounded-full text-[9px] font-black">
+              {topCuentas.length} DE HOY
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+            {topCuentas.map((cta: any, idx: number) => (
+              <div
+                key={cta.id}
+                className="flex-shrink-0 w-44 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default"
+              >
+                {/* Rank */}
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-[28px] font-black text-slate-100 leading-none tabular-nums">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  {cta.supera_limite ? (
+                    <span className="shrink-0 flex items-center px-1.5 py-0.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-md text-[8px] font-black">
+                      <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> RIESGO
+                    </span>
+                  ) : (
+                    <span className="shrink-0 flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-md text-[8px] font-black">
+                      <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" /> OK
+                    </span>
+                  )}
+                </div>
+
+                {/* Name */}
+                <p className="text-[11px] font-black text-slate-900 uppercase leading-tight mb-3 line-clamp-2">
+                  {cta.cliente_razon_social}
+                </p>
+
+                {/* Balance */}
+                <p className={`text-lg font-black tracking-tighter leading-none mb-0.5 ${cta.saldo_actual > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  ${fmt(Math.abs(cta.saldo_actual))}
+                </p>
+                <p className={`text-[8px] font-bold uppercase mb-3 ${cta.saldo_actual > 0 ? 'text-rose-400' : 'text-emerald-500'}`}>
+                  {cta.saldo_actual > 0 ? 'Deuda pendiente' : 'A favor'}
+                </p>
+
+                {/* Quick actions */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => handleOpenDetailModal(cta)}
+                    className="flex items-center justify-center py-2 bg-slate-50 text-slate-500 hover:bg-slate-100 text-[8px] font-black rounded-xl border border-slate-100 transition-all uppercase tracking-wide active:scale-95"
+                  >
+                    <Eye className="h-3 w-3 mr-1" /> Ver
+                  </button>
+                  <button
+                    onClick={() => handleOpenPayModal(cta)}
+                    className="flex items-center justify-center py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] font-black rounded-xl transition-all uppercase tracking-wide active:scale-95"
+                  >
+                    <Coins className="h-3 w-3 mr-1" /> Cobrar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Main content ── */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600"></div>
@@ -126,13 +277,15 @@ export const CuentasCorrientes: React.FC = () => {
         <div className="border border-dashed border-slate-200 rounded-[2rem] p-16 text-center bg-white">
           <Coins className="h-16 w-16 text-slate-200 mx-auto mb-4" />
           <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">Sin Cuentas</h3>
-          <p className="text-sm text-slate-400 mt-2 font-medium">No se encontraron clientes que coincidan con la búsqueda.</p>
+          <p className="text-sm text-slate-400 mt-2 font-medium">No se encontraron clientes que coincidan.</p>
         </div>
-      ) : (
+      ) : viewMode === 'cards' ? (
+
+        /* ── CARD VIEW ── */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCuentas.map((cta) => (
+          {filteredCuentas.map(cta => (
             <div key={cta.id} className="group bg-white border border-slate-200 rounded-[2.5rem] p-6 space-y-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              {/* Header */}
+              {/* Card header */}
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                   <h3 className="font-black text-slate-900 text-lg uppercase leading-tight tracking-tight mb-1 group-hover:text-brand-600 transition-colors">
@@ -144,103 +297,250 @@ export const CuentasCorrientes: React.FC = () => {
                   </div>
                 </div>
                 {cta.supera_limite ? (
-                   <span className="shrink-0 flex items-center px-2 py-1 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[9px] font-black uppercase tracking-widest animate-pulse">
-                      <AlertTriangle className="h-3 w-3 mr-1" /> Riesgo
-                   </span>
+                  <span className="shrink-0 flex items-center px-2 py-1 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[9px] font-black uppercase tracking-widest animate-pulse">
+                    <AlertTriangle className="h-3 w-3 mr-1" /> Riesgo
+                  </span>
                 ) : (
-                   <span className="shrink-0 flex items-center px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                      <CheckCircle2 className="h-3 w-3 mr-1" /> OK
-                   </span>
+                  <span className="shrink-0 flex items-center px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                    <CheckCircle2 className="h-3 w-3 mr-1" /> OK
+                  </span>
                 )}
               </div>
 
-              {/* Financial Dashboard */}
+              {/* Balances */}
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 h-16 w-16 bg-slate-200/20 rounded-bl-full pointer-events-none"></div>
-                
                 <div className="relative z-10">
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] mb-2 flex items-center">
-                    Saldo Actual
-                  </p>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] mb-2">Saldo Actual</p>
                   <p className={`text-2xl font-black tracking-tighter leading-none ${cta.saldo_actual > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                    ${Math.abs(cta.saldo_actual).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                    ${fmt(Math.abs(cta.saldo_actual))}
                   </p>
                   <p className={`text-[9px] font-bold uppercase mt-1 ${cta.saldo_actual > 0 ? 'text-rose-400' : 'text-emerald-500'}`}>
                     {cta.saldo_actual > 0 ? 'Deuda en Contra' : 'Saldo a Favor'}
                   </p>
                 </div>
-
                 <div className="text-right border-l border-slate-200 pl-4 relative z-10">
                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] mb-2">Límite de Crédito</p>
                   <p className="text-lg font-black text-slate-900 tracking-tight leading-none">
                     ${cta.limite_credito.toLocaleString('es-AR')}
                   </p>
                   <div className="mt-2 w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                    <div 
-                        className={`h-full transition-all duration-500 ${cta.supera_limite ? 'bg-rose-500' : 'bg-brand-500'}`}
-                        style={{ width: `${Math.min((cta.saldo_actual / cta.limite_credito) * 100, 100)}%` }}
-                    ></div>
+                    <div
+                      className={`h-full transition-all duration-500 ${cta.supera_limite ? 'bg-rose-500' : 'bg-brand-500'}`}
+                      style={{ width: `${Math.min((cta.saldo_actual / cta.limite_credito) * 100, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Interactive Limit Slider */}
+              {/* Limit slider */}
               <div className="px-2">
                 <div className="flex justify-between items-center mb-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ajustar Límite ($)</label>
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded-md border border-slate-200">
-                        VAL: {cta.limite_credito / 1000}k
-                    </span>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ajustar Límite ($)</label>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded-md border border-slate-200">
+                    VAL: {(cta.limite_credito / 1000).toFixed(0)}k
+                  </span>
                 </div>
-                <input 
-                    type="range"
-                    min="0"
-                    max="1000000"
-                    step="50000"
-                    value={cta.limite_credito}
-                    onChange={async (e) => {
-                        const newLimit = parseInt(e.target.value);
-                        // Optimistic update
-                        setCuentas(prev => prev.map(c => c.id === cta.id ? {...c, limite_credito: newLimit, supera_limite: c.saldo_actual > newLimit} : c));
-                        try {
-                            await cuentasCorrientesAPI.updateLimiteCredito(cta.cliente_id, newLimit);
-                        } catch (err) {
-                            alert("No se pudo actualizar el límite. Reintentando...");
-                            fetchCuentas();
-                        }
-                    }}
-                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-brand-600 focus:outline-none"
+                <input
+                  type="range"
+                  min="0"
+                  max="1000000"
+                  step="50000"
+                  value={cta.limite_credito}
+                  onChange={async e => {
+                    const v = parseInt(e.target.value);
+                    await handleUpdateLimit(cta.cliente_id, v);
+                  }}
+                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-brand-600 focus:outline-none"
                 />
                 <div className="flex justify-between mt-2 text-[8px] text-slate-300 font-black uppercase tracking-widest">
-                    <span>Sin Límite</span>
-                    <span>500k</span>
-                    <span>1M+</span>
+                  <span>Sin Límite</span>
+                  <span>500k</span>
+                  <span>1M+</span>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <button
-                   onClick={() => handleOpenDetailModal(cta)}
-                   className="flex items-center justify-center py-4 bg-slate-50 text-slate-600 hover:bg-slate-100 text-[10px] font-black rounded-[1.25rem] border border-slate-100 transition-all uppercase tracking-widest shadow-sm active:scale-95"
+                  onClick={() => handleOpenDetailModal(cta)}
+                  className="flex items-center justify-center py-4 bg-slate-50 text-slate-600 hover:bg-slate-100 text-[10px] font-black rounded-[1.25rem] border border-slate-100 transition-all uppercase tracking-widest shadow-sm active:scale-95"
                 >
-                   <Eye className="h-4 w-4 mr-2" />
-                   Historial
+                  <Eye className="h-4 w-4 mr-2" /> Historial
                 </button>
                 <button
-                   onClick={() => handleOpenPayModal(cta)}
-                   className="flex items-center justify-center py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-[1.25rem] transition-all uppercase tracking-widest shadow-lg shadow-emerald-900/10 active:scale-95"
+                  onClick={() => handleOpenPayModal(cta)}
+                  className="flex items-center justify-center py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-[1.25rem] transition-all uppercase tracking-widest shadow-lg shadow-emerald-900/10 active:scale-95"
                 >
-                   <Coins className="h-4 w-4 mr-2" />
-                   Cobrar
+                  <Coins className="h-4 w-4 mr-2" /> Cobrar
                 </button>
               </div>
             </div>
           ))}
         </div>
+      ) : (
+
+        /* ── TABLE VIEW ── */
+        <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">CUIT</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Saldo Actual</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Límite</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-28">Uso</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                  <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredCuentas.map(cta => {
+                  const usoPct = cta.limite_credito > 0
+                    ? Math.min((cta.saldo_actual / cta.limite_credito) * 100, 100)
+                    : 0;
+                  const isEditingLimit = editingLimitId === cta.cliente_id;
+
+                  return (
+                    <tr key={cta.id} className="hover:bg-slate-50/70 transition-colors group">
+                      {/* Name */}
+                      <td className="px-5 py-4">
+                        <span className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                          {cta.cliente_razon_social}
+                        </span>
+                      </td>
+
+                      {/* CUIT */}
+                      <td className="px-5 py-4">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {cta.cuit || '—'}
+                        </span>
+                      </td>
+
+                      {/* Saldo */}
+                      <td className="px-5 py-4 text-right">
+                        <span className={`text-sm font-black tabular-nums ${cta.saldo_actual > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          ${fmt(Math.abs(cta.saldo_actual))}
+                        </span>
+                        <br />
+                        <span className={`text-[8px] font-bold uppercase ${cta.saldo_actual > 0 ? 'text-rose-400' : 'text-emerald-500'}`}>
+                          {cta.saldo_actual > 0 ? 'Deuda' : 'A favor'}
+                        </span>
+                      </td>
+
+                      {/* Limit (inline edit) */}
+                      <td className="px-5 py-4 text-right">
+                        {isEditingLimit ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="text-[10px] text-slate-400 font-bold">$</span>
+                            <input
+                              type="number"
+                              autoFocus
+                              value={editingLimitValue}
+                              onChange={e => setEditingLimitValue(Number(e.target.value))}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  handleUpdateLimit(cta.cliente_id, editingLimitValue);
+                                  setEditingLimitId(null);
+                                }
+                                if (e.key === 'Escape') setEditingLimitId(null);
+                              }}
+                              className="w-28 px-2 py-1 border border-brand-400 rounded-lg text-sm font-black text-right focus:outline-none focus:ring-2 focus:ring-brand-500/30 tabular-nums"
+                            />
+                            <button
+                              onClick={() => {
+                                handleUpdateLimit(cta.cliente_id, editingLimitValue);
+                                setEditingLimitId(null);
+                              }}
+                              className="p-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors active:scale-90"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setEditingLimitId(null)}
+                              className="p-1 bg-slate-100 text-slate-400 rounded-lg hover:bg-slate-200 transition-colors active:scale-90"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditingLimitId(cta.cliente_id);
+                              setEditingLimitValue(cta.limite_credito);
+                            }}
+                            className="group/edit flex items-center justify-end gap-1.5 ml-auto text-sm font-black text-slate-700 tabular-nums hover:text-brand-600 transition-colors"
+                            title="Clic para editar límite"
+                          >
+                            ${cta.limite_credito.toLocaleString('es-AR')}
+                            <Pencil className="h-3 w-3 opacity-0 group-hover/edit:opacity-100 transition-opacity text-brand-400" />
+                          </button>
+                        )}
+                      </td>
+
+                      {/* Uso bar */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${cta.supera_limite ? 'bg-rose-500' : 'bg-brand-500'}`}
+                              style={{ width: `${usoPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-black text-slate-400 tabular-nums w-8 text-right">
+                            {usoPct.toFixed(0)}%
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Estado */}
+                      <td className="px-5 py-4">
+                        {cta.supera_limite ? (
+                          <span className="inline-flex items-center px-2 py-1 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                            <AlertTriangle className="h-2.5 w-2.5 mr-1" /> Riesgo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                            <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> OK
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenDetailModal(cta)}
+                            className="flex items-center py-2 px-3 bg-slate-50 text-slate-600 hover:bg-slate-100 text-[9px] font-black rounded-xl border border-slate-200 transition-all uppercase tracking-widest active:scale-95"
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1.5" /> Historial
+                          </button>
+                          <button
+                            onClick={() => handleOpenPayModal(cta)}
+                            className="flex items-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black rounded-xl transition-all uppercase tracking-widest active:scale-95"
+                          >
+                            <Coins className="h-3.5 w-3.5 mr-1.5" /> Cobrar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table footer count */}
+          <div className="px-5 py-3 border-t border-slate-100 bg-slate-50">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {filteredCuentas.length} cuenta{filteredCuentas.length !== 1 ? 's' : ''}{search ? ' · filtradas' : ' en total'}
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Register Payment Modal Dialogue */}
+      {/* ── Register Payment Modal ── */}
       {payModalOpen && selectedClientPay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-slate-100">
@@ -249,7 +549,7 @@ export const CuentasCorrientes: React.FC = () => {
                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Registrar Cobro</h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ingreso de fondos a CC</p>
               </div>
-              <button 
+              <button
                 onClick={() => { setSelectedClientPay(null); setPayModalOpen(false); }}
                 className="p-3 bg-slate-50 text-slate-400 hover:text-brand-600 rounded-2xl border border-slate-200 transition-all active:scale-90"
               >
@@ -262,7 +562,7 @@ export const CuentasCorrientes: React.FC = () => {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cliente</p>
                 <p className="text-md font-black text-slate-900 uppercase">{selectedClientPay.cliente_razon_social}</p>
                 <p className="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p>
-                <p className="text-xl font-black text-rose-600">${selectedClientPay.saldo_actual.toLocaleString('es-AR')}</p>
+                <p className="text-xl font-black text-rose-600">${fmt(selectedClientPay.saldo_actual)}</p>
               </div>
 
               <div>
@@ -273,7 +573,7 @@ export const CuentasCorrientes: React.FC = () => {
                   min="0.1"
                   step="0.01"
                   value={monto}
-                  onChange={(e) => setMonto(Number(e.target.value))}
+                  onChange={e => setMonto(Number(e.target.value))}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                   placeholder="0.00"
                 />
@@ -283,7 +583,7 @@ export const CuentasCorrientes: React.FC = () => {
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Medio de Pago</label>
                 <select
                   value={tipoPago}
-                  onChange={(e) => setTipoPago(e.target.value)}
+                  onChange={e => setTipoPago(e.target.value)}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="Transferencia">Transferencia Bancaria</option>
@@ -297,7 +597,7 @@ export const CuentasCorrientes: React.FC = () => {
                 <input
                   type="text"
                   value={referencia}
-                  onChange={(e) => setReferencia(e.target.value)}
+                  onChange={e => setReferencia(e.target.value)}
                   placeholder="ID DE TRANSACCIÓN O CHEQUE..."
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 />
@@ -324,7 +624,7 @@ export const CuentasCorrientes: React.FC = () => {
         </div>
       )}
 
-      {/* Account Statement Details Modal Dialogue */}
+      {/* ── Statement Detail Modal ── */}
       {detailModalOpen && selectedAccountDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-4xl bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
@@ -333,7 +633,7 @@ export const CuentasCorrientes: React.FC = () => {
                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">Extracto Histórico</h3>
                 <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-2">{selectedAccountDetail.cliente_razon_social}</p>
               </div>
-              <button 
+              <button
                 onClick={() => { setSelectedAccountDetail(null); setDetailModalOpen(false); }}
                 className="p-3 bg-slate-50 text-slate-400 hover:text-brand-600 rounded-2xl border border-slate-200 transition-all active:scale-90"
               >
@@ -341,11 +641,11 @@ export const CuentasCorrientes: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
               {movements.length === 0 ? (
                 <div className="py-20 text-center">
-                    <Coins className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No hay movimientos registrados</p>
+                  <Coins className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No hay movimientos registrados</p>
                 </div>
               ) : (
                 <div className="border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50/30">
@@ -359,18 +659,18 @@ export const CuentasCorrientes: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {movements.map((mov) => (
+                      {movements.map(mov => (
                         <tr key={mov.id} className="text-slate-600 hover:bg-white transition-colors">
                           <td className="p-5 text-[10px] font-black tabular-nums">{new Date(mov.fecha).toLocaleDateString('es-AR')}</td>
                           <td className="p-5">
                             <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{mov.descripcion}</span>
                             <span className={`ml-3 px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${mov.tipo === 'DEBITO' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                {mov.tipo === 'DEBITO' ? 'VENTA' : 'COBRO'}
+                              {mov.tipo === 'DEBITO' ? 'VENTA' : 'COBRO'}
                             </span>
                           </td>
                           <td className="p-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{mov.referencia}</td>
                           <td className={`p-5 text-right font-black tabular-nums ${mov.tipo === 'DEBITO' ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            {mov.tipo === 'DEBITO' ? '-' : '+'}${mov.monto.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                            {mov.tipo === 'DEBITO' ? '-' : '+'}${fmt(mov.monto)}
                           </td>
                         </tr>
                       ))}
@@ -387,10 +687,10 @@ export const CuentasCorrientes: React.FC = () => {
               </div>
               <div className="text-right">
                 <p className={`text-4xl font-black tracking-tighter ${selectedAccountDetail.saldo_actual > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                  ${Math.abs(selectedAccountDetail.saldo_actual).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  ${fmt(Math.abs(selectedAccountDetail.saldo_actual))}
                 </p>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                    {selectedAccountDetail.saldo_actual > 0 ? 'DEUDA PENDIENTE' : 'SALDO A FAVOR'}
+                  {selectedAccountDetail.saldo_actual > 0 ? 'DEUDA PENDIENTE' : 'SALDO A FAVOR'}
                 </p>
               </div>
             </div>
